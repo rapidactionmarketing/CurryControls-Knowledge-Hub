@@ -18,6 +18,7 @@ import { SECURITY_ENTRIES } from './content/security';
 import { HOWTO_ENTRIES } from './content/howto';
 import { TROUBLESHOOTING_ENTRIES } from './content/troubleshooting';
 import { LIBRARY_ENTRIES } from './content/library';
+import { ARTICLE_ENTRIES } from './content/articles';
 
 export type { Entry, EntryKind, Block, Faq, CauseCheck } from './content-types';
 export { KIND_LABEL } from './content-types';
@@ -34,6 +35,7 @@ export const ENTRIES: Entry[] = [
   ...HOWTO_ENTRIES,
   ...TROUBLESHOOTING_ENTRIES,
   ...LIBRARY_ENTRIES,
+  ...ARTICLE_ENTRIES,
 ];
 
 const byPath = new Map<string, Entry>(ENTRIES.map((e) => [e.path, e]));

@@ -2098,4 +2098,456 @@ Station_Critical := Avail_Count < 2;`,
       '/how-to/plc-how-to/create-a-pid-loop',
     ],
   },
+  {
+    path: '/water-wastewater/wastewater-systems/wastewater-treatment/aeration-control',
+    kind: 'reference',
+    title: 'Aeration Control',
+    summary:
+      'Controlling the largest energy user at a wastewater plant: the DO cascade to airflow, blower staging and turndown, most-open-valve pressure control across basins, ammonia-based aeration control, the instruments each strategy depends on, and the interlocks that keep blowers out of surge.',
+    answer:
+      'Aeration control modulates the air delivered to biological treatment basins to hold a dissolved oxygen setpoint, or an ammonia target, at the lowest blower energy that meets it. The standard structure is a cascade: a DO controller per zone sets an airflow setpoint, an airflow controller positions the zone valve, and a header pressure controller runs the blowers, with most-open-valve logic lowering the header pressure until one valve is nearly open. Blower staging, turndown limits, and surge protection sit underneath, and the whole scheme depends on DO and airflow instruments that are placed and cleaned correctly.',
+    keyPoints: [
+      'Cascade: DO sets airflow, airflow sets the valve, header pressure runs the blowers.',
+      'Most-open-valve control lowers the header pressure to the minimum the basins need. That is where the energy is.',
+      'Blowers have a turndown floor and a surge line. The control respects both or the blowers do.',
+      'Ammonia-based control trims the DO setpoint to the load, saving air when the load is low.',
+      'Every loop in the cascade is only as good as its sensor. Cleaning is part of the control strategy.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 11,
+    tags: ['Wastewater', 'Control', 'PID', 'Instrumentation'],
+    blocks: [
+      { t: 'h2', text: 'Why aeration control matters' },
+      {
+        t: 'p',
+        text: 'Blowers supplying air to activated sludge basins consume half or more of the electricity at a typical wastewater plant. The air is needed: the bacteria that oxidize organic matter and ammonia need dissolved oxygen, and too little means poor treatment. But the demand varies through the day and the year with the load, and a plant that runs its blowers at a fixed output supplies the peak demand all the time. Aeration control matches the air to the demand, which typically cuts blower energy by a quarter to a half, and it does so with a chain of loops and instruments that has to be designed as a whole.',
+      },
+      { t: 'h2', text: 'The cascade' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'DO control per zone', text: 'A DO sensor in each aeration zone feeds a slow PID controller whose output is an airflow setpoint for that zone. The loop is slow, minutes, because the basin responds slowly and the sensor has a lag; the dissolved oxygen page covers the sensor placement and cleaning.' },
+          { title: 'Airflow control per zone', text: 'An airflow meter on the drop pipe to each zone feeds a faster PID that positions the zone control valve to hold the airflow setpoint. This inner loop removes the nonlinearity of the valve and the effect of header pressure changes from the DO loop.' },
+          { title: 'Header pressure control', text: 'A pressure transmitter on the main air header feeds a controller that sets the blower output, by guide vane, inlet valve, or speed, to hold a header pressure setpoint. The blowers deliver whatever the valves are taking.' },
+          { title: 'Most-open-valve', text: 'The header pressure setpoint is not fixed. A supervisory routine watches the zone valve positions and lowers the pressure setpoint until the most-open valve is near a target, typically 80 to 90 percent open, and raises it when a valve reaches fully open. Lower header pressure is less blower work, and the routine keeps the pressure at the minimum that still lets every zone get its air.' },
+          { title: 'Blower staging', text: 'When the running blowers reach their maximum, another is started; when they fall to their minimum turndown, one is stopped, with delays and a minimum time between staging events. The staging also respects which blowers are available and rotates them.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'Why the cascade instead of DO straight to the blower',
+        text: 'A DO controller driving the blower directly fights the other zones, cannot tell whether a valve or the blower should move, and is destabilized by every header pressure change. The cascade gives each loop one job at one speed: DO decides how much air, airflow delivers it, pressure supplies it. Each loop can be tuned and validated alone.',
+      },
+      { t: 'h2', text: 'Blowers' },
+      {
+        t: 'table',
+        head: ['Blower type', 'Control method', 'Turndown', 'Surge'],
+        rows: [
+          ['Positive displacement (rotary lobe)', 'Speed with a drive', 'Wide, to about 25 to 40 percent', 'None; pressure rises with restriction instead'],
+          ['Multistage centrifugal', 'Inlet throttling valve, or speed', 'Limited, typically to 50 to 60 percent', 'Yes; a surge line the control must stay above'],
+          ['Single-stage integrally geared centrifugal', 'Inlet guide vanes and variable diffuser vanes', 'Good, to about 45 percent', 'Yes; the blower controller manages it'],
+          ['High-speed turbo (air or magnetic bearing)', 'Speed', 'To about 40 to 50 percent', 'Yes; the package controller protects it'],
+        ],
+      },
+      {
+        t: 'p',
+        text: 'Centrifugal blowers surge when the flow falls below a limit at a given pressure: the flow reverses momentarily, the machine shudders, and repeated surge damages it. The blower package controller enforces a surge line and will open a blow-off valve or shut down rather than cross it, which is the right behavior and which the plant control must anticipate. Staging down a blower before the running ones reach their turndown floor, and never asking the header pressure loop for a pressure the blowers cannot make at low flow, keeps the plant out of the surge protection.',
+      },
+      { t: 'h2', text: 'Ammonia-based aeration control' },
+      {
+        t: 'p',
+        text: 'Holding a fixed DO setpoint aerates for the design load at all times. The actual oxygen demand follows the ammonia and organic load, which varies through the day, and a plant that nitrifies needs enough DO to finish ammonia oxidation and no more. Ammonia-based aeration control puts an ammonia analyzer at the end of the aerobic zone, or at a point along it, and uses it to trim the DO setpoint: when ammonia is low, the load is met and the DO setpoint drops toward a floor; when ammonia rises, the DO setpoint rises toward a ceiling. The ammonia loop is slower still, tens of minutes to hours, and it sits above the DO loop as another cascade level. The savings are real, often another 10 to 20 percent of blower energy, and the cost is an ammonia analyzer that needs the same care as any wet chemistry instrument.',
+      },
+      { t: 'h2', text: 'Instruments the scheme depends on' },
+      {
+        t: 'ul',
+        items: [
+          'DO sensors per zone, optical, with automatic cleaning, placed to represent the zone and checked against a portable meter.',
+          'Airflow meters per zone, thermal mass or differential pressure, on straight pipe runs with the drop pipe geometry the meter needs, calibrated for the air temperature and pressure.',
+          'Header pressure transmitter, with a range that resolves the fractions of a psi the most-open-valve logic moves it by.',
+          'Zone valve position feedback, actual, from the actuator, not the command.',
+          'Blower package status: running, available, output, inlet vane or speed position, surge state, from the package controller over a network.',
+          'Ammonia analyzer where used, with its sample system and calibration schedule.',
+          'Basin level and temperature, for the DO saturation correction and for the diffuser depth.',
+        ],
+      },
+      { t: 'h2', text: 'Failure handling' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'DO sensor invalid', def: 'The zone drops to a fixed airflow setpoint, the last good value or a configured default, and alarms. A DO reading stuck low would otherwise drive the zone to full air.' },
+          { term: 'Airflow meter invalid', def: 'The zone valve holds position, or goes to a default, and the DO loop is suspended for the zone.' },
+          { term: 'Header pressure invalid', def: 'The blowers hold their output, the staging is suspended, and the plant runs on the last known state until someone looks.' },
+          { term: 'Blower fault', def: 'The staging logic removes it, starts the next available, and alarms. A plant with one blower short in summer is a plant that will fall behind on DO in the afternoon; the loss of standby is its own alarm.' },
+          { term: 'Communication loss to the blower package', def: 'The blower keeps running on its own controller at its last setpoint; the plant alarms.' },
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'What DO setpoint should the zones run?',
+        a: 'Whatever the process engineer and the operators set for the treatment objective: commonly around 2 mg/L in a conventional nitrifying basin, lower at the end of the aerobic zone, near zero in anoxic zones. The control system holds and trims it; it does not choose it. Ammonia-based control lets the setpoint float within limits the operators set.',
+      },
+      {
+        q: 'Why does the header pressure keep hunting?',
+        a: 'The most-open-valve routine and the pressure loop are fighting, usually because the routine moves the setpoint too often or too far, or because the pressure loop is tuned too fast for the blower response. Slow the routine: small setpoint steps, long intervals, a deadband on the valve position target. Tune the pressure loop for the blower, not for the header.',
+      },
+      {
+        q: 'Can I do aeration control without airflow meters?',
+        a: 'DO directly to the valve position works on a single-zone basin and poorly on several zones sharing a header, because a valve move in one zone changes the pressure and the air to the others. Airflow meters make the zones independent. They are the instrument most often left out to save money and most often added later.',
+      },
+      {
+        q: 'How much energy will aeration control save?',
+        a: 'Plants moving from fixed blower output to DO cascade control commonly report 25 to 40 percent blower energy reduction, and ammonia-based control adds to it. The number depends on how far the load varies from the design and how much the blowers can turn down. A plant with blowers that cannot turn down below 60 percent saves less until the blowers are addressed.',
+      },
+    ],
+    related: [
+      '/controls/instrumentation/analytical/dissolved-oxygen',
+      '/controls/plc-systems/analog-control/pid',
+      '/how-to/plc-how-to/create-a-pid-loop',
+      '/controls/plc-systems/analog-control/signal-validation',
+      '/water-wastewater/wastewater-systems/wastewater-treatment/ras-was',
+      '/controls/control-panels/pump-panels/vfd',
+    ],
+  },
+  {
+    path: '/water-wastewater/wastewater-systems/wastewater-treatment/headworks',
+    kind: 'reference',
+    title: 'Headworks Control',
+    summary:
+      'The first stop for raw wastewater: influent flow measurement, mechanical screens and their differential level control, grit removal, influent pumping where the plant needs it, the odor and hazardous atmosphere considerations that shape the electrical design, and what SCADA needs from the headworks.',
+    answer:
+      'The headworks receives raw wastewater, measures it, removes the material that would damage downstream equipment, and delivers it to treatment. Its controls run the screens on a differential level across the screen with a timed backup, run the grit removal on flow or on a schedule, pace the screenings and grit handling to the screens, and measure the influent flow that every downstream process and the permit depend on. The headworks is a wet, corrosive, and often classified hazardous location, and the instruments and panels are specified for it.',
+    keyPoints: [
+      'The influent flow meter is a compliance measurement and the pacing signal for the plant. It gets the best installation on site.',
+      'Screens clean on differential level across the screen, with a timer as backup and a high differential alarm.',
+      'Grit removal runs on flow or on a schedule; the grit pump and classifier are paced to it.',
+      'Much of the headworks is a Class I, Division 1 or 2 location. Instruments, panels, and wiring are rated for it.',
+      'The headworks is where a storm arrives first. Rate-of-rise alarms and bypass logic live here.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['Wastewater', 'Control', 'Instrumentation', 'Flow'],
+    blocks: [
+      { t: 'h2', text: 'What the headworks does' },
+      {
+        t: 'p',
+        text: 'Everything the collection system delivers arrives at the headworks: wastewater, rags, grit, wipes, sticks, the occasional bicycle. The headworks measures the flow, screens out the large material, settles out the grit, and passes the water on to primary or secondary treatment. Its equipment runs in the harshest environment on the plant, with hydrogen sulfide, moisture, and abrasive solids, and its failure sends the debris downstream into pumps, diffusers, and clarifier mechanisms. The controls are simple in concept and unforgiving in detail.',
+      },
+      { t: 'h2', text: 'Influent flow' },
+      {
+        t: 'p',
+        text: 'The influent flow measurement is the number the plant runs on. It paces chemical feeds, it drives the flow-proportional sampling the permit requires, it is reported daily to the regulator, and it is the basis for the plant capacity rating. It is measured in an open channel with a Parshall flume and a level sensor, or in a pipe with a magnetic flowmeter where the influent is pumped, and either way it gets the best installation and the most frequent verification of any instrument on site. The open channel flow page covers the flume; the mag meter page covers the pipe. A second flow measurement, at the plant effluent or at the influent pump station, gives a cross-check that catches a fouled flume sensor before the monthly report does.',
+      },
+      { t: 'h2', text: 'Screens' },
+      {
+        t: 'p',
+        text: 'Mechanical bar screens and fine screens remove material that would damage pumps and clog diffusers. A screen accumulates debris on its face, the water level upstream rises as the screen blinds, and the screen rake or brush cleans the face on a cycle. The control decides when to cycle.',
+      },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Differential level', def: 'Level sensors upstream and downstream of the screen; the difference is the head loss through the accumulated debris. A cleaning cycle starts when the differential exceeds a setpoint, commonly a few inches, and runs until the differential drops or a set number of rake passes completes. The primary control.' },
+          { term: 'Timer', def: 'A cycle on a fixed interval regardless of differential, so a screen with a failed level sensor still cleans, and so debris does not sit on the face during low flow and go septic.' },
+          { term: 'Continuous during high flow', def: 'Above a flow or an upstream level setpoint, the screen runs continuously; a storm brings the debris of the whole collection system at once.' },
+          { term: 'High differential alarm', def: 'A differential that keeps rising with the screen running means the screen cannot keep up, is jammed, or has failed. The alarm is high priority because the next event is the channel overflowing the screen or the bypass opening.' },
+          { term: 'Bypass', def: 'A bypass channel with a coarse bar rack, opened manually or by a gate that lifts on high upstream level, so a failed screen does not back up the collection system. The bypass event is logged and, in most permits, reported.' },
+        ],
+      },
+      {
+        t: 'p',
+        text: 'The screen drive has its own protection: a torque or current limit that stops the rake on a jam, an overload, and often a reverse-and-retry routine before it alarms. Screenings drop into a washer compactor or a conveyor that runs when the screen runs plus a lag time, and the compactor has its own jam detection.',
+      },
+      { t: 'h2', text: 'Grit removal' },
+      {
+        t: 'p',
+        text: 'Grit, the sand and small dense solids that pass the screen, settles in a grit chamber, a vortex unit, or an aerated grit tank, and is pumped out to a classifier that separates it from the organics and dewaters it. The grit pump runs on a schedule, every hour for a few minutes, or on the flow, longer and more often at high flow when the grit load is higher. The classifier runs with the pump plus a lag. An aerated grit tank has an airflow setpoint that sets the roll velocity, high enough to keep organics in suspension and low enough to let grit settle, and it is adjusted with flow.',
+      },
+      { t: 'h2', text: 'Influent pumping' },
+      {
+        t: 'p',
+        text: 'Plants below the collection system grade have an influent pump station at or before the headworks, and it is a lift station with the largest pumps in the utility, controlled as the lift station pages describe, with a wet well level loop, staging, and a backup path. Two headworks-specific points: the pumps are usually after the coarse screen so they are protected from the worst debris, and the station capacity and its high level alarm define the plant peak hydraulic capacity and the point at which a bypass or a storage basin comes into use.',
+      },
+      {
+        t: 'callout',
+        kind: 'safety',
+        title: 'Hazardous locations and hydrogen sulfide',
+        text: 'Enclosed headworks spaces, screen channels, and wet wells are classified locations under NFPA 820, commonly Class I, Division 1 or 2, because of methane and hydrogen sulfide. Every instrument, motor, panel, and wiring method in those spaces is rated for the classification, and the panels that do not have to be there are placed outside it. Gas detection for hydrogen sulfide and combustible gas, with ventilation interlocks and alarms, is part of the headworks control scope, and it is a life safety system.',
+      },
+      { t: 'h2', text: 'Storm response' },
+      {
+        t: 'p',
+        text: 'The headworks sees a storm before the rest of the plant. A rate-of-rise on the influent flow, a rising channel level, and the collection system lift stations calling their lag pumps all arrive together, and the headworks controls respond: screens to continuous cleaning, grit pumps to their high-flow schedule, influent pumps staged up, and the plant flow split logic that decides when flow above the treatment capacity goes to equalization or to a wet weather treatment path. The setpoints for those transitions are in the control narrative and are the most consequential numbers in the headworks program.',
+      },
+      { t: 'h2', text: 'What SCADA needs' },
+      {
+        t: 'ul',
+        items: [
+          'Influent flow, totalized daily, with the meter verification record.',
+          'Screen differential level, cycle count, run time, and jam events.',
+          'Grit pump and classifier run status and cycle counts.',
+          'Influent pump station status as for any lift station.',
+          'Gas detector readings and ventilation status, alarmed at high priority.',
+          'Bypass gate position and bypass events, logged for reporting.',
+          'Channel and wet well levels, with high alarms.',
+          'Equipment availability: every device in the headworks with its HOA and fault.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Why does the screen cycle constantly at night?',
+        a: 'The differential setpoint is too close to the head loss of a clean screen at low flow, the downstream level sensor is reading low, or debris is hanging on the face and never clearing. Check the two level sensors against a tape, raise the differential setpoint a little, and inspect the screen face and the rake.',
+      },
+      {
+        q: 'How is the influent flume checked?',
+        a: 'The head measurement is compared with a staff gauge at the measuring point on a schedule, and the flume dimensions are checked against the standard when there is any doubt. An independent flow measurement, such as a mag meter on the influent pump discharge or the effluent flow adjusted for plant use, gives a daily cross-check.',
+      },
+      {
+        q: 'What runs the grit pump when the flow meter fails?',
+        a: 'The schedule. Grit pumping on a fixed interval is the fallback for the flow-paced mode, and the program falls back automatically when the flow signal is invalid, with an alarm. The classifier follows the pump.',
+      },
+      {
+        q: 'Can the headworks panels be inside the building?',
+        a: 'Only if the room is unclassified or the panels are rated for the classification. The usual design puts the panels in an electrical room outside the classified boundary with intrinsically safe barriers or rated wiring methods for the instruments inside it. NFPA 820 and the electrical engineer set the boundary.',
+      },
+    ],
+    related: [
+      '/controls/instrumentation/flow/open-channel-flow',
+      '/controls/instrumentation/flow/magnetic-flowmeters',
+      '/water-wastewater/wastewater-systems/lift-stations/duplex-lift-stations',
+      '/water-wastewater/wastewater-systems/lift-stations/high-level',
+      '/controls/instrumentation/level/radar-level',
+      '/controls/control-panels/panel-design/enclosure-selection',
+    ],
+  },
+  {
+    path: '/water-wastewater/wastewater-systems/wastewater-treatment/clarifiers',
+    kind: 'reference',
+    title: 'Clarifier Control',
+    summary:
+      'Primary and secondary clarifiers from the control room: the mechanism drive and its torque protection, sludge blanket measurement and sludge withdrawal control, scum removal, the weir and the effluent turbidity, and the sludge blanket as the early warning for a secondary process losing its footing.',
+    answer:
+      'A clarifier is a settling tank with a slowly rotating mechanism that moves settled sludge to a hopper and skims floating scum from the surface. Its controls protect the mechanism with a torque monitor, withdraw sludge at a rate that keeps the blanket at a target depth, run the scum system on a cycle, and watch the effluent for the solids that escape when the blanket rises. In a secondary clarifier the sludge withdrawal is the return activated sludge flow, and the blanket depth is the earliest indication that the biological process is settling poorly.',
+    keyPoints: [
+      'The mechanism torque alarm and cutoff is the protection for the most expensive moving part in the tank.',
+      'Measure the sludge blanket continuously. Everything else about clarifier control follows from it.',
+      'Withdraw sludge to hold the blanket, not on a fixed schedule alone.',
+      'A rising blanket with normal withdrawal is a process problem, not a clarifier problem.',
+      'Effluent turbidity at the weir is the last line: solids over the weir are a permit problem in minutes.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['Wastewater', 'Control', 'Level', 'Instrumentation'],
+    blocks: [
+      { t: 'h2', text: 'What a clarifier does' },
+      {
+        t: 'p',
+        text: 'Wastewater enters a clarifier at the center or one end, slows down, and the solids settle while the clarified water flows over the effluent weir. A rotating mechanism with scraper blades or suction pipes moves the settled sludge to a hopper for withdrawal and a skimmer moves floating scum to a trough. Primary clarifiers ahead of biological treatment remove settleable solids from raw wastewater; secondary clarifiers after the aeration basin separate the biological floc from the treated water and return it to the process. The tank does the work; the controls keep the mechanism turning, the sludge moving, and the operator informed.',
+      },
+      { t: 'h2', text: 'The mechanism' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Drive', def: 'A gear motor turning the mechanism at a fraction of a revolution per minute, continuously. It runs whenever the tank is in service and stops only for maintenance; a stopped mechanism lets sludge build until it cannot restart.' },
+          { term: 'Torque monitoring', def: 'A torque indicator on the drive, a load cell or a current-based measurement, with an alarm at a percentage of the design torque and a cutoff above it. Rising torque means sludge accumulating faster than it is withdrawn, a heavy blanket, ice, or an obstruction. The cutoff protects the drive and the mechanism from breaking; the alarm gives the operator time to increase withdrawal.' },
+          { term: 'Overload and run confirmation', def: 'Motor overload as for any motor, and a run confirmation from the drive or a rotation sensor, so that a mechanism that has stopped is alarmed within minutes.' },
+          { term: 'Freeze protection', def: 'In cold climates, a torque alarm in winter is often ice; heat tracing on the weirs and scum troughs and a note in the narrative about winter torque limits.' },
+        ],
+      },
+      { t: 'h2', text: 'Sludge blanket and withdrawal' },
+      {
+        t: 'p',
+        text: 'The sludge blanket is the interface between the settled sludge and the clear water above it. Its depth is the clarifier control variable. A blanket that rises toward the weir carries solids into the effluent; a blanket drawn too thin withdraws dilute sludge that wastes downstream capacity. A sludge blanket level sensor, ultrasonic or optical, on a mount that sweeps clear of the mechanism, measures it continuously and is the instrument that turns clarifier operation from guesswork into control.',
+      },
+      {
+        t: 'table',
+        head: ['Withdrawal mode', 'How it works', 'Where it fits'],
+        rows: [
+          ['Timed', 'The sludge pump or valve runs for a set time at a set interval', 'Primary clarifiers with steady loads; the fallback for the other modes'],
+          ['Blanket level', 'Withdrawal increases when the blanket is above a target and decreases below it', 'Primary and secondary; needs a reliable blanket sensor'],
+          ['Flow ratio (RAS)', 'Return sludge flow is a set percentage of plant influent flow', 'Secondary clarifiers; the common RAS mode, with the blanket as the trim or the alarm'],
+          ['Concentration', 'Withdrawal adjusts to hold a sludge concentration measured by a suspended solids sensor on the withdrawal line', 'Primary sludge to thickening or digestion, where a consistent feed matters'],
+        ],
+      },
+      {
+        t: 'p',
+        text: 'In a primary clarifier, the sludge pump usually runs on a timer trimmed by the blanket level, pumping thick sludge in short cycles so the sludge that goes to digestion is as concentrated as the pump can move. In a secondary clarifier the withdrawal is the return activated sludge, covered on the RAS and WAS page, and the blanket level is the check on whether the return rate is keeping up with the settling.',
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'A rising blanket is a process alarm',
+        text: 'In a secondary clarifier, a blanket that rises while the return sludge flow is normal means the sludge is settling poorly: filamentous bulking, denitrification lifting the floc, a hydraulic overload, or a process upset upstream. Increasing the return rate buys time; it does not fix it. The blanket alarm goes to the operator as a process alarm, and the response is in the biological treatment procedures.',
+      },
+      { t: 'h2', text: 'Scum' },
+      {
+        t: 'p',
+        text: 'Floating material, grease and foam, collects on the surface and is moved by a surface skimmer to a scum trough or a beach, from which a scum pump or a tipping trough removes it. The skimmer runs with the mechanism; the scum removal runs on a cycle, a few times a day, or on a level in the scum well. Scum systems fail by plugging, and a scum pump that runs without pumping is detected by the same means as any pump: current and a run time without a level change.',
+      },
+      { t: 'h2', text: 'Effluent' },
+      {
+        t: 'p',
+        text: 'The clarifier effluent weir is where the tank either succeeds or fails. A turbidity or suspended solids sensor in the effluent channel, one per clarifier or one on the combined effluent, shows solids carryover within minutes of it starting. In a secondary clarifier the effluent turbidity, the blanket level, and the return sludge flow, trended together, tell the whole story of a settling problem in the order it happened. The alarm on effluent turbidity is a high priority alarm in a plant with an effluent solids limit.',
+      },
+      { t: 'h2', text: 'What SCADA shows' },
+      {
+        t: 'ul',
+        items: [
+          'Mechanism running and torque, with the alarm and cutoff setpoints, per clarifier.',
+          'Sludge blanket depth, trended, with the target and the alarm.',
+          'Sludge withdrawal: pump status, flow where measured, cycle counts, and the mode.',
+          'Return sludge flow and concentration on secondary units.',
+          'Scum system status and cycles.',
+          'Effluent turbidity per unit or combined.',
+          'Weir level or tank level, for a tank going out of service or an overflow.',
+          'Clarifier in service or out of service, with the flow split to the units in service.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'How deep should the sludge blanket be?',
+        a: 'Deep enough to withdraw concentrated sludge and shallow enough that solids never approach the weir; typical targets are a foot or two in a primary and a few feet in a secondary, well below the mid-depth of the tank, and the operators set it for the plant. The sensor and the trend let the operator see where the blanket is and hold it there.',
+      },
+      {
+        q: 'Why does the torque alarm come in every morning?',
+        a: 'The blanket has built overnight while the withdrawal was on its night schedule, or the mechanism is starting to drag on something. Trend the torque with the blanket level: if the torque follows the blanket, increase overnight withdrawal; if it rises independently, inspect the mechanism.',
+      },
+      {
+        q: 'Can a clarifier run with the mechanism stopped?',
+        a: 'For a short time, with sludge accumulating and no scum removal. A mechanism stopped for more than a few hours lets sludge settle into a mass the drive cannot move when it restarts, which is how mechanisms are broken. A stopped mechanism is an alarm that brings someone in.',
+      },
+      {
+        q: 'One blanket sensor or several?',
+        a: 'One per clarifier, on a sweep-clear mount, is the minimum that gives control. A second at a different radius shows whether the blanket is level or piled at the center, which matters on large tanks. A plant with no blanket sensor is operating its clarifiers on a core sampler and a guess.',
+      },
+    ],
+    related: [
+      '/water-wastewater/wastewater-systems/wastewater-treatment/ras-was',
+      '/controls/instrumentation/analytical/turbidity',
+      '/water-wastewater/wastewater-systems/wastewater-treatment/aeration-control',
+      '/controls/instrumentation/level/ultrasonic-level',
+      '/troubleshooting/pump-troubleshooting/pump-runs-but-no-flow',
+    ],
+  },
+  {
+    path: '/water-wastewater/wastewater-systems/wastewater-treatment/ras-was',
+    kind: 'reference',
+    title: 'RAS and WAS Control',
+    summary:
+      'Return and waste activated sludge: what each flow does for the process, RAS control by influent flow ratio or by blanket level, WAS control to a target sludge age or a target mixed liquor concentration, the flow and solids measurements each needs, and the pump and valve arrangements that make the setpoints achievable.',
+    answer:
+      'Return activated sludge carries settled biomass from the secondary clarifier back to the aeration basin so the process keeps its population; waste activated sludge removes the growth so the population stays at the intended age. RAS is usually controlled as a ratio to influent flow, commonly 50 to 100 percent, trimmed by the clarifier sludge blanket. WAS is controlled to hold a target solids retention time or a target mixed liquor suspended solids, from a daily calculation or a continuous solids measurement, and it is the setting that shapes the whole biological process. Both need a flow measurement, a way to modulate the pump or the valve, and a solids concentration where the calculation depends on it.',
+    keyPoints: [
+      'RAS keeps the biomass in the process. WAS sets how old the biomass is.',
+      'RAS as a ratio to influent flow, trimmed on the clarifier blanket, is the standard control.',
+      'WAS to a sludge age target is a slow loop: a daily calculation, a small adjustment, and patience.',
+      'Both need flow meters. WAS also needs the solids concentration, measured or sampled.',
+      'The operator sets the targets. The control system holds the flows and does the arithmetic.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['Wastewater', 'Control', 'Pumps', 'Flow'],
+    blocks: [
+      { t: 'h2', text: 'The two flows' },
+      {
+        t: 'p',
+        text: 'An activated sludge process is a population of microorganisms that eat what arrives in the wastewater. They are grown in the aeration basin, separated from the treated water in the secondary clarifier, and most of them are pumped back to the basin as return activated sludge so that the population is maintained. They also multiply, and a portion equal to the growth is removed as waste activated sludge to thickening and digestion, so that the population does not keep increasing. The rate of removal decides the average age of the population, the solids retention time, and the solids retention time decides what the process can do: a young sludge removes organic matter, an older one nitrifies, an older one still does more, at the cost of more air and more clarifier load.',
+      },
+      { t: 'h2', text: 'RAS control' },
+      {
+        t: 'table',
+        head: ['Mode', 'How it works', 'Notes'],
+        rows: [
+          ['Constant flow', 'The RAS pumps run at a fixed rate set by the operator', 'Simple; over-returns at low flow and under-returns at peak; the fallback mode'],
+          ['Influent flow ratio', 'RAS flow is held at a set percentage of plant influent flow, commonly 50 to 100 percent, by a flow controller on the RAS pumps or a valve', 'The standard; keeps the clarifier solids loading proportional and the blanket stable through the daily cycle'],
+          ['Blanket level trim', 'The ratio is adjusted within limits to hold the clarifier sludge blanket at a target depth', 'The refinement; needs a blanket sensor per clarifier and a limit so the trim cannot run away'],
+          ['Constant concentration', 'RAS flow adjusts to hold a RAS solids concentration', 'Less common; needs a solids sensor on the RAS line'],
+        ],
+      },
+      {
+        t: 'p',
+        text: 'The RAS pumps are often on drives with a flow meter on the common RAS line or one per clarifier, and the controller holds the flow setpoint that the ratio produces. Where the pumps are constant speed, a modulating valve on each clarifier draw-off splits the flow, and the number of pumps running sets the total. The RAS flow split between clarifiers is proportional to their influent split, and a clarifier with a rising blanket gets more; the blanket trim per clarifier does that automatically where the piping allows it.',
+      },
+      { t: 'h2', text: 'WAS control' },
+      {
+        t: 'p',
+        text: 'WAS is a small flow with a large effect. A plant wasting a few percent of its influent flow as thick sludge sets the sludge age of the whole process, and the effect of a change appears over days. The control is therefore a calculation and a slow adjustment, not a fast loop.',
+      },
+      {
+        t: 'formula',
+        expr: 'SRT = (V × MLSS) / (Q_WAS × X_WAS + Q_eff × X_eff)',
+        where: [
+          'SRT = solids retention time, or sludge age, in days',
+          'V = aeration basin volume',
+          'MLSS = mixed liquor suspended solids concentration in the basin',
+          'Q_WAS and X_WAS = waste sludge flow and its solids concentration',
+          'Q_eff and X_eff = effluent flow and its solids concentration, often small enough to neglect',
+        ],
+      },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Target SRT', def: 'The operator sets the sludge age the process needs, for example 8 to 15 days for nitrification in a temperate plant. The controller computes the WAS flow that holds it from the basin volume, the MLSS, and the WAS concentration, and adjusts the WAS pump rate or run time daily. The MLSS and WAS concentration come from online solids sensors or from daily lab samples entered into the system.' },
+          { term: 'Target MLSS', def: 'The operator sets a mixed liquor concentration; the controller wastes more when MLSS is above target and less below it. Simpler, and the common practice at plants without online solids measurement; it drifts with the influent load in a way the SRT method does not.' },
+          { term: 'Constant WAS flow', def: 'A fixed daily wasting volume set by the operator from the weekly calculation. The fallback and the practice at many small plants.' },
+          { term: 'Wasting from the mixed liquor', def: 'Wasting directly from the aeration basin instead of from the RAS line, which makes the WAS concentration equal to the MLSS and removes one measurement from the calculation, at the cost of a larger volume to thickening.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'The WAS loop is slow on purpose',
+        text: 'Sludge age is the average age of a population that turns over in days to weeks. A WAS change today shows in the process next week. The controller adjusts the wasting rate once a day by a small amount toward the target and never makes a large step; a large step, in either direction, is how a plant loses nitrification or fills a clarifier. The operator reviews the calculation daily and overrides it with judgment when the influent changes.',
+      },
+      { t: 'h2', text: 'Instruments' },
+      {
+        t: 'ul',
+        items: [
+          'RAS flow, by a magnetic flowmeter on the RAS line, total or per clarifier. Sludge is conductive and a mag meter reads it well; the meter is sized for the velocity that keeps it clean.',
+          'WAS flow, by a mag meter on the WAS line, with a totalizer that is the wasting record.',
+          'Sludge blanket level per clarifier for the RAS trim.',
+          'MLSS by an online suspended solids sensor in the basin, cleaned automatically, and verified against lab samples; or lab samples entered daily.',
+          'RAS and WAS solids concentration by a suspended solids sensor on the line, or lab samples.',
+          'Influent flow, from the headworks, for the ratio.',
+        ],
+      },
+      { t: 'h2', text: 'Pumps and valves' },
+      {
+        t: 'p',
+        text: 'RAS pumps move a thick, ragging liquid at a moderate head, and they are usually non-clog centrifugal or screw pumps on drives. WAS pumps move a small flow of the same liquid, on a drive or on a timer, and they need the same clog and dry-run protection as any sludge pump. Where the RAS is split among clarifiers by valves, the valves are modulating with position feedback, and the control keeps every clarifier draw-off open enough that sludge never sits in a hopper long enough to go septic and rise. A clarifier whose RAS valve is closed while it is in service is a clarifier that will lose its blanket over the weir within hours.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'What RAS rate should we run?',
+        a: 'The process engineer sets it from the settling characteristics and the clarifier design, typically 50 to 100 percent of influent flow, sometimes higher during poor settling. The control system holds the ratio the operators set and shows the blanket that results.',
+      },
+      {
+        q: 'Why is the WAS calculation different from what the lab computes?',
+        a: 'The inputs: the online solids sensor and the lab sample rarely agree exactly, and the calculation is sensitive to the WAS concentration. The controller calculation uses the values it is given, and the daily review compares them with the lab. When they diverge, the sensor is checked and the lab value is entered.',
+      },
+      {
+        q: 'Can WAS be automated fully?',
+        a: 'The calculation and the daily adjustment can, with the target SRT set by the operator and limits on the rate of change. Most plants keep the operator in the loop for the daily review, because the process changes in ways the calculation does not see: a temperature drop, a toxic slug, a change in the influent character. Full automation with limits and a daily report is reasonable at a plant with reliable online solids measurement.',
+      },
+      {
+        q: 'What happens to RAS control when the influent flow meter fails?',
+        a: 'The ratio has no basis and the controller falls back to a constant RAS flow at the last good value, with an alarm. The blanket trim continues if the blanket sensors are healthy. The influent meter is also the compliance flow, so its failure is already a high priority alarm.',
+      },
+    ],
+    related: [
+      '/water-wastewater/wastewater-systems/wastewater-treatment/clarifiers',
+      '/water-wastewater/wastewater-systems/wastewater-treatment/aeration-control',
+      '/controls/instrumentation/flow/magnetic-flowmeters',
+      '/controls/instrumentation/analytical/dissolved-oxygen',
+      '/water-wastewater/wastewater-systems/wastewater-treatment/headworks',
+    ],
+  },
 ];

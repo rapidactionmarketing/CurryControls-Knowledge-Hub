@@ -11,7 +11,7 @@ Uploading only the root files and `assets` ships 8 files and one folder, leaving
 
 **Why the domain-specific directory:** the account hosts multiple domains, so uploading to the account-level `public_html` can target the wrong site. Confirm the addon domain's document root before uploading.
 
-**Preferred: run the deploy script.** `pnpm --filter @workspace/currycontrols run deploy` builds, packages the whole tree, uploads it, extracts it server-side, and checks a deep URL afterward. It needs four Replit Secrets: `CPANEL_HOST`, `CPANEL_USER`, `CPANEL_TOKEN`, and `CPANEL_DOCROOT` (the addon domain's absolute document root). Set `SITE_URL` to enable the post-deploy check. The archive is staged in the account home directory, never in the document root, so it is never reachable over the web.
+**Preferred: run the deploy script.** `pnpm --filter @workspace/currycontrols run deploy` builds, packages the whole tree, uploads it, extracts it server-side, and checks a deep URL afterward. It accepts the workspace's `HOSTING_COM_CPANEL_HOST`, `HOSTING_COM_CPANEL_USERNAME`, and `HOSTING_COM_CPANEL_API_TOKEN` secrets, with optional `CPANEL_*` aliases. The addon-domain document root defaults to `/home/<cPanel-user>/currycontrols.com`, and `SITE_URL` defaults to `https://currycontrols.com`. The archive is staged in the account home directory, never in the document root, and repeat uploads explicitly overwrite that temporary archive.
 
 cPanel exposes no UAPI function for extraction, so the script uploads through UAPI `Fileman::upload_files` and extracts through the older cPanel API 2 `Fileman::fileop`. That pairing is deliberate, not an oversight.
 

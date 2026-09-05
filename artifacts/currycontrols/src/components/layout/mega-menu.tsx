@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { ArrowRight, ChevronDown, ExternalLink } from 'lucide-react';
-import { NAV_SECTIONS, type NavNode, type NavSection } from '@/data/navigation';
+import { NAV_LINKS, NAV_SECTIONS, type NavNode, type NavSection } from '@/data/navigation';
 import { countDescendants, getEntry, label } from '@/data/nav-index';
 import { hasContent } from '@/data/content';
 import { Icon } from '@/components/icon';
@@ -91,11 +91,41 @@ export function MegaMenu() {
     }
   };
 
+  // The bar is sections in order, with each declared link dropped in after the
+  // section it names. Order lives in the data file, not here.
+  const barItems: (
+    | { kind: 'section'; section: NavSection }
+    | { kind: 'link'; href: string; label: string }
+  )[] = [];
+  for (const section of NAV_SECTIONS) {
+    barItems.push({ kind: 'section', section });
+    for (const link of NAV_LINKS) {
+      if (link.after === section.slug) {
+        barItems.push({ kind: 'link', href: link.href, label: link.label });
+      }
+    }
+  }
+
   return (
     <div ref={containerRef} className="cc-desktop-only relative">
       <nav aria-label="Main navigation" className="cc-navbar">
         <ul className="flex items-center gap-0.5">
-          {NAV_SECTIONS.map((section, index) => {
+          {barItems.map((item) => {
+            if (item.kind === 'link') {
+              return (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    className="cc-navlink"
+                    data-current={location === item.href || location.startsWith(`${item.href}/`)}
+                    data-testid={`nav-link-${item.href.slice(1)}`}
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              );
+            }
+            const section = item.section;
             const isOpen = open === section.slug;
             const isCurrent = location === `/${section.slug}` || location.startsWith(`/${section.slug}/`);
             return (
@@ -133,7 +163,7 @@ export function MegaMenu() {
                       setPinned(true);
                     }
                   }}
-                  onKeyDown={(event) => onTriggerKeyDown(event, index)}
+                  onKeyDown={(event) => onTriggerKeyDown(event, NAV_SECTIONS.indexOf(section))}
                 >
                   {label(section)}
                   <ChevronDown

@@ -654,6 +654,29 @@ const ABOUT: NavSection = {
  * Exported tree
  * ------------------------------------------------------------------ */
 
+/**
+ * Top-level bar destinations that are real pages rather than taxonomy
+ * branches.
+ *
+ * The calculators and the reference tables are generated from their own data
+ * files, not from this tree, so they have no branch to hang a mega-menu panel
+ * on. They still belong in the primary navigation, so they are declared here
+ * as direct links and the header renders them alongside the sections. `after`
+ * names the section slug each link follows, keeping bar order a data concern
+ * like everything else in this file.
+ */
+export type NavLink = {
+  href: string;
+  label: string;
+  /** Slug of the section this link is placed after. */
+  after: string;
+  icon?: string;
+};
+
+export const NAV_LINKS: NavLink[] = [
+  { href: '/calculators', label: 'Calculators', after: 'engineering-library', icon: 'Calculator' },
+];
+
 export const NAV_SECTIONS: NavSection[] = [
   CONTROLS,
   WATER,

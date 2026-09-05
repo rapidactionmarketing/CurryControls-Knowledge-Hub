@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { Link } from 'wouter';
 import { ChevronDown, ExternalLink, Phone, X } from 'lucide-react';
-import { NAV_SECTIONS, type NavNode } from '@/data/navigation';
+import { NAV_LINKS, NAV_SECTIONS, type NavNode } from '@/data/navigation';
 import { label } from '@/data/nav-index';
 import { hasContent } from '@/data/content';
 import { CONTACT } from '@/data/site';
@@ -111,14 +111,28 @@ export function MobileNav({ open, onClose }: { open: boolean; onClose: () => voi
 
         <nav className="flex-1 overflow-y-auto overscroll-contain px-4 pb-24" aria-label="Site navigation">
           {NAV_SECTIONS.map((section) => (
-            <AccordionNode
-              key={section.slug}
-              node={section}
-              path={`/${section.slug}`}
-              depth={0}
-              icon={section.icon}
-              onNavigate={onClose}
-            />
+            <Fragment key={section.slug}>
+              <AccordionNode
+                node={section}
+                path={`/${section.slug}`}
+                depth={0}
+                icon={section.icon}
+                onNavigate={onClose}
+              />
+              {/* Direct links sit in the drawer in the same order as the
+                  desktop bar, after the section each one names. */}
+              {NAV_LINKS.filter((link) => link.after === section.slug).map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={onClose}
+                  className="cc-acc-leaf"
+                  data-testid={`mobile-nav-link-${link.href.slice(1)}`}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </Fragment>
           ))}
 
           <Link

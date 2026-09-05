@@ -3440,4 +3440,1086 @@ HighAlarm := HighTimer.Q;`,
       '/controls/plc-systems/programming/program-organization',
     ],
   },
+  {
+    path: '/controls/plc-systems/platforms/schneider-electric/modicon-m340',
+    kind: 'reference',
+    title: 'Modicon M340',
+    summary:
+      'Field notes on the Schneider Electric Modicon M340, a rack-based mid-range controller common in water plants: rack and CPU layout, X80 I/O, memory card behavior, Ethernet and serial communications, programming in Control Expert, and what to check on site.',
+    answer:
+      'The Modicon M340 is a rack-based programmable automation controller in the middle of the Schneider Electric range: larger than a compact controller, smaller than the M580, and found in a great many water and wastewater plants built or upgraded in the last fifteen years. A CPU in the first slot of a rack drives X80 I/O modules in the same rack and in extension racks; CPU variants add an Ethernet port, a CANopen port, and always a Modbus serial port; and communication modules add further Ethernet ports for Modbus TCP and EtherNet/IP. The application lives in the CPU and can be backed up on the removable memory card, which is the first thing to understand on a site visit, because a card that holds an old application will restore that old application on a power cycle if the CPU memory is lost. It is programmed in Control Expert, formerly Unity Pro, in the five IEC 61131-3 languages, and it has no hot standby option; sites that need controller redundancy use the M580.',
+    keyPoints: [
+      'Rack-based CPU with X80 I/O; extension racks through bus extender modules; the same I/O modules as the M580.',
+      'Every CPU has a Modbus serial port; the Ethernet and CANopen ports depend on the CPU variant.',
+      'The memory card can hold a copy of the application; know what is on it before power cycling a CPU.',
+      'Programmed in Control Expert or its predecessor Unity Pro, in ladder, function block, structured text, instruction list, and sequential function chart.',
+      'No hot standby; a plant that needs controller redundancy is an M580 application.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['PLC', 'Design', 'Water', 'Wastewater', 'Communications'],
+    blocks: [
+      { t: 'h2', text: 'Layout' },
+      {
+        t: 'table',
+        head: ['Element', 'Notes'],
+        rows: [
+          ['Rack', 'Backplane racks of several slot sizes; the CPU occupies slot 0 of the main rack; power supply at the left'],
+          ['CPU', 'Variants differ by memory, by the presence of an Ethernet port, and by a CANopen port; all carry a Modbus serial port and a USB programming port'],
+          ['I/O', 'X80 discrete, analog, counting, and special modules; screw terminal blocks or pre-wired connector systems'],
+          ['Extension', 'Bus extender modules link additional racks over a short bus cable; the number of racks and the total distance are limited'],
+          ['Communication modules', 'Ethernet modules for Modbus TCP and EtherNet/IP, with embedded web diagnostics; serial modules for extra Modbus ports'],
+          ['Memory card', 'A removable card that can store the application and, on some CPUs, files for the embedded web server'],
+        ],
+      },
+      { t: 'h2', text: 'Where it is found' },
+      {
+        t: 'p',
+        text: 'Treatment plants of small to medium size, larger lift stations with several drives, and packaged systems from integrators who standardized on the Schneider range. In a water plant it typically runs the process areas from a main rack in the control room with remote racks or Modbus TCP I/O in the field, talking to drives over Modbus serial or Ethernet and to SCADA over Modbus TCP. Sites built as Modicon Premium or Quantum installations are sometimes replaced with M340 for the smaller cases and M580 for the larger.',
+      },
+      { t: 'h2', text: 'Communications' },
+      {
+        t: 'ul',
+        items: [
+          'Modbus serial on every CPU: RS-485 or RS-232 depending on the cable, master or slave, for drives, meters, and radios.',
+          'Modbus TCP on Ethernet CPUs and modules: I/O scanning of remote devices, messaging between controllers, and SCADA access.',
+          'EtherNet/IP on the network modules that support it; used for drives and I/O from that ecosystem.',
+          'CANopen on the CPUs with that port, for drives and distributed I/O on a CANopen bus.',
+          'The embedded web pages on Ethernet CPUs and modules show port status, I/O scanner status, and diagnostics without the programming software.',
+        ],
+      },
+      { t: 'h2', text: 'Programming' },
+      {
+        t: 'p',
+        text: 'The application is built in Control Expert, formerly Unity Pro, with the hardware configured in the catalog, variables declared with data types, and logic in sections written in any of the five languages. Derived function blocks let a site build its own pump, valve, and alarm blocks and reuse them. Online changes are built and downloaded as changes; a full download stops the controller. A project file from a site must match the software version that created it, or be an archive that a later version can open, and the upload information option determines whether an application can be recovered from the controller without the project file.',
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'The memory card',
+        text: 'On many M340 CPUs the memory card is where the application is stored and restored from. A card with an old application, moved to a new CPU or left in place through a memory loss, brings the old application back. Label the card, record what it holds, and back up the application from the card and the CPU both.',
+      },
+      { t: 'h2', text: 'On a site visit' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'CPU indicators', text: 'Run, error, I/O fault, and the communication indicators on the front; the meaning is on the CPU label and in the manual.' },
+          { title: 'Memory card', text: 'Present, seated, and matching the running application; a card error indicator on the CPU.' },
+          { title: 'Rack faults', text: 'A module that is not the one configured, or a slot that is empty when it should not be, sets the I/O fault indicator; the diagnostics screen in the software or the web page names it.' },
+          { title: 'Communications', text: 'The Ethernet module web page for the I/O scanner and the Modbus TCP messaging status; the serial port indicators for activity.' },
+          { title: 'Battery', text: 'Older CPUs and some modules hold retentive data with a battery; the low battery indicator and the replacement date on the panel record.' },
+          { title: 'Backup', text: 'Upload the application with the correct software version and store it with the site documentation before making any change.' },
+        ],
+      },
+      { t: 'h2', text: 'Limits and lifecycle' },
+      {
+        t: 'ul',
+        items: [
+          'No hot standby or controller redundancy; single CPU per rack system.',
+          'Rack and extension count are fixed; a plant that outgrows them moves to Ethernet I/O drops or to the M580.',
+          'Security features are basic compared with the M580: application password, section protection, and network isolation are the tools.',
+          'Firmware and software versions must be matched; keep the firmware record with the asset inventory.',
+          'Spares: a CPU of the same variant, a power supply, and one of each I/O module type on the shelf, with the application on a labeled card.',
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'Identification only',
+        text: 'Vendor and product names on this page are used for identification only. This is independent field guidance, not vendor documentation; specifications, part numbers, and version behavior change, and the current manufacturer manuals govern.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Can I mix M340 and M580 I/O?',
+        a: 'The X80 I/O module family is shared, and modules move between the two in the same rack types, subject to the compatibility lists for the specific module and firmware. A migration from M340 to M580 often keeps the I/O and replaces the CPU and rack.',
+      },
+      {
+        q: 'How do I get the program out of a controller with no project file?',
+        a: 'If the application was downloaded with upload information enabled, Control Expert can upload it with variable names and comments. If not, the upload gives logic without the documentation. Check the memory card, which may hold the application, and ask the integrator for the project archive.',
+      },
+      {
+        q: 'The controller runs but SCADA cannot connect over Modbus TCP.',
+        a: 'The Ethernet port address and mask, the switch port, and the Modbus TCP access control if it is enabled on the module. The embedded web page on the Ethernet port shows connections and errors; if the page loads, the network path is fine and the problem is the Modbus configuration or a client limit.',
+      },
+      {
+        q: 'Is the M340 still current?',
+        a: 'It remains in production and supported as of this writing, positioned below the M580. Check the current lifecycle status with the manufacturer before specifying it for a new plant, and plan spares for any installed base regardless.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/platforms/schneider-electric/modicon-m580',
+      '/controls/plc-systems/platforms/schneider-electric/control-expert',
+      '/controls/plc-systems/communications/modbus-tcp',
+      '/controls/plc-systems/plc-fundamentals/plc-architecture',
+      '/cybersecurity/backups/plc-program-backups',
+      '/controls/plc-systems/platforms/legacy-systems',
+    ],
+  },
+  {
+    path: '/controls/plc-systems/platforms/schneider-electric/modicon-m580',
+    kind: 'reference',
+    title: 'Modicon M580',
+    summary:
+      'Field notes on the Schneider Electric Modicon M580, the Ethernet-backplane controller at the top of the range: remote I/O drops on a ring, hot standby CPUs, built-in security features, the networks it defines, Quantum migration, and what to check on site.',
+    answer:
+      'The Modicon M580 is the flagship of the Schneider Electric Modicon range: a rack-based controller whose backplane carries Ethernet as well as the classic bus, so that I/O, communication modules, and the CPU share an Ethernet fabric, and whose remote I/O drops connect over an Ethernet daisy-chain ring that heals a single break. It uses the same X80 I/O modules as the M340, adds CPU variants for hot standby with a direct synchronization link between two CPUs, and was designed with cybersecurity in mind, with certified network stacks, access control lists, and secure firmware. It is the natural migration target for Quantum and Premium plants and the usual choice for a treatment plant that needs redundancy, a large I/O count, or several remote racks. It is programmed in Control Expert, and its configuration is as much a network design as a program.',
+    keyPoints: [
+      'Ethernet on the backplane; remote I/O drops on a daisy-chain ring with single-break recovery.',
+      'Hot standby CPU variants with a dedicated synchronization link; I/O on the remote drops, not in the CPU racks.',
+      'Same X80 I/O modules as the M340, with Ethernet-capable adapters for the drops.',
+      'Security features built in: certified stacks, access control lists, IPsec on some modules, secure firmware.',
+      'Configuration in Control Expert covers the device networks, the drops, and the addressing, not just the logic.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['PLC', 'Design', 'Ethernet', 'Cybersecurity', 'Water'],
+    blocks: [
+      { t: 'h2', text: 'Architecture' },
+      {
+        t: 'table',
+        head: ['Element', 'Notes'],
+        rows: [
+          ['CPU', 'Standalone and hot standby variants at several performance levels; a service port and device network ports on the front; a safety variant for safety functions'],
+          ['Backplane', 'Ethernet and the classic bus; modules that support Ethernet use it, older X80 modules use the bus'],
+          ['Local rack', 'The CPU rack and extension racks; in hot standby systems the CPU racks hold no process I/O'],
+          ['Remote I/O drops', 'Racks with an Ethernet adapter, connected on the remote I/O ring; the ring uses a recovery protocol that heals one break'],
+          ['Distributed I/O', 'Modbus TCP or EtherNet/IP devices scanned by the CPU or a network module on the device network'],
+          ['Network modules', 'Additional Ethernet ports, network isolation, a firewall module, and modules that support encryption'],
+        ],
+      },
+      { t: 'h2', text: 'The networks it defines' },
+      {
+        t: 'p',
+        text: 'An M580 system has at least two Ethernet networks and often three: the remote I/O network, which is the ring of drops and is kept private to the controller; the device network, which carries drives, meters, and distributed I/O; and the control network, through which SCADA and engineering reach the CPU. The remote I/O ring is not a general network and nothing else belongs on it; the device network is scanned by the CPU with a cycle time that depends on the device count; and the control network is where the switch design, the firewall, and the access control lists apply. The configuration in Control Expert declares the topology, and a switch that is not configured for the ring protocol or that puts SCADA traffic on the I/O ring produces I/O faults that look like hardware.',
+      },
+      { t: 'h2', text: 'Hot standby' },
+      {
+        t: 'p',
+        text: 'Two CPUs, each in its own rack, are linked by a dedicated synchronization cable, copper or fiber depending on the variant. One is primary and runs the process; the other is standby and receives the data every scan. On a primary failure the standby takes over within a scan or two, and the remote I/O drops, which are on the ring and connected to both, do not notice. The application must be identical in both, which the system enforces, and the I/O must be on remote drops, because I/O in the CPU rack is lost with that CPU. A switchover is a routine test at commissioning and on a schedule; a hot standby system that has never switched over has not been proven.',
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Test the switchover',
+        text: 'Pull the primary power with the plant running under supervision and watch the drops, the drives, and the SCADA connections. The drives that trip on the switchover and the SCADA tags that go stale for a minute are the design problems to fix before a real failure finds them.',
+      },
+      { t: 'h2', text: 'Security' },
+      {
+        t: 'ul',
+        items: [
+          'Network stacks certified for robustness against malformed traffic.',
+          'Access control lists on the CPU and network modules restrict which addresses may connect and which services they may use.',
+          'IPsec on modules that support it, for encrypted links to engineering and SCADA.',
+          'Signed firmware, application password, section protection, and the ability to disable unused services and ports.',
+          'Event logging to a syslog server on recent firmware.',
+          'None of it replaces network segmentation; the control network still sits behind a firewall.',
+        ],
+      },
+      { t: 'h2', text: 'Migration from Quantum and Premium' },
+      {
+        t: 'p',
+        text: 'Many M580 systems replaced a Quantum or Premium controller at the end of its life. The migration paths keep as much of the installed I/O as possible: Quantum remote I/O drops can be attached to the M580 remote I/O network with the appropriate adapters, so the field wiring stays while the CPU changes; Premium systems typically move to X80 I/O with wiring conversion. Application conversion in Control Expert brings the logic across, with the hardware configuration and the I/O addressing rebuilt for the new platform, and every converted routine tested. A phased migration that runs the old and new controllers in parallel on different process areas is the usual approach at a plant that cannot stop.',
+      },
+      { t: 'h2', text: 'On a site visit' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'CPU display and indicators', text: 'The state of each CPU in a hot standby pair, the primary and standby roles, and any error.' },
+          { title: 'Remote I/O ring', text: 'The ring status in the diagnostics: a healthy ring has no broken segment; a ring running on one break is one break from losing drops.' },
+          { title: 'Drop status', text: 'Each drop connected and its modules healthy; the diagnostic screens show which drop and which slot.' },
+          { title: 'Device network', text: 'The scanner status per device; a device with timeouts is failing.' },
+          { title: 'Access control', text: 'Whether access control lists are enabled and whether the engineering laptop address is on them; a refused connection is not a network fault.' },
+          { title: 'Firmware', text: 'CPU and module versions against the compatibility list for the Control Expert version in use; record them in the asset inventory.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'Identification only',
+        text: 'Vendor and product names on this page are used for identification only. This is independent field guidance, not vendor documentation; specifications, part numbers, and version behavior change, and the current manufacturer manuals govern.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Can I put SCADA on the remote I/O network?',
+        a: 'No. The remote I/O ring is a deterministic private network for the drops. SCADA and engineering connect through the control network on the CPU service port or a network module, with the traffic kept off the ring.',
+      },
+      {
+        q: 'What happens to a drop when the ring breaks?',
+        a: 'Nothing, for a single break: the ring protocol reroutes within the recovery time. A second break isolates the drops between the breaks, and the CPU reports them lost. The first break must be alarmed and fixed; a ring that runs broken for months is a line.',
+      },
+      {
+        q: 'Do I need a hot standby system?',
+        a: 'When a controller failure would stop treatment or cause an overflow and the process cannot ride through the time to replace a CPU from spares. Many plants use a single M580 with a spare CPU on the shelf and the application on a card; a hot standby pair is for the processes that cannot wait even that long.',
+      },
+      {
+        q: 'Why does the engineering laptop get refused after a firmware update?',
+        a: 'The update enabled or reset the access control list, or a service the software uses was disabled. Read the security settings in the configuration and add the engineering addresses deliberately rather than turning the list off.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/platforms/schneider-electric/modicon-m340',
+      '/controls/plc-systems/platforms/schneider-electric/control-expert',
+      '/controls/scada-hmi/scada-fundamentals/redundancy',
+      '/controls/plc-systems/communications/remote-i-o',
+      '/cybersecurity/plc-security/controller-hardening',
+      '/cybersecurity/network-segmentation/zones-and-conduits',
+    ],
+  },
+  {
+    path: '/controls/plc-systems/platforms/schneider-electric/control-expert',
+    kind: 'reference',
+    title: 'Control Expert',
+    summary:
+      'Field notes on Control Expert, the Schneider Electric engineering software for the Modicon M340 and M580: project structure, the five languages and derived function blocks, versions and files, online changes, upload information, and security settings.',
+    answer:
+      'Control Expert is the engineering environment for the Modicon M340, M580, and the Unity-generation Quantum, Premium, and Momentum controllers, and it is the same product that was called Unity Pro until version 14. A project holds the hardware configuration, the variables with their data types, the derived function block library, the program sections in any of the five IEC 61131-3 languages, and the animation tables and operator screens used for testing. The version of the software must suit the controller firmware and the project file, which is why a plant keeps a record of which version built each controller and a machine that can run it. The decisions that matter most later are whether the application was downloaded with upload information, whether the project archive was stored with the site documentation, and whether the derived function blocks were written once and reused.',
+    keyPoints: [
+      'One product, two names: Unity Pro through version 13, Control Expert from version 14.',
+      'Five IEC 61131-3 languages plus derived function blocks and derived data types for reusable site libraries.',
+      'Project files are version-sensitive; keep archives and a machine with the matching version.',
+      'Upload information downloaded with the application is what lets the next engineer recover it from the controller.',
+      'Application passwords, section protection, and the controller access settings are set here; write them down.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['PLC', 'Programming', 'Documentation', 'Standards', 'Design'],
+    blocks: [
+      { t: 'h2', text: 'Project structure' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Hardware configuration', def: 'The racks, modules, and communication settings, chosen from the catalog; the I/O addressing follows from the slot positions.' },
+          { term: 'Variables', def: 'Elementary and derived data types, located or unlocated; a located variable maps to an address for communication with SCADA and other controllers.' },
+          { term: 'Derived function blocks', def: 'User blocks with inputs, outputs, and internal logic, instanced wherever they are needed; the pump, valve, alarm, and PID wrappers of a site library.' },
+          { term: 'Program', def: 'Tasks containing sections in ladder, function block, structured text, instruction list, or sequential function chart; sections execute in order within a task.' },
+          { term: 'Animation tables and screens', def: 'Engineering tools for watching and forcing variables and for simple test screens; not the operator interface.' },
+          { term: 'Communication', def: 'Ethernet and serial configuration, I/O scanning tables, and, for Ethernet I/O, the device configuration through the device type manager browser.' },
+        ],
+      },
+      { t: 'h2', text: 'Versions and files' },
+      {
+        t: 'table',
+        head: ['Item', 'Notes'],
+        rows: [
+          ['Software version', 'Must support the controller firmware; a newer software version can usually open older projects, and a controller may need a firmware update for a newer version'],
+          ['Working project file', 'Tied closely to the version that saved it'],
+          ['Archive file', 'The portable form; keep one with the site documentation after every change'],
+          ['Export files', 'Text exports of sections and variables, useful for comparison and for moving logic between projects'],
+          ['Editions', 'Licensed by the range of controllers supported; the edition on the laptop must cover the controller on site'],
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'One machine per version',
+        text: 'A plant with controllers built across ten years has projects from several versions. A virtual machine per major version, with the matching software installed and licensed, avoids the day when a project cannot be opened on the only laptop that has the current release.',
+      },
+      { t: 'h2', text: 'Online and download' },
+      {
+        t: 'p',
+        text: 'A full download stops the controller, loads the application, and restarts it, which at a running plant is planned with the operators. An online change builds only the modified sections and applies them without stopping, subject to limits on what can change online; a hardware change or a change to a located variable often requires a full download. Before either, the running application is uploaded and archived, so that the state before the change exists somewhere other than the controller.',
+      },
+      { t: 'h2', text: 'Upload information' },
+      {
+        t: 'p',
+        text: 'When an application is downloaded, the project can include the information needed to rebuild it from the controller: variable names, comments, and section structure. Without it, an upload recovers the logic in a form nobody can maintain. The option costs controller memory and is the single most valuable setting for the plant that will own the system for twenty years. Set it, and store the archive anyway.',
+      },
+      { t: 'h2', text: 'Security settings' },
+      {
+        t: 'ul',
+        items: [
+          'Application password, required to open the project and, depending on settings, to connect to the controller.',
+          'Section protection, which hides or locks sections of logic.',
+          'Controller access settings: which services are enabled, access control lists on the M580, and the firmware protections.',
+          'All of them recorded in the site documentation in a secure place; a password nobody remembers is a controller nobody can maintain.',
+        ],
+      },
+      { t: 'h2', text: 'Habits that pay off' },
+      {
+        t: 'ul',
+        items: [
+          'A site library of derived function blocks, documented, tested once, and used everywhere.',
+          'Naming conventions for variables that match the tag database and the drawings.',
+          'Comments on every section stating what it does and which narrative paragraph it implements.',
+          'An archive after every change, named with the date and the change, in the engineering library and the offline backup.',
+          'A record of software version, controller firmware, and license for every controller.',
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'Identification only',
+        text: 'Vendor and product names on this page are used for identification only. This is independent field guidance, not vendor documentation; specifications, part numbers, and version behavior change, and the current manufacturer manuals govern.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Can Control Expert open a Unity Pro project?',
+        a: 'Generally yes, the archive from an older version opens in a newer one and is converted on save. The reverse is not possible. Keep the original archive before converting.',
+      },
+      {
+        q: 'The controller says the project does not match. What does that mean?',
+        a: 'The application in the controller differs from the project open on the laptop: a later change, a different build, or a different project. Upload the controller application and compare before downloading anything.',
+      },
+      {
+        q: 'Where is the operator interface built?',
+        a: 'Not here. Control Expert builds the controller application; the operator screens are in the SCADA or HMI software. The operator screens in Control Expert are engineering test tools.',
+      },
+      {
+        q: 'How do I move a pump block from one plant project to another?',
+        a: 'Export the derived function block and its data types from one project and import them into the other, or maintain the site library as a separate exported file that every project imports. A block copied by hand drifts.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/platforms/schneider-electric/unity-pro',
+      '/controls/plc-systems/platforms/schneider-electric/modicon-m580',
+      '/controls/plc-systems/programming/iec-61131-3',
+      '/controls/plc-systems/programming/program-organization',
+      '/cybersecurity/backups/plc-program-backups',
+      '/cybersecurity/plc-security/program-integrity',
+    ],
+  },
+  {
+    path: '/controls/plc-systems/platforms/schneider-electric/unity-pro',
+    kind: 'reference',
+    title: 'Unity Pro',
+    summary:
+      'Field notes on Unity Pro, the earlier name of Control Expert and the software behind most installed Modicon M340, Quantum, and Premium applications: versions, moving projects to Control Expert, keeping an old version alive, and the Concept and PL7 originals.',
+    answer:
+      'Unity Pro is the name the Schneider Electric engineering software carried through version 13, before it became Control Expert at version 14, and it is the software that built most Modicon M340, Quantum, and Premium applications still running in water plants. A Unity Pro project is a Control Expert project in an older format: it opens in the newer software, converts, and continues. The practical questions on a site are which version built the running application, whether a licensed installation of that version or a newer one exists, and whether the archive was kept. Behind Unity Pro stand still older tools, Concept for Quantum and PL7 for Premium, whose applications were converted to Unity when those plants were upgraded, and whose original files are worth keeping for the day a conversion question arises.',
+    keyPoints: [
+      'Unity Pro through version 13; Control Expert from version 14; one product line.',
+      'Archives from Unity Pro open in Control Expert and are converted; keep the original.',
+      'A plant with Unity Pro applications needs a working licensed installation of a version that can open them, kept on a virtual machine.',
+      'Older Concept and PL7 applications were converted to Unity Pro; keep those originals too.',
+      'The install and license process for old versions on new operating systems is the hard part; do it before it is urgent.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 7,
+    tags: ['PLC', 'Programming', 'Documentation', 'Design', 'Engineering'],
+    blocks: [
+      { t: 'h2', text: 'What is on the plant' },
+      {
+        t: 'p',
+        text: 'A treatment plant built or upgraded between the mid-2000s and the late 2010s with Modicon controllers has Unity Pro applications: an M340 in a booster station, a Quantum in the main plant, a Premium on an older process line. The integrator built them with the version current at the time, and the version is written in the project archive and often on a label in the panel. If the archive exists, it can be opened in Control Expert; if only the controller exists, the recoverability depends on whether upload information was downloaded with the application.',
+      },
+      {
+        t: 'table',
+        head: ['Generation', 'Controllers', 'Notes'],
+        rows: [
+          ['Concept, ProWORX', 'Quantum, older Momentum', 'Pre-Unity; converted with a conversion tool; ladder in the 984 style'],
+          ['PL7', 'Premium, Micro', 'Pre-Unity; converted with a conversion tool'],
+          ['Unity Pro', 'M340, Quantum, Premium, Momentum', 'Versions through 13; the same project model as Control Expert'],
+          ['Control Expert', 'M340, M580, Quantum, Premium, Momentum', 'Version 14 onward; the current name'],
+        ],
+      },
+      { t: 'h2', text: 'Moving to Control Expert' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Get the archive', text: 'From the integrator, the site documentation, or an upload from the controller with upload information present.' },
+          { title: 'Keep the original', text: 'A copy of the Unity Pro archive, untouched, in the engineering library.' },
+          { title: 'Open and convert', text: 'In Control Expert, which converts the project on opening; review the conversion messages.' },
+          { title: 'Rebuild and compare', text: 'A full rebuild, then a comparison against the running controller to confirm the converted project matches.' },
+          { title: 'Decide on firmware', text: 'A controller may need a firmware update to accept a download from the newer software; plan it as a change with a backup and a rollback.' },
+          { title: 'Archive again', text: 'The converted project as a Control Expert archive, dated, with the version recorded.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Do not convert in a hurry',
+        text: 'A conversion done at midnight during a fault, on a laptop with a trial version, on a project whose archive was found on a memory stick in a drawer, is how a plant ends up with a controller it cannot download to. Convert on a quiet day, with the original kept, and test the download on a spare CPU first.',
+      },
+      { t: 'h2', text: 'Keeping an old version alive' },
+      {
+        t: 'ul',
+        items: [
+          'A virtual machine per major version, with the operating system the version supported, the software installed, and the license activated.',
+          'The installation media and license details in the engineering library, not on one laptop.',
+          'A test download to a spare controller once a year to prove the chain still works.',
+          'A migration plan for the day the old version cannot be activated: the archives converted to the current software while the old version still runs.',
+        ],
+      },
+      { t: 'h2', text: 'Concept and PL7 originals' },
+      {
+        t: 'p',
+        text: 'Plants that were converted to Unity Pro from Concept or PL7 should keep the original application files and the conversion report. A behavior that changed at conversion, a timer that counts differently, a data type that was widened, is found by comparing with the original, and the original is the only record of what the plant did before. Keeping the old software running on a virtual machine is worthwhile where the plant still has an unconverted controller of that generation.',
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'Identification only',
+        text: 'Vendor and product names on this page are used for identification only. This is independent field guidance, not vendor documentation; specifications, part numbers, and version behavior change, and the current manufacturer manuals govern.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Can I still buy Unity Pro?',
+        a: 'The product is sold as Control Expert; a current license covers the current version, and older versions are available to licensed users through the manufacturer support channels within their support policy. Confirm the current policy with the manufacturer.',
+      },
+      {
+        q: 'Will an old M340 accept a download from Control Expert?',
+        a: 'Only if its firmware is one the software version supports; older firmware may need updating first, which the compatibility list for the software version states. Read the list before connecting.',
+      },
+      {
+        q: 'The archive opens but the hardware catalog shows unknown modules.',
+        a: 'The project references modules not present in the catalog of the version in use, often because a catalog update or hardware package was not installed. Install the matching catalog before converting.',
+      },
+      {
+        q: 'What is the risk of leaving a plant on Unity Pro?',
+        a: 'The version stops installing or activating on current computers, the people who know it retire, and the archive is lost with a laptop. None of it is urgent until the day it is. Convert and archive on a schedule.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/platforms/schneider-electric/control-expert',
+      '/controls/plc-systems/platforms/schneider-electric/modicon-m340',
+      '/controls/plc-systems/platforms/legacy-systems',
+      '/cybersecurity/backups/plc-program-backups',
+      '/cybersecurity/backups/offline-copies',
+      '/cybersecurity/asset-inventory/documenting-firmware-versions',
+    ],
+  },
+  {
+    path: '/controls/plc-systems/platforms/rockwell-automation/controllogix',
+    kind: 'reference',
+    title: 'ControlLogix',
+    summary:
+      'Field notes on the Rockwell Automation ControlLogix, the chassis-based controller of larger water plants: chassis and modules, tag-based memory and tasks, EtherNet/IP and older networks, controller redundancy, version matching, and what to check on site.',
+    answer:
+      'ControlLogix is the large chassis-based member of the Rockwell Automation Logix family: a chassis with a power supply, one or more controllers, communication modules, and I/O modules, programmed in Studio 5000 Logix Designer with a tag-based memory model in which data is named rather than addressed. It is the controller of choice in many larger treatment plants, where it runs the process from a control room chassis with remote I/O over EtherNet/IP, talks to drives and instruments on the same network, and, where the plant requires it, runs as a redundant pair of chassis that switch over on a failure. The version discipline is its main administrative burden: the controller firmware major revision and the project version must match, and a plant accumulates versions over the years. Its strengths are the depth of the ecosystem, the produced and consumed tags that let controllers share data without messaging, and the add-on instructions that make a site library.',
+    keyPoints: [
+      'Chassis-based: power supply, controller, communication modules, and I/O in numbered slots; several controllers can share a chassis.',
+      'Tag-based memory with user-defined types and add-on instructions; continuous, periodic, and event tasks.',
+      'EtherNet/IP for I/O, drives, messaging, and SCADA; ControlNet, DeviceNet, and Data Highway Plus on older plants.',
+      'Redundancy with paired chassis and redundancy modules; all process I/O remote.',
+      'Firmware major revision and project version must match; keep the record and the software versions.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['PLC', 'Design', 'Ethernet', 'Water', 'Wastewater'],
+    blocks: [
+      { t: 'h2', text: 'Layout' },
+      {
+        t: 'table',
+        head: ['Element', 'Notes'],
+        rows: [
+          ['Chassis', 'Several slot counts; any module in any slot; the controller does not need slot 0'],
+          ['Controller', 'Generations differ by memory, speed, and built-in ports; recent controllers carry a built-in Ethernet port and a USB programming port; older ones need a communication module'],
+          ['Communication modules', 'EtherNet/IP modules, including ring-capable ones, ControlNet and DeviceNet scanners, and a Data Highway Plus and remote I/O module for legacy links'],
+          ['I/O', 'Discrete, analog, counting, and specialty modules in the chassis; remote I/O in other families over EtherNet/IP'],
+          ['Redundancy', 'Two identical chassis linked by redundancy modules over fiber; a primary and a secondary controller'],
+        ],
+      },
+      { t: 'h2', text: 'Memory and tasks' },
+      {
+        t: 'p',
+        text: 'Data lives in tags: controller-scoped tags visible everywhere, program-scoped tags local to a program, and aliases that name a physical I/O point. User-defined data types group the data for a pump or a valve into a structure, and add-on instructions wrap the logic for that structure into a reusable instruction with its own parameters. Logic is organized in tasks, each holding programs that hold routines: a continuous task runs whenever nothing else is, periodic tasks run at a set rate, and event tasks run on a trigger. The scan of a periodic task is measured and has a watchdog, and I/O updates asynchronously to the tasks at the requested packet interval for each module, which is why a value can change in the middle of a scan unless it is buffered.',
+      },
+      { t: 'h2', text: 'Networks' },
+      {
+        t: 'ul',
+        items: [
+          'EtherNet/IP is the current network for everything: remote I/O, drives, instruments, messaging between controllers, SCADA, and engineering. Ring topology is available with modules that support it.',
+          'Produced and consumed tags exchange data between controllers on the same network at a set interval without message instructions.',
+          'Messaging instructions read and write tags in other controllers and, through the right modules, older controllers on older networks.',
+          'ControlNet and DeviceNet are found on plants from the 2000s; they work, they are aging, and their scanners and cables are the migration items.',
+          'Data Highway Plus and the older remote I/O network connect a ControlLogix to PLC-5 and SLC systems that have not yet been replaced.',
+        ],
+      },
+      { t: 'h2', text: 'Redundancy' },
+      {
+        t: 'p',
+        text: 'A redundant system is two chassis, each with a controller, a redundancy module, and communication modules, connected by fiber between the redundancy modules and both attached to the I/O networks. The primary runs the process and crossloads its data to the secondary each scan; on a failure or a manual switch, the secondary takes over and the I/O connections re-establish within the switchover time. Process I/O cannot be in the redundant chassis; every point is on remote I/O. The application is written with the redundancy rules in mind, particularly around scan time and which instructions are permitted, and the switchover is tested at commissioning and on a schedule.',
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Versions',
+        text: 'The controller firmware major revision and the project version must match, the software version installed must be able to open the project, and communication modules have their own firmware. A plant with controllers on several revisions keeps every corresponding software version installed and records which controller is on which. A firmware update is a project conversion, planned with a backup and a rollback.',
+      },
+      { t: 'h2', text: 'On a site visit' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Controller status', text: 'Run, program, or fault; the OK indicator; the major and minor fault records in the software.' },
+          { title: 'Module status', text: 'Each module in the chassis reports its own state; a module the project expects but does not find is a fault the software names by slot.' },
+          { title: 'I/O connections', text: 'The I/O tree shows every remote module and its connection state; a module with a yellow triangle is not connected.' },
+          { title: 'Network', text: 'The Ethernet module web pages for connections in use, packet rate, and errors; the ring status where a ring is used.' },
+          { title: 'Redundancy', text: 'Primary and secondary status, synchronization state, and any disqualification reason on the redundancy module display.' },
+          { title: 'Backup', text: 'Upload with the matching software version; store the project with the site documentation; record the firmware.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'Identification only',
+        text: 'Vendor and product names on this page are used for identification only. This is independent field guidance, not vendor documentation; specifications, part numbers, and version behavior change, and the current manufacturer manuals govern.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'ControlLogix or CompactLogix for a plant?',
+        a: 'ControlLogix for large I/O counts, several controllers in one chassis, legacy networks, and redundancy; CompactLogix for small and medium plants and remote sites. The programming is the same, and logic moves between them.',
+      },
+      {
+        q: 'Why did the I/O connection fail after a switch replacement?',
+        a: 'The new switch is not configured for the multicast the older I/O connections use, or for the ring protocol, or the port speed and duplex differ. Unicast connections avoid the multicast issue where the modules support them.',
+      },
+      {
+        q: 'Can I upload the program without the project file?',
+        a: 'Yes: the controller holds the logic and tag names, and if the project was downloaded with documentation stored in the controller, the comments and descriptions as well. Recent revisions support storing that documentation; on older ones the upload has logic and tag names only.',
+      },
+      {
+        q: 'How many connections can it handle?',
+        a: 'Each controller and each communication module has a connection limit and a packet rate limit; the totals are in the specifications and the current use is on the module web pages. SCADA servers, historians, messaging, and I/O all count, and the design keeps well below the limit.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/platforms/rockwell-automation/compactlogix',
+      '/controls/plc-systems/platforms/rockwell-automation/studio-5000',
+      '/controls/plc-systems/communications/ethernet-ip',
+      '/controls/plc-systems/plc-fundamentals/tasks',
+      '/controls/scada-hmi/scada-fundamentals/redundancy',
+      '/controls/plc-systems/plc-troubleshooting/network-problems',
+    ],
+  },
+  {
+    path: '/controls/plc-systems/platforms/rockwell-automation/compactlogix',
+    kind: 'reference',
+    title: 'CompactLogix',
+    summary:
+      'Field notes on the Rockwell Automation CompactLogix, the smaller Logix controller behind most lift stations and small plants: families and I/O, the two Ethernet ports, what it shares with ControlLogix and what it lacks, and what to check on site.',
+    answer:
+      'CompactLogix is the small and medium member of the Rockwell Automation Logix family, with the same programming software, tag-based memory, and task model as ControlLogix in a controller that mounts on a DIN rail with its I/O modules beside it rather than in a chassis. It has been the standard controller for lift stations, well sites, and small treatment plants in that ecosystem for two decades, across several hardware generations with different local I/O families and Ethernet arrangements. Recent controllers carry two Ethernet ports that can form a ring, a linear chain, or two separate networks, which decides how the site connects to its drives, its SCADA radio, and its engineering access. It has no controller redundancy; a site that needs it is a ControlLogix application. Its administrative burden is the same version discipline as its larger sibling.',
+    keyPoints: [
+      'Same software, tags, tasks, add-on instructions, and messaging as ControlLogix; logic moves between them.',
+      'DIN-rail controller with local I/O modules beside it; the I/O family depends on the controller generation.',
+      'Recent controllers have two Ethernet ports: ring or linear on one network, or two separate networks with different addresses.',
+      'No controller redundancy; the spare on the shelf and the program backup are the redundancy.',
+      'Firmware major revision and project version must match, as on every Logix controller.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['PLC', 'Design', 'Lift Stations', 'Ethernet', 'Pumps'],
+    blocks: [
+      { t: 'h2', text: 'Families' },
+      {
+        t: 'table',
+        head: ['Generation', 'Local I/O', 'Notes'],
+        rows: [
+          ['Older CompactLogix with a single Ethernet port', 'The Compact I/O family on the rail beside the controller', 'Common on sites from the 2000s; one network, no ring; a serial port on many'],
+          ['CompactLogix with dual Ethernet ports', 'The same Compact I/O family', 'Ring or linear topology; the mainstay of many current lift stations'],
+          ['CompactLogix with embedded I/O', 'Built-in discrete points plus expansion', 'Small sites where a dozen points and a couple of analogs are enough'],
+          ['Newer CompactLogix generation', 'A newer high-density I/O family on the rail', 'Faster, more memory, dual ports that can be two networks; the current choice for new sites'],
+        ],
+      },
+      { t: 'h2', text: 'The two ports' },
+      {
+        t: 'p',
+        text: 'A controller with two Ethernet ports can use them in more than one way, and the choice is a design decision recorded on the network drawing. In the ring or linear mode, both ports are on one network with one address, and the controller can sit in a ring with its drives and remote I/O or in a chain along a pipe gallery. In the dual-network mode, available on the newer generation, each port has its own address on its own network, so that the site network with the drives and instruments is separate from the network that carries SCADA and engineering through the radio or the fiber. The second arrangement is the one that makes segmentation at a remote site possible without an extra device.',
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Segmenting a lift station',
+        text: 'Drives, the level transmitter, and the local touchscreen on one port; the SCADA radio or cellular router on the other, with the controller passing only the tags SCADA needs. A compromised radio path then reaches the controller port, which is hardened, and not the drives.',
+      },
+      { t: 'h2', text: 'What it shares with ControlLogix' },
+      {
+        t: 'ul',
+        items: [
+          'Studio 5000 Logix Designer, the tag model, user-defined types, add-on instructions, and the task model.',
+          'EtherNet/IP for I/O, drives, messaging, produced and consumed tags, and SCADA.',
+          'The same alarm, PID, and motion instructions within the capacity of the controller.',
+          'The same firmware and software version rules.',
+        ],
+      },
+      { t: 'h2', text: 'What it lacks' },
+      {
+        t: 'ul',
+        items: [
+          'Controller redundancy.',
+          'The chassis: local I/O count is limited to what the rail supports, and beyond that the I/O is remote.',
+          'The legacy network modules; a CompactLogix reaches older networks through gateways, not chassis modules.',
+          'Capacity: memory and connection limits are lower, and a site that grows into a plant can outgrow it.',
+        ],
+      },
+      { t: 'h2', text: 'Typical site' },
+      {
+        t: 'p',
+        text: 'A duplex lift station: the controller on the rail with a discrete input module for floats, run feedbacks, and seal and temperature switches, a discrete output module for the starters, an analog input module for the level transmitter and the current transducers, and an analog output for a drive reference. The drives on Ethernet if they are Ethernet drives, or on hardwired control if not. A small touchscreen on the door on the same network. The SCADA radio on the second port or on the site switch. The program built from the site library: a level control routine, a lead and lag alternation with the standard pump add-on instruction, alarms in the controller, and a watchdog word for SCADA.',
+      },
+      { t: 'h2', text: 'On a site visit' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Status indicators', text: 'Run, fault, I/O, and the port link indicators on the front; the fault record in the software.' },
+          { title: 'Local I/O', text: 'Each module status indicator; a module the project expects and does not find faults the I/O tree.' },
+          { title: 'Network', text: 'The controller web page for port status, address, connections, and errors; the ring status if a ring is used.' },
+          { title: 'Retentive data and the battery or capacitor', text: 'Older controllers hold memory with a battery; newer ones with a capacitor and non-volatile storage. Know which, and the replacement schedule.' },
+          { title: 'Backup', text: 'Upload with the matching software version; store the project; record the firmware revision on the site record.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'Identification only',
+        text: 'Vendor and product names on this page are used for identification only. This is independent field guidance, not vendor documentation; specifications, part numbers, and version behavior change, and the current manufacturer manuals govern.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Can I replace an old single-port CompactLogix with a new one and keep the I/O?',
+        a: 'Within a generation that uses the same local I/O family, often yes with a project conversion; across generations the I/O family changes and the wiring is converted. Check the compatibility of the specific controller and modules and plan the conversion of the project to the new firmware.',
+      },
+      {
+        q: 'Which port goes to the radio?',
+        a: 'In dual-network mode, the port on the network designed for SCADA and engineering, separate from the drives and instruments. In ring or linear mode, both ports are the same network and the radio connects to the site switch on that network.',
+      },
+      {
+        q: 'How much I/O before I should be on ControlLogix?',
+        a: 'The local I/O limit of the controller generation is one threshold; the connection and memory limits are another; redundancy and legacy networks are the third. Many small plants run comfortably on a CompactLogix with remote I/O; a plant with hundreds of points, several drives on Ethernet, and a historian usually belongs on the larger controller.',
+      },
+      {
+        q: 'The controller lost its program after a long power outage.',
+        a: 'An older controller with a dead or missing battery loses its memory when power is off; a newer one stores the project in non-volatile memory or on a removable card and restores it on power-up if configured to. Check the battery schedule, the card, and the restore setting, and keep the project backup current.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/platforms/rockwell-automation/controllogix',
+      '/controls/plc-systems/platforms/rockwell-automation/studio-5000',
+      '/water-wastewater/wastewater-systems/lift-stations/backup-control',
+      '/cybersecurity/network-segmentation/segmenting-a-remote-site',
+      '/controls/plc-systems/plc-fundamentals/retentive-memory',
+      '/how-to/plc-how-to/program-lead-lag-pumps',
+    ],
+  },
+  {
+    path: '/controls/plc-systems/platforms/rockwell-automation/studio-5000',
+    kind: 'reference',
+    title: 'Studio 5000',
+    summary:
+      'Field notes on Studio 5000, the Rockwell Automation software for ControlLogix and CompactLogix: the version-to-firmware rule, side-by-side installs, project files, add-on instructions, online editing, documentation in the controller, source protection.',
+    answer:
+      'Studio 5000 Logix Designer, the successor to RSLogix 5000, is the software that builds every ControlLogix and CompactLogix application. Its defining rule is that a project has a version equal to the major firmware revision of the controller it targets, so a plant with controllers on several revisions needs several versions of the software installed side by side, which the software supports. A project is one file that holds the controller configuration, the I/O tree, the tags, the user-defined types, the add-on instructions, and the programs; it exports to text for comparison and version control. The choices made at download time, whether to store the project documentation in the controller and whether to protect source, decide how recoverable and how maintainable the site is later. The compare tool and the emulator are the two utilities that separate a controlled change from a hopeful one.',
+    keyPoints: [
+      'Project version equals controller firmware major revision; install the versions the plant needs side by side.',
+      'One project file per controller; text export for compare and version control.',
+      'User-defined types and add-on instructions are the site library; build them once and reuse them.',
+      'Download with project documentation stored in the controller so the next engineer can upload comments and descriptions.',
+      'Use the compare tool before and after every change, and the emulator for testing logic offline.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['PLC', 'Programming', 'Documentation', 'Design', 'Engineering'],
+    blocks: [
+      { t: 'h2', text: 'Versions' },
+      {
+        t: 'p',
+        text: 'A controller at firmware revision thirty-something runs projects of the same major version, and the software at that version is what opens and downloads them. Installing a newer software version does not remove the older ones, and a plant keeps every version its controllers use. Updating a controller to a newer firmware is a project conversion: the project opens in the newer software, is saved at the new version, and is downloaded after the firmware update, with the original kept. Communication modules and I/O modules have firmware of their own, and the compatibility lists say which combinations are supported. The version record per controller is part of the asset inventory.',
+      },
+      {
+        t: 'table',
+        head: ['Item', 'Notes'],
+        rows: [
+          ['Project file', 'The working file; one per controller; keep dated copies'],
+          ['Text export', 'A complete text form of the project; used for comparison, for version control, and for importing pieces into other projects'],
+          ['Partial export', 'Routines, add-on instructions, and data types exported individually and imported elsewhere'],
+          ['Compare tool', 'Shows the differences between two projects or between a project and an upload, rung by rung'],
+          ['Emulator', 'A software controller that runs the project on a computer for testing without hardware'],
+          ['Activation', 'Licensing through the activation manager; editions differ by features; keep the activation details with the software record'],
+        ],
+      },
+      { t: 'h2', text: 'Building a site library' },
+      {
+        t: 'p',
+        text: 'A user-defined type for a pump holds its command, its feedbacks, its alarms, its runtime, and its mode in one structure; an add-on instruction for a pump takes that structure and implements the start, stop, fail-to-start, fail-to-stop, and alternation logic once. Every pump in every controller on the plant then uses the same instruction with the same behavior, the SCADA graphics bind to the same structure, and a change to the pump logic is one edit in one place followed by a documented update. The same applies to valves, analog inputs with scaling and alarms, and PID wrappers. The library is exported, versioned, and stored in the engineering library.',
+      },
+      { t: 'h2', text: 'Online editing' },
+      {
+        t: 'p',
+        text: 'Logic can be edited while the controller runs: a rung is modified, tested in place while the original still executes, and then assembled to replace it, or cancelled. Structural changes, new tags of some kinds, I/O changes, and add-on instruction definition changes usually need a download, which stops the controller. Every online edit at a running plant is preceded by a saved copy of the project and followed by an upload and a compare, because the edit exists only in the controller until the project on the laptop is saved.',
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Save after the edit',
+        text: 'The controller holds the edited logic; the laptop holds the project. If the laptop closes without saving, the project and the controller differ, and the next download from that project erases the edit. Save, upload, compare, archive.',
+      },
+      { t: 'h2', text: 'Documentation in the controller' },
+      {
+        t: 'p',
+        text: 'Tag names travel with the download; comments, tag descriptions, and rung comments do only if the project is downloaded with the documentation stored in the controller, an option on recent revisions that uses controller memory. With it, an upload from the controller gives a maintainable project; without it, the upload has logic and names but no explanation. Set it, and keep the archive anyway.',
+      },
+      { t: 'h2', text: 'Source protection' },
+      {
+        t: 'p',
+        text: 'Routines and add-on instructions can be protected so that the logic cannot be viewed or edited without a key. It has its uses for a vendor package, and it is a liability for a plant that owns its own controllers: the key is lost, the vendor is gone, and the logic is a black box. A plant that accepts protected logic gets the key in escrow, or refuses the protection.',
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'Identification only',
+        text: 'Vendor and product names on this page are used for identification only. This is independent field guidance, not vendor documentation; specifications, part numbers, and version behavior change, and the current manufacturer manuals govern.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Can I open a project from a newer version in an older version?',
+        a: 'No. A project saved at a newer version opens only in that version or later. Keep the version record and the installed versions in step with the plant.',
+      },
+      {
+        q: 'The upload has no comments.',
+        a: 'The project was downloaded without the documentation stored in the controller, or the controller revision does not support it. Find the project archive from the integrator or the site records, and download with documentation next time.',
+      },
+      {
+        q: 'How do I keep two engineers from overwriting each other?',
+        a: 'One master project per controller in the engineering library, checked out for a change and checked back in with a dated archive and a compare report. The controller is the truth in between, and an upload with compare before any change catches an edit that was not checked in.',
+      },
+      {
+        q: 'Should the plant standardize on one version?',
+        a: 'As far as the hardware allows. Controllers of one generation can often be brought to one firmware revision in a planned program, which reduces the versions to maintain. Older controllers that cannot run newer firmware stay on their version until they are replaced.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/platforms/rockwell-automation/controllogix',
+      '/controls/plc-systems/platforms/rockwell-automation/compactlogix',
+      '/controls/plc-systems/programming/program-organization',
+      '/cybersecurity/backups/plc-program-backups',
+      '/cybersecurity/plc-security/program-integrity',
+      '/cybersecurity/asset-inventory/documenting-firmware-versions',
+    ],
+  },
+  {
+    path: '/controls/plc-systems/platforms/siemens',
+    kind: 'reference',
+    title: 'Siemens',
+    summary:
+      'Field notes on Siemens controllers in water and wastewater: the S7-1200 and S7-1500 with TIA Portal, the older S7-300 and S7-400, PROFINET and PROFIBUS, the block model and memory cards, protection levels, and why it arrives inside packaged equipment.',
+    answer:
+      'Siemens controllers are less common than Rockwell or Schneider in North American water utilities but arrive regularly inside packaged equipment from European manufacturers, membrane skids, ultraviolet systems, dewatering equipment, and generators, and are the standard in many plants elsewhere. The current families are the compact S7-1200 and the modular S7-1500, both programmed in TIA Portal with PROFINET as the native network; the older S7-300 and S7-400 run under the classic STEP 7 software with PROFIBUS and are in their phase-out period. The platform has a block-oriented program model with organization blocks as the entry points, function blocks with instance data blocks, and data blocks for storage, a mandatory memory card on the S7-1500 that holds the project, and access protection levels on the CPU that must be understood before anyone connects. Modbus TCP and OPC UA make it interoperable with the rest of a plant.',
+    keyPoints: [
+      'S7-1200 compact and S7-1500 modular with TIA Portal and PROFINET; S7-300 and S7-400 with the classic software and PROFIBUS.',
+      'Blocks: organization blocks are the tasks, function blocks with instance data blocks are the reusable logic, data blocks are the storage.',
+      'The S7-1500 project lives on its memory card; the card is the controller memory.',
+      'CPU protection levels control read, write, and HMI access; know the password before a site visit.',
+      'Modbus TCP and OPC UA are the usual bridges to SCADA and to other controllers.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['PLC', 'Design', 'Programming', 'Communications', 'Standards'],
+    blocks: [
+      { t: 'h2', text: 'Families' },
+      {
+        t: 'table',
+        head: ['Family', 'Software', 'Network', 'Notes'],
+        rows: [
+          ['S7-1200', 'TIA Portal', 'PROFINET built in', 'Compact; signal boards and expansion modules; typical for a skid or a small station'],
+          ['S7-1500', 'TIA Portal', 'PROFINET built in, PROFIBUS by module', 'Modular; a display on the CPU; distributed I/O families for the field; redundant variants'],
+          ['S7-300', 'STEP 7 classic', 'PROFIBUS, PROFINET by CPU or module', 'Widely installed; in phase-out; migration target is S7-1500'],
+          ['S7-400', 'STEP 7 classic', 'PROFIBUS, PROFINET', 'Large and redundant systems in older plants; migration target is S7-1500 and its redundant variants'],
+        ],
+      },
+      { t: 'h2', text: 'The block model' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Organization blocks', def: 'The entry points the operating system calls: the cyclic main block, cyclic interrupts at fixed periods, hardware interrupts, the startup block, and the diagnostic and error blocks. They are the task model.' },
+          { term: 'Function blocks', def: 'Reusable logic with memory; each use has an instance data block that holds its state. The pump and valve blocks of a site library.' },
+          { term: 'Functions', def: 'Reusable logic without memory; calculations and conversions.' },
+          { term: 'Data blocks', def: 'Structured storage; global data blocks for shared data, instance data blocks for function block state.' },
+          { term: 'Optimized and standard access', def: 'Optimized blocks are addressed by name only and are faster; standard blocks allow absolute addressing, which some communication methods need. The choice is per block and matters for SCADA access.' },
+        ],
+      },
+      {
+        t: 'p',
+        text: 'Languages are ladder, function block diagram, structured control language, which is the structured text of the platform, statement list on the larger families, and a graph language for sequences on the S7-1500. The program structure is the same across the families, which is what makes migration from the older families a conversion rather than a rewrite.',
+      },
+      { t: 'h2', text: 'Memory card and protection' },
+      {
+        t: 'p',
+        text: 'On the S7-1500 the memory card is not a backup; it is where the project is stored and the controller runs from it. A card removed from a running system stops it; a card from another system starts that other project. The card is labeled and its contents recorded. The CPU has protection levels: full access, read access, HMI access only, and no access, each with a password, and a block can carry know-how protection that hides its logic. A site visit begins with knowing which level is set and having the password from the site record, because a CPU at a restrictive level with an unknown password cannot be read.',
+      },
+      { t: 'h2', text: 'Communications' },
+      {
+        t: 'ul',
+        items: [
+          'PROFINET for distributed I/O, drives, and controller-to-controller data; ring topology with media redundancy where the devices support it.',
+          'PROFIBUS on the older families and by module on the S7-1500 for older devices.',
+          'Modbus TCP as client or server through library blocks, which is the usual link to non-Siemens devices and SCADA.',
+          'OPC UA server built into the S7-1500 and recent S7-1200 firmware, which is the cleanest link to SCADA and historians.',
+          'The native S7 communication used by Siemens HMIs and some SCADA drivers, with access controlled by the protection level and, on recent firmware, disabled by default for put and get access from other devices.',
+        ],
+      },
+      { t: 'h2', text: 'In a water plant' },
+      {
+        t: 'p',
+        text: 'The most common encounter is a packaged system with its own S7-1200 or S7-1500 and its own touchscreen, delivered by the equipment manufacturer with a Modbus TCP or OPC UA interface to the plant SCADA. The plant does not usually own the program; it owns the interface, and the interface document listing every register or node, its meaning, and its units is the item to obtain at delivery. Plants that run Siemens throughout have the same needs as any other platform: the site library, the backup discipline, the version record, and a machine that runs the software version each controller needs.',
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'Identification only',
+        text: 'Vendor and product names on this page are used for identification only. This is independent field guidance, not vendor documentation; specifications, part numbers, and version behavior change, and the current manufacturer manuals govern.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Can the plant SCADA read a Siemens skid controller directly?',
+        a: 'Over Modbus TCP if the manufacturer enabled a Modbus server in the program, over OPC UA if the CPU offers it and the nodes are exposed, or over the native protocol with a driver, subject to the protection level and the put and get setting. The interface document from the manufacturer says which.',
+      },
+      {
+        q: 'The CPU refuses the connection with a password prompt we do not have.',
+        a: 'The protection level is set and the password is with whoever built it. Contact the manufacturer or integrator; a CPU at a restrictive level cannot be read without it, and resetting the CPU to factory settings erases the program.',
+      },
+      {
+        q: 'Is the S7-300 still supported?',
+        a: 'It is in the manufacturer phase-out program with defined dates for the end of delivery and of service; check the current status. Plan migration for any S7-300 that runs a critical process, with the classic software kept alive until the conversion is done.',
+      },
+      {
+        q: 'What is different about optimized blocks for SCADA?',
+        a: 'Optimized blocks have no absolute addresses, so drivers that read by address cannot reach them; drivers that read by symbolic name, and OPC UA, can. A data block that SCADA must read by address is set to standard access, or the data is copied to one that is.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/programming/iec-61131-3',
+      '/controls/plc-systems/communications/opc-ua',
+      '/controls/plc-systems/communications/modbus-tcp',
+      '/controls/plc-systems/plc-fundamentals/tasks',
+      '/cybersecurity/plc-security/controller-hardening',
+      '/controls/plc-systems/platforms/legacy-systems',
+    ],
+  },
+  {
+    path: '/controls/plc-systems/platforms/automationdirect',
+    kind: 'reference',
+    title: 'AutomationDirect',
+    summary:
+      'Field notes on AutomationDirect controllers in water and wastewater: the Productivity, Do-more and BRX, and CLICK families with free software, the legacy DirectLOGIC line, Modbus and EtherNet/IP support, what they suit, and what to check on site.',
+    answer:
+      'AutomationDirect sells controllers direct, at low cost, with programming software that is free to download, and a share of small water and wastewater sites run on them: lift stations, well sites, chemical feed skids, and package plants built by integrators who value the price and the quick delivery. The current families are Productivity, a tag-based controller in stackable and rack forms; Do-more, whose BRX hardware is the current line and whose CPU can also drop into older DirectLOGIC 205 bases; and CLICK, the small address-based controller for a handful of points. DirectLOGIC is the legacy line, still running on many sites and in retirement. All of them speak Modbus, most speak EtherNet/IP, and several support MQTT, so they connect to any SCADA. What they lack is controller redundancy, the depth of the large-vendor ecosystems, and a local distributor; what they offer is a capable controller at a price that changes what a small utility can afford to automate.',
+    keyPoints: [
+      'Productivity, Do-more with BRX, and CLICK are the current families; DirectLOGIC is legacy.',
+      'The programming software for each family is free; keep the installers and the versions with the site records.',
+      'Modbus RTU and TCP throughout; EtherNet/IP and MQTT on the families and models that support them.',
+      'No controller redundancy and no chassis-scale I/O; suited to small and medium sites.',
+      'Support is direct from the manufacturer by phone and online, not through a local distributor.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['PLC', 'Design', 'Lift Stations', 'Communications', 'Programming'],
+    blocks: [
+      { t: 'h2', text: 'Families' },
+      {
+        t: 'table',
+        head: ['Family', 'Form', 'Memory model', 'Notes'],
+        rows: [
+          ['Productivity', 'Stackable and rack-based series of several sizes', 'Tag-based with structured data', 'The closest in feel to the large-vendor controllers; the choice for a small plant'],
+          ['Do-more with BRX', 'Stackable controllers with built-in I/O and expansion; a CPU for the older DirectLOGIC 205 base', 'Named elements with structures; instruction-rich', 'The current mainstream line; the migration path for DirectLOGIC 205 sites'],
+          ['CLICK and CLICK PLUS', 'Small stackable controller', 'Address-based with nicknames', 'A few dozen points; lift stations, well sites, chemical skids; very low cost'],
+          ['DirectLOGIC', 'Bricks and rack systems of several sizes', 'Address-based', 'Legacy; parts availability declining; migrate to BRX or Productivity'],
+        ],
+      },
+      { t: 'h2', text: 'Communications' },
+      {
+        t: 'ul',
+        items: [
+          'Modbus RTU on serial ports and Modbus TCP on Ethernet across the families, as master or slave; the register mapping of each family is fixed and documented, and SCADA drivers use it.',
+          'EtherNet/IP adapter and, on some models, scanner support, for drives and I/O from that ecosystem.',
+          'MQTT publish and subscribe on the families that support it, for cloud and broker-based telemetry.',
+          'Remote I/O within each family over Ethernet, for a rack in another panel.',
+          'Serial ports for radios, meters, and drives; the port configuration is in the project.',
+        ],
+      },
+      { t: 'h2', text: 'What they suit' },
+      {
+        t: 'p',
+        text: 'A duplex lift station, a well with a single pump and a chlorinator, a booster station, a chemical feed system, a small package plant: sites with tens of points, a couple of analogs, a drive or two, and a SCADA link over radio or cellular. At that scale a CLICK or a BRX does everything the process needs at a fraction of the cost of a larger controller, and a Productivity system runs a small plant. An integrator who standardizes on the range and builds a site library can deliver consistent small sites quickly. Where the range does not fit is the large plant with hundreds of points and a historian, the process that needs controller redundancy, and the plant whose staff and spares are built around another ecosystem.',
+      },
+      { t: 'h2', text: 'Considerations' },
+      {
+        t: 'ul',
+        items: [
+          'Standardize on one family per utility; a mix of CLICK, DirectLOGIC, and Productivity across sites is three sets of software, spares, and habits.',
+          'Keep the software installers and version numbers with the site records; free software is easy to obtain today and not necessarily in ten years.',
+          'Check the listings needed for the panel: the components are listed, and the panel shop still builds to its own listing.',
+          'The SCADA driver: any platform talks Modbus; a driver that knows the family register map by name saves configuration and mistakes.',
+          'The migration path from DirectLOGIC: a Do-more CPU in an existing 205 base keeps the I/O; a new BRX or Productivity system replaces a brick.',
+          'Support hours and the absence of a local integrator relationship unless the utility has one.',
+        ],
+      },
+      { t: 'h2', text: 'On a site visit' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Family and model', text: 'From the label; it decides which software and which cable.' },
+          { title: 'Indicators', text: 'Power, run, error, and port activity; the meaning per family in the manual.' },
+          { title: 'Project backup', text: 'Upload with the family software; store the project and note the software version and the firmware.' },
+          { title: 'Communications', text: 'The port settings in the project against the network schedule; the Modbus map the SCADA driver uses.' },
+          { title: 'Memory retention', text: 'Which family uses a battery and which does not; the replacement schedule where it applies.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'Identification only',
+        text: 'Vendor and product names on this page are used for identification only. This is independent field guidance, not vendor documentation; specifications, part numbers, and version behavior change, and the current manufacturer manuals govern.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Will a large SCADA platform talk to a CLICK?',
+        a: 'Yes, over Modbus TCP or RTU, using the fixed register map of the CLICK, which the manual and most driver libraries provide. Tag names in the SCADA map to those registers.',
+      },
+      {
+        q: 'Can I keep the DirectLOGIC 205 rack and replace the CPU?',
+        a: 'A Do-more CPU is made for that base and keeps the I/O modules, with a new program in the Do-more software. The old program is converted or rewritten; the wiring stays.',
+      },
+      {
+        q: 'Is the lack of redundancy a problem for a lift station?',
+        a: 'Not usually; lift stations on any platform run without controller redundancy and rely on backup float control, a spare controller, and the program backup. A treatment process that cannot lose its controller is a different case and a different platform.',
+      },
+      {
+        q: 'How do I get help at two in the morning?',
+        a: 'The manufacturer support line has published hours, the documentation and forums are online, and the utility either has an integrator on call or trains its own staff. The same is true of every platform; the difference is that there is no distributor engineer to call.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/communications/modbus-tcp',
+      '/controls/plc-systems/communications/modbus-rtu',
+      '/water-wastewater/wastewater-systems/lift-stations/backup-control',
+      '/controls/plc-systems/platforms/legacy-systems',
+      '/cybersecurity/backups/plc-program-backups',
+      '/how-to/plc-how-to/configure-modbus',
+    ],
+  },
+  {
+    path: '/controls/plc-systems/platforms/legacy-systems',
+    kind: 'reference',
+    title: 'Legacy Systems',
+    summary:
+      'Keeping older controllers running and planning a migration: the families still found in water plants, the risks that grow each year, software to keep alive, batteries and memory, tested spares, the security problem, and a migration the plant can survive.',
+    answer:
+      'Every utility has controllers older than the people maintaining them: SLC 500 and PLC-5 systems, MicroLogix stations, Modicon 984 and Quantum racks, GE 90-30 systems, DirectLOGIC bricks, and others, running processes that have not needed to change. They fail in predictable ways: a battery dies and the program goes with it, a module fails and the spare turns out to be dead too, the software will not install on a current laptop, the network they use has no modern equivalent, and nobody left knows how they work. Keeping them running is a program of backups, spares that are tested, software kept alive on virtual machines, batteries on a schedule, and documentation recovered while it can be; migrating them is a project planned around the process, phased by area, with the I/O wiring preserved wherever a conversion system exists. The controllers also predate any idea of security, which makes isolation the only protection they have.',
+    keyPoints: [
+      'Back up every legacy program now, with the software that can read it, and store the software and its license with the backup.',
+      'Batteries hold the program on many legacy controllers; a schedule and a spare battery beat a rewrite.',
+      'A spare that has never been tested is a hope; test spares in a bench rack and keep the test record.',
+      'Legacy controllers have no security; isolate them behind a firewall and do not connect them to anything they do not need.',
+      'Migrate by area, preserve the field wiring with conversion systems where they exist, and run old and new in parallel where the process allows.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['PLC', 'Design', 'Documentation', 'Cybersecurity', 'Engineering'],
+    blocks: [
+      { t: 'h2', text: 'What is still out there' },
+      {
+        t: 'table',
+        head: ['Family', 'Software', 'Network', 'Typical risk'],
+        rows: [
+          ['PLC-5', 'RSLogix 5', 'Data Highway Plus, remote I/O', 'Software and operating system compatibility; module spares; battery'],
+          ['SLC 500', 'RSLogix 500', 'DH-485, Data Highway Plus, Ethernet on some processors', 'Battery; software licensing; processor spares'],
+          ['MicroLogix', 'RSLogix 500 or Micro', 'Serial, Ethernet on some', 'Very common at remote sites; battery on some; end of life announced'],
+          ['Modicon 984, Quantum', 'Modsoft, ProWORX, Concept, Unity', 'Modbus Plus, Modbus, Ethernet', 'Software generations; Modbus Plus hardware; conversion to M580'],
+          ['GE 90-30, 90-70', 'Logicmaster, Proficy Machine Edition', 'Genius, SNP, Ethernet', 'Software lineage; module spares; migration to newer families'],
+          ['DirectLOGIC', 'DirectSOFT', 'Serial, Ethernet on some', 'Retiring; migration to Do-more or Productivity'],
+          ['Siemens S5, S7-300', 'STEP 5, STEP 7 classic', 'PROFIBUS', 'Software on old operating systems; phase-out'],
+        ],
+      },
+      { t: 'h2', text: 'The ways they fail' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'The battery', def: 'Most legacy processors hold the program and retentive data in battery-backed memory. The battery lasts a few years, the low battery indicator is ignored or never wired to an alarm, and a power outage erases the program. Some processors have an EEPROM or a memory module that restores the program on power-up if it was written; many never were.' },
+          { term: 'The spare', def: 'A processor bought as a spare fifteen years ago has its own dead battery and possibly a failed component. A spare that was never powered has never been tested.' },
+          { term: 'The software', def: 'The programming software was licensed to a computer that no longer exists, runs on an operating system that no longer installs, and communicates through a serial or proprietary interface that no current laptop has.' },
+          { term: 'The network', def: 'A proprietary network with no new hardware; a failed interface card is a plant with no SCADA.' },
+          { term: 'The knowledge', def: 'The integrator is gone, the documentation is a printout in a drawer, and the program has no comments.' },
+        ],
+      },
+      { t: 'h2', text: 'Keeping them running' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Inventory', text: 'Every legacy controller, its family, its firmware, its software version, its network, its battery type, and the date of the last backup, in the asset inventory.' },
+          { title: 'Back up', text: 'Upload every program with the correct software and save it with the software installer, the license information, and a description of the communication cable and driver. Print the program too; a printout is the backup that survives every format change.' },
+          { title: 'Batteries', text: 'Replace on the manufacturer interval, with power applied where the procedure allows, and wire the low battery output to a SCADA alarm.' },
+          { title: 'Non-volatile copies', text: 'Where the processor supports an EEPROM, a memory module, or a card, write the program to it and set the processor to load from it on power-up.' },
+          { title: 'Spares', text: 'Test every spare in a bench rack once a year: power it, load the program, exercise the I/O. Replace the battery in the spare.' },
+          { title: 'Software machines', text: 'A virtual machine per software generation, with the operating system, the software, the license, and the communication driver, plus the physical interface it needs, kept with the engineering records.' },
+          { title: 'Isolate', text: 'A firewall between any legacy controller and anything it does not need to talk to; no direct internet, no direct business network, remote access only through a jump host.' },
+          { title: 'Document', text: 'While the people who know the system are still available: a narrative, an I/O list, and comments recovered from the printout into the program.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Do not power cycle a legacy processor casually',
+        text: 'Until the program is backed up and the battery is known good, a power cycle can erase the process. Back up first, on every visit.',
+      },
+      { t: 'h2', text: 'Security' },
+      {
+        t: 'p',
+        text: 'A legacy controller trusts every message it receives. It has no accounts, no password on its network services worth the name, no signed firmware, and a network stack that can be crashed by malformed packets. The only protection is not to let anything reach it: a firewall that permits exactly the SCADA server and the engineering jump host, a network with nothing else on it, and physical control of the panel. A legacy controller found with a direct path to the business network or a cellular router with a public address is the first remediation item in any security assessment.',
+      },
+      { t: 'h2', text: 'Planning the migration' },
+      {
+        t: 'ul',
+        items: [
+          'Start with the risk: the controllers whose failure stops treatment or causes an overflow, whose spares are gone, or whose software cannot be run, go first.',
+          'Choose the target platform for the whole utility, not per site; the site library, the spares, and the training follow from it.',
+          'Preserve the field wiring where a conversion system exists: swing-arm and cable conversion systems for several legacy I/O families land the old terminal blocks on the new I/O without rewiring the field.',
+          'Convert the logic with the vendor tool where one exists, then review every routine; a conversion is a starting point, not a result.',
+          'Build the SCADA changes with it: tag names, drivers, and graphics change with the controller.',
+          'Phase by process area; run old and new in parallel with the field wiring switched over area by area, and keep the old controller in place until the new one has run through a full operating cycle.',
+          'Write the narrative and the I/O list as part of the migration; the new system starts documented.',
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'Identification only',
+        text: 'Vendor and product names on this page are used for identification only. This is independent field guidance, not vendor documentation; specifications, part numbers, and version behavior change, and the current manufacturer manuals govern.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'The processor lost its program. What now?',
+        a: 'Load the backup with the correct software, if one exists, and replace the battery. If no backup exists, the printout is typed back in, or the process is run manually while a new program is written from the narrative. This is why the backup comes first on every visit.',
+      },
+      {
+        q: 'Can I keep the old controller and just add a gateway to modern SCADA?',
+        a: 'Yes, for a time; a protocol gateway or a driver for the legacy network gives SCADA access without touching the controller. It does not fix the battery, the spares, or the software, and it should be a step in a migration plan, not a substitute for one.',
+      },
+      {
+        q: 'How do I justify replacing a controller that works?',
+        a: 'With the consequences and the cost of the day it stops: the overflow, the boil notice, the manual operation for weeks while a replacement is engineered under pressure. A planned migration costs less than an emergency one and can be scheduled around the process.',
+      },
+      {
+        q: 'Is a virtual machine with old software really necessary?',
+        a: 'Until the last controller of that generation is gone, yes. The alternative is discovering on the day of a failure that nothing on the shelf can talk to the processor. The virtual machine, the license, and the cable are the insurance.',
+      },
+    ],
+    related: [
+      '/cybersecurity/backups/plc-program-backups',
+      '/cybersecurity/backups/offline-copies',
+      '/cybersecurity/network-segmentation/segmenting-a-remote-site',
+      '/cybersecurity/asset-inventory/documenting-firmware-versions',
+      '/controls/plc-systems/plc-fundamentals/retentive-memory',
+      '/troubleshooting/plc-troubleshooting/retentive-data-lost',
+    ],
+  },
 ];

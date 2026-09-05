@@ -12,6 +12,8 @@ import { NAV_ENTRIES, describe, getEntry } from '@/data/nav-index';
 import { ENTRIES, KIND_LABEL, type EntryKind } from '@/data/content';
 import { PROJECTS } from '@/data/projects';
 import { GLOSSARY, glossaryPath } from '@/data/glossary';
+import { CALCULATORS, calculatorPath } from '@/data/calculators';
+import { REFERENCE_TABLES, tablePath } from '@/data/tables';
 
 export type SearchScope =
   | 'all'
@@ -62,6 +64,24 @@ const SECTION_SCOPE: Record<string, SearchScope[]> = {
 
 /** Standalone pages that are not taxonomy nodes but should still be findable. */
 const SITE_PAGES = [
+  {
+    path: '/calculators',
+    title: 'Calculators',
+    summary: 'Electrical, panel, instrumentation, data, network, and process calculators.',
+    keywords: 'calculator calculators compute tools electrical',
+  },
+  {
+    path: '/tables',
+    title: 'Reference tables',
+    summary: 'Wire, ampacity, conduit, motor, data type, and unit conversion tables.',
+    keywords: 'tables charts wire ampacity conduit reference lookup',
+  },
+  {
+    path: '/disclaimer',
+    title: 'Disclaimer',
+    summary: 'The limits of the information, calculators, and tables published here.',
+    keywords: 'disclaimer limits liability warranty use',
+  },
   {
     path: '/glossary',
     title: 'Controls and Automation Glossary',
@@ -231,6 +251,56 @@ function buildIndex(): SearchRecord[] {
     });
   }
 
+  // Calculators are high-intent: someone searching "voltage drop" usually
+  // wants the tool, so they carry close to the weight of a written guide.
+  for (const calculator of CALCULATORS) {
+    records.set(calculatorPath(calculator.slug), {
+      path: calculatorPath(calculator.slug),
+      title: calculator.title,
+      context: `Calculators › ${calculator.category}`,
+      summary: calculator.summary,
+      kindLabel: 'Calculator',
+      scopes: ['all', 'engineering'],
+      haystack: [
+        calculator.title,
+        calculator.category,
+        calculator.summary,
+        calculator.answer,
+        (calculator.keywords ?? []).join(' '),
+        (calculator.faqs ?? []).map((f) => f.q).join(' '),
+        'calculator calculate compute',
+      ]
+        .join(' ')
+        .toLowerCase(),
+      weight: 9,
+      factor: 0.85,
+    });
+  }
+
+  for (const table of REFERENCE_TABLES) {
+    records.set(tablePath(table.slug), {
+      path: tablePath(table.slug),
+      title: table.title,
+      context: `Reference tables › ${table.category}`,
+      summary: table.summary,
+      kindLabel: 'Table',
+      scopes: ['all', 'engineering'],
+      haystack: [
+        table.title,
+        table.category,
+        table.summary,
+        table.answer,
+        table.basis,
+        (table.keywords ?? []).join(' '),
+        'table chart lookup reference',
+      ]
+        .join(' ')
+        .toLowerCase(),
+      weight: 8,
+      factor: 0.75,
+    });
+  }
+
   for (const page of SITE_PAGES) {
     records.set(page.path, {
       path: page.path,
@@ -348,11 +418,11 @@ export const SEARCH_PLACEHOLDER = 'Search PLC, SCADA, instrumentation, troublesh
 /** Shown in the empty state of the search dialog. */
 export const POPULAR_SEARCHES = [
   '4-20 mA',
-  'lead/lag pumps',
+  'voltage drop',
+  'ampacity',
   'wet well level',
+  'conduit fill',
   'Modbus',
-  'alarm management',
+  'pump horsepower',
   'UL 508A',
-  'ground loop',
-  'scan cycle',
 ];

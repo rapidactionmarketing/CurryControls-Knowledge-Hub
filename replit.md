@@ -53,7 +53,12 @@ Everything is under `artifacts/currycontrols`.
 | `src/lib/analytics.ts` | Cookieless client collector. Honors Do Not Track and Global Privacy Control. |
 | `src/pages/analytics.tsx` | The dashboard, at `/analytics`. Noindex, not prerendered. |
 | `src/pages/discovery.tsx` | HTML sitemap, topic hubs, and the questions-and-answers hub. |
-| `src/pages/policies.tsx` | Privacy, terms, accessibility, and editorial standards. |
+| `src/pages/policies.tsx` | Privacy, terms, accessibility, editorial standards, and the disclaimer. |
+| `src/data/calc-types.ts` | The calculator model: typed fields, a pure `run` function, assumptions. |
+| `src/data/reference-data.ts` | **Safety-critical numeric tables.** Ampacity, derating factors, motor FLC, conduit areas. |
+| `src/data/calculators/*.ts` | The 35 calculators, by discipline. |
+| `src/data/tables.ts` | Reference table pages, each stating the document its values come from. |
+| `src/components/blocks/calculator-disclaimer.tsx` | The disclaimer shown on every calculator and table. |
 | `scripts/build-seo.mjs` | Generates `sitemap.xml`, `robots.txt`, `llms.txt`, `feed.xml`. |
 | `scripts/prerender.mjs` | Renders every indexable route to static HTML. |
 | `lib/api-spec/openapi.yaml` | The API contract. Edit here, then run codegen; never edit generated files. |
@@ -87,8 +92,15 @@ Everything is under `artifacts/currycontrols`.
   the FAQPage entity for its own questions; duplicating them on the hub would put two competing
   entities in the graph for the same content.
 - **Search relevance is scaled by record type.** A glossary term titled exactly "4-20 mA" would
-  otherwise beat the full reference titled "4-20 mA Current Loops". The guide leads and the
-  definition sits under it.
+  otherwise beat the full reference titled "4-20 mA Current Loops". The guide leads, then the
+  troubleshooting guide, then the calculator, then the definition.
+- **Calculators show their work and never issue a verdict.** Each returns the outputs, the
+  arithmetic that produced them, and what it does not account for. Where one reads a code table it
+  displays the value it used, so a disagreement with the reader's own code book is immediately
+  visible rather than hidden inside an answer. This is a safety decision, not a style one.
+- **Calculators compute during render from a pure function.** The prerendered HTML therefore
+  contains a worked example with real numbers, which serves a reader without JavaScript and gives
+  a crawler real content instead of an empty form.
 
 ## Product
 
@@ -109,6 +121,11 @@ Everything is under `artifacts/currycontrols`.
 - **Built-in analytics** at `/analytics`: traffic, top pages, phone-click conversions by placement,
   Core Web Vitals from real visits, and the searches that returned nothing, which is the content
   backlog in priority order.
+- **35 calculators** at `/calculators`: electrical, control panel, instrumentation, PLC and data,
+  networking, and water and wastewater process. Every one shows its arithmetic.
+- **Reference tables** at `/tables`: conductor ampacity, derating factors, wire gauge, motor
+  full-load current, conduit fill, overcurrent ratings, PLC data types, enclosure ratings, and
+  unit conversions.
 
 ## User preferences
 
@@ -140,6 +157,18 @@ Everything is under `artifacts/currycontrols`.
   run `pnpm --filter @workspace/db run push`, and restart the API server.
 - **Every phone link needs a `data-phone-placement` attribute.** One delegated listener records
   phone and outbound clicks; a link without the attribute is recorded as "unlabelled".
+- **The values in `reference-data.ts` are safety-critical.** A wrong ampacity or motor full-load
+  current can lead to an undersized conductor. They are reproduced from published code tables and
+  are not authoritative. Never change one without checking it against the code book, and never
+  remove the verification language from a table page.
+- **Verify calculator arithmetic against hand-computed values, not against the implementation.**
+  There is a check script pattern for this: derive each expectation independently, then compare.
+  Web search summaries are not a reliable source for tabular data — during this work a search
+  returned 130 A for a 100 hp motor at 460 V where the code table says 124 A, and another
+  conflated two adjacent rows.
+- **Calculators must degrade safely.** A `run` function that cannot produce a meaningful answer
+  returns an `error` rather than a number. The ampacity calculator refusing 14 AWG aluminum is the
+  reference behaviour.
 
 ## Pointers
 

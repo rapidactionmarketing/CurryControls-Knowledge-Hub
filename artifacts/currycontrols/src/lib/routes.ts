@@ -10,6 +10,8 @@
 import { NAV_ENTRIES } from '@/data/nav-index';
 import { ALL_TAGS, ENTRIES, getContent } from '@/data/content';
 import { GLOSSARY } from '@/data/glossary';
+import { CALCULATORS } from '@/data/calculators';
+import { REFERENCE_TABLES } from '@/data/tables';
 import { PROJECTS } from '@/data/projects';
 import { getChildren, getEntry } from '@/data/nav-index';
 
@@ -53,6 +55,17 @@ function buildRoutes(): RouteRecord[] {
 
   // Reference and discovery pages. The sitemap page in particular is what
   // puts every deep taxonomy node two clicks from the home page.
+  // Calculators and reference tables. High intent, so they rank alongside the
+  // written guides rather than below them.
+  add({ path: '/calculators', priority: 0.9, changefreq: 'monthly' });
+  for (const calculator of CALCULATORS) {
+    add({ path: `/calculators/${calculator.slug}`, priority: 0.8, changefreq: 'monthly' });
+  }
+  add({ path: '/tables', priority: 0.8, changefreq: 'monthly' });
+  for (const table of REFERENCE_TABLES) {
+    add({ path: `/tables/${table.slug}`, priority: 0.7, changefreq: 'monthly' });
+  }
+
   add({ path: '/glossary', priority: 0.8, changefreq: 'monthly' });
   for (const term of GLOSSARY) {
     add({ path: `/glossary/${term.slug}`, priority: 0.6, changefreq: 'monthly' });
@@ -65,6 +78,7 @@ function buildRoutes(): RouteRecord[] {
   }
 
   // Trust pages. Low priority for ranking, but they must be crawlable.
+  add({ path: '/disclaimer', priority: 0.5, changefreq: 'monthly' });
   add({ path: '/editorial-standards', priority: 0.4, changefreq: 'monthly' });
   add({ path: '/accessibility', priority: 0.3, changefreq: 'monthly' });
   add({ path: '/privacy', priority: 0.3, changefreq: 'monthly' });

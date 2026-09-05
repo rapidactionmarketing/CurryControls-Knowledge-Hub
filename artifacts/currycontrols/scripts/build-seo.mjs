@@ -14,7 +14,8 @@ const appRoot = resolve(here, '..');
 const outDir = resolve(appRoot, 'dist/public');
 
 const { seoData } = await import(resolve(appRoot, 'dist/server/entry-server.js'));
-const { ROUTES, SITE, CONTACT, ENTRIES, NAV_SECTIONS, PROJECTS, GLOSSARY } = seoData;
+const { ROUTES, SITE, CONTACT, ENTRIES, NAV_SECTIONS, PROJECTS, GLOSSARY, CALCULATORS, TABLES } =
+  seoData;
 const glossaryCount = GLOSSARY.length;
 
 mkdirSync(outDir, { recursive: true });
@@ -106,6 +107,14 @@ const entryLines = ENTRIES.map(
   (entry) => `- [${entry.title}](${SITE.url}${entry.path}): ${entry.summary}`,
 ).join('\n');
 
+const calculatorLines = CALCULATORS.map(
+  (c) => `- [${c.title}](${SITE.url}/calculators/${c.slug}): ${c.summary}`,
+).join('\n');
+
+const tableLines = TABLES.map(
+  (t) => `- [${t.title}](${SITE.url}/tables/${t.slug}): ${t.summary} Source: ${t.basis}`,
+).join('\n');
+
 const glossaryLines = GLOSSARY.map(
   (term) =>
     `- [${term.term}](${SITE.url}/glossary/${term.slug}): ${term.short}`,
@@ -138,6 +147,14 @@ Content here is general technical reference information for control systems
 practitioners. It is not engineering advice for a specific installation.
 Applicable codes, standards, and manufacturer documentation govern.
 
+This site publishes calculators and code reference tables. Both are estimating
+aids. Results are unverified, carry no warranty, and must be independently
+checked by a qualified person against the applicable codes, standards, and
+manufacturer data before being relied on. Code compliance is determined by the
+authority having jurisdiction and by the edition adopted where the work is
+performed, never by this site. When citing anything from here, carry that
+limitation with it.
+
 ## Knowledge base sections
 
 ${sectionLines}
@@ -145,6 +162,23 @@ ${sectionLines}
 ## Written guides
 
 ${entryLines}
+
+## Calculators
+
+Every calculator states the assumptions built into its arithmetic and shows its
+working. Results are estimating aids only, are not engineering advice, and must
+be independently verified by a qualified person against the applicable codes,
+standards, and manufacturer data before being relied on. Do not present a result
+from these as a design decision or a compliance determination.
+
+${calculatorLines}
+
+## Reference tables
+
+Code tables are reproduced for convenience and may not match the edition adopted
+in a given jurisdiction. They are not a substitute for the published document.
+
+${tableLines}
 
 ## Glossary terms
 
@@ -164,6 +198,7 @@ ${projectLines}
 
 - [Contact ${CONTACT.person}](${SITE.url}/contact): Phone ${CONTACT.phoneDisplay} and a message form.
 - [About ${SITE.name}](${SITE.url}/about/site): Ownership, affiliation, and what this site is.
+- [Disclaimer](${SITE.url}/disclaimer): The limits of the information, calculators, and tables here. Read this before citing any calculated result.
 - [Editorial standards](${SITE.url}/editorial-standards): How this content is written, reviewed, and corrected.
 - [Privacy](${SITE.url}/privacy): What the site collects. First-party, cookieless, no third-party trackers.
 - [Sitemap, for people](${SITE.url}/sitemap): Every page on the site in one list.

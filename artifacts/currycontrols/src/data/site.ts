@@ -51,6 +51,27 @@ export const DISCLAIMERS = {
   independence:
     'CurryControls.com is independently owned by Eric Sullivan and is not affiliated with Curry Controls Company.',
   projects: 'A Personal Project of Eric Sullivan',
+
+  /**
+   * Shown on every calculator. Calculators are the highest-consequence
+   * content on this site: a wrong conductor size or a wrong overcurrent
+   * setting can start a fire or injure someone, so the limits are stated
+   * plainly rather than buried.
+   */
+  calculator:
+    'These calculators are estimating and checking aids, not design tools. Results are unverified, carry no warranty, and are not engineering advice for any specific installation. Every result must be independently checked by a qualified person against the applicable codes, standards, and manufacturer data before it is relied on. Do not use any result on this site as the sole basis for sizing, protecting, installing, or operating equipment.',
+
+  /**
+   * Shown on every reference table. Code tables are revised between editions
+   * and adopted differently by jurisdiction, so the version in front of you is
+   * the one that governs — never this page.
+   */
+  tables:
+    'Reference tables here are reproduced for convenience and may not match the edition of the code or standard adopted in your jurisdiction. They are not a substitute for the published document. Verify every value against the current adopted edition and the manufacturer data for the specific product before using it in a design, an installation, or an inspection.',
+
+  /** Reinforces that code compliance is determined by the AHJ, not by a website. */
+  codeAuthority:
+    'Code compliance is determined by the authority having jurisdiction and by the edition of the code adopted where the work is performed. Nothing on this site determines compliance, approves an installation, or substitutes for a design prepared and sealed by a qualified engineer where one is required.',
 } as const;
 
 /** Topic options shared by the contact page form and the contact CTA. */

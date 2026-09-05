@@ -217,6 +217,102 @@ function OptOutControl() {
 }
 
 /* ------------------------------------------------------------------ *
+ * Disclaimer
+ * ------------------------------------------------------------------ */
+
+export function DisclaimerPage() {
+  return (
+    <PolicyPage
+      title="Disclaimer"
+      description="The limits of the information, calculators, and reference tables published on CurryControls.com, and what you must do before relying on any of it."
+      path="/disclaimer"
+      updated="September 2026"
+      intro="This site publishes technical reference material, calculators, and code reference tables. All three have hard limits, and this page states them in one place."
+    >
+      <H2>Everything here is reference information</H2>
+      <p>{DISCLAIMERS.engineering}</p>
+      <p>
+        Nothing on this site creates an engineering relationship. Nothing here has been reviewed
+        against your installation, your equipment, your process, or the conditions at your site. A
+        qualified person who knows those things has to make the decision.
+      </p>
+
+      <H2>The calculators</H2>
+      <p>{DISCLAIMERS.calculator}</p>
+      <p>
+        Each calculator states the assumptions built into its arithmetic and lists what it does not
+        account for. Those statements are part of the result. A number taken from a calculator
+        without reading them is a number you cannot defend.
+      </p>
+      <Bullets
+        items={[
+          'Calculators show their arithmetic on purpose. Check the working rather than trusting the output.',
+          'Where a calculator reads a code table, it displays the value it used so a disagreement with your own code book is immediately visible.',
+          'A calculator result is one input to a decision. Ampacity, overcurrent protection, terminal temperature ratings, short-circuit withstand, and mechanical constraints are separate requirements, and satisfying one does not satisfy the others.',
+          'No calculator here has been independently verified, certified, or validated by any third party.',
+        ]}
+      />
+
+      <H2>The reference tables</H2>
+      <p>{DISCLAIMERS.tables}</p>
+      <p>
+        Code tables are revised between editions, and jurisdictions adopt editions at different
+        times. The copy of the code adopted where the work is performed is the one that governs. A
+        table reproduced on a website never is.
+      </p>
+
+      <H2>Code compliance</H2>
+      <p>{DISCLAIMERS.codeAuthority}</p>
+
+      <H2>Safety</H2>
+      <p>{DISCLAIMERS.safety}</p>
+
+      <H2>No warranty</H2>
+      <p>
+        All content, calculators, and tables are provided as they are, without warranty of any kind,
+        express or implied. Reasonable care goes into accuracy and mistakes still happen. If you find
+        one, report it and it will be corrected.
+      </p>
+      <p>
+        To the fullest extent permitted by law, no liability is accepted for any loss, damage, injury,
+        or cost arising from the use of, or reliance on, anything published here.
+      </p>
+
+      <H2>Manufacturers and standards</H2>
+      <p>{DISCLAIMERS.endorsement}</p>
+      <p>
+        Standards bodies, including NFPA, ISA, IEC, and UL, are not affiliated with this site and have
+        not reviewed or endorsed anything on it. Their published documents are the authority on their
+        own content.
+      </p>
+
+      <H2>Ownership</H2>
+      <p>{DISCLAIMERS.independence}</p>
+
+      <H2>Reporting an error</H2>
+      <p>
+        If a calculator, a table, or a page is wrong, that is worth knowing. Call {CONTACT.person} at{' '}
+        {CONTACT.phoneDisplay} or use the{' '}
+        <Link href="/contact" className="cc-link">
+          contact page
+        </Link>
+        . See the{' '}
+        <Link href="/editorial-standards" className="cc-link">
+          editorial standards
+        </Link>{' '}
+        for how corrections are handled.
+      </p>
+      <p className="!mt-6">
+        <a href={CONTACT.phoneHref} data-phone-placement="disclaimer" className="cc-btn cc-btn-outline">
+          <Phone size={14} aria-hidden="true" />
+          {CONTACT.phoneDisplay}
+        </a>
+      </p>
+    </PolicyPage>
+  );
+}
+
+/* ------------------------------------------------------------------ *
  * Terms
  * ------------------------------------------------------------------ */
 
@@ -249,10 +345,23 @@ export function TermsPage() {
       <H2>Safety</H2>
       <p>{DISCLAIMERS.safety}</p>
 
+      <H2>Calculators and reference tables</H2>
+      <p>{DISCLAIMERS.calculator}</p>
+      <p>{DISCLAIMERS.tables}</p>
+      <p>
+        The full limits of use are set out on the{' '}
+        <Link href="/disclaimer" className="cc-link">
+          disclaimer page
+        </Link>
+        , which forms part of these terms.
+      </p>
+
       <H2>No warranty</H2>
       <p>
-        The content is provided as it is, without warranty of any kind. Reasonable care goes into
-        accuracy, and mistakes still happen. If you find one, say so and it will be corrected.
+        The content, calculators, and tables are provided as they are, without warranty of any kind.
+        Reasonable care goes into accuracy, and mistakes still happen. If you find one, say so and it
+        will be corrected. To the fullest extent permitted by law, no liability is accepted for any
+        loss, damage, injury, or cost arising from use of, or reliance on, anything published here.
       </p>
 
       <H2>Trademarks and references</H2>

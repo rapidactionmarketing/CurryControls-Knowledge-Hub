@@ -18,6 +18,8 @@ const RESOURCE_LINKS = [
   { href: '/how-to', label: 'How-To Guides' },
   { href: '/engineering-library', label: 'Engineering Library' },
   { href: '/articles', label: 'Articles' },
+  { href: '/calculators', label: 'Calculators' },
+  { href: '/tables', label: 'Reference Tables' },
   { href: '/glossary', label: 'Glossary' },
   { href: '/faq', label: 'Questions & Answers' },
   { href: '/topics', label: 'Topics' },
@@ -26,6 +28,7 @@ const RESOURCE_LINKS = [
 
 const SITE_LINKS = [
   { href: '/sitemap', label: 'Sitemap' },
+  { href: '/disclaimer', label: 'Disclaimer' },
   { href: '/editorial-standards', label: 'Editorial Standards' },
   { href: '/accessibility', label: 'Accessibility' },
   { href: '/privacy', label: 'Privacy' },
@@ -134,6 +137,7 @@ export function SiteFooter() {
           <p>{DISCLAIMERS.independence}</p>
           <p>{DISCLAIMERS.endorsement}</p>
           <p>{DISCLAIMERS.engineering}</p>
+          <p>{DISCLAIMERS.calculator}</p>
           <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
             <span>© {SITE.founded} {SITE.name}</span>
             <span className="cc-mono text-white/40">

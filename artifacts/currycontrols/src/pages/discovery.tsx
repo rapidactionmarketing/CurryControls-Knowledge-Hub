@@ -10,6 +10,8 @@ import { NAV_SECTIONS } from '@/data/navigation';
 import { getChildren, getEntry, label } from '@/data/nav-index';
 import { ALL_TAGS, ENTRIES_BY_RECENCY, entriesWithTag, hasContent } from '@/data/content';
 import { GLOSSARY_ALPHABETICAL, glossaryPath } from '@/data/glossary';
+import { CALCULATORS, calculatorPath } from '@/data/calculators';
+import { REFERENCE_TABLES, tablePath } from '@/data/tables';
 import { PROJECTS } from '@/data/projects';
 import {
   breadcrumbSchema,
@@ -26,6 +28,8 @@ import {
 const UTILITY_PAGES = [
   { name: 'Home', path: '/' },
   { name: 'Search', path: '/search' },
+  { name: 'Calculators', path: '/calculators' },
+  { name: 'Reference tables', path: '/tables' },
   { name: 'Glossary', path: '/glossary' },
   { name: 'Questions and answers', path: '/faq' },
   { name: 'Topics', path: '/topics' },
@@ -33,6 +37,7 @@ const UTILITY_PAGES = [
   { name: 'About CurryControls.com', path: '/about/site' },
   { name: 'About Eric Sullivan', path: '/about/eric-sullivan' },
   { name: 'Tools & Projects', path: '/tools-projects' },
+  { name: 'Disclaimer', path: '/disclaimer' },
   { name: 'Editorial standards', path: '/editorial-standards' },
   { name: 'Accessibility', path: '/accessibility' },
   { name: 'Privacy', path: '/privacy' },
@@ -121,6 +126,32 @@ export function SiteMapPage() {
             </section>
           );
         })}
+
+        <section className="mb-12" aria-labelledby="sm-calculators">
+          <div className="border-b border-[hsl(var(--rule))] pb-2">
+            <h2 id="sm-calculators" className="cc-h2 text-[1.15rem]">
+              <Link href="/calculators" className="hover:text-[hsl(var(--accent-blue))]">
+                Calculators and reference tables
+              </Link>
+            </h2>
+          </div>
+          <ul className="mt-4 grid gap-x-8 gap-y-0.5 sm:grid-cols-2 lg:grid-cols-3">
+            {CALCULATORS.map((calculator) => (
+              <li key={calculator.slug}>
+                <Link href={calculatorPath(calculator.slug)} className="cc-mega-link">
+                  {calculator.title}
+                </Link>
+              </li>
+            ))}
+            {REFERENCE_TABLES.map((table) => (
+              <li key={table.slug}>
+                <Link href={tablePath(table.slug)} className="cc-mega-link">
+                  {table.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
 
         <section className="mb-12" aria-labelledby="sm-glossary">
           <div className="border-b border-[hsl(var(--rule))] pb-2">

@@ -19,10 +19,19 @@ import { GlossaryIndexPage, GlossaryTermPage, isGlossarySlug } from '@/pages/glo
 import { FaqHubPage, SiteMapPage, TopicPage, TopicsIndexPage, isTagSlug } from '@/pages/discovery';
 import {
   AccessibilityPage,
+  DisclaimerPage,
   EditorialStandardsPage,
   PrivacyPage,
   TermsPage,
 } from '@/pages/policies';
+import {
+  CalculatorPage,
+  CalculatorsIndexPage,
+  TablePage,
+  TablesIndexPage,
+} from '@/pages/calculators';
+import { isCalculatorSlug } from '@/data/calculators';
+import { isTableSlug } from '@/data/tables';
 import NotFound from '@/pages/not-found';
 
 const PROJECTS_BASE = '/tools-projects/eric-sullivans-personal-projects';
@@ -59,6 +68,19 @@ export function Routes() {
     if (isTagSlug(slug)) return <TopicPage slug={slug} />;
   }
 
+  // Calculators and the reference tables behind them.
+  if (path === '/calculators') return <CalculatorsIndexPage />;
+  if (path.startsWith('/calculators/')) {
+    const slug = path.slice('/calculators/'.length);
+    if (isCalculatorSlug(slug)) return <CalculatorPage slug={slug} />;
+  }
+  if (path === '/tables') return <TablesIndexPage />;
+  if (path.startsWith('/tables/')) {
+    const slug = path.slice('/tables/'.length);
+    if (isTableSlug(slug)) return <TablePage slug={slug} />;
+  }
+
+  if (path === '/disclaimer') return <DisclaimerPage />;
   if (path === '/privacy') return <PrivacyPage />;
   if (path === '/terms') return <TermsPage />;
   if (path === '/accessibility') return <AccessibilityPage />;

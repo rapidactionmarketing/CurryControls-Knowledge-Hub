@@ -1636,4 +1636,466 @@ Station_Critical := Avail_Count < 2;`,
       '/controls/scada-hmi/alarm-management/notification',
     ],
   },
+  {
+    path: '/water-wastewater/water-systems/water-pumping/well-pumps',
+    kind: 'reference',
+    title: 'Well Pump Control',
+    summary:
+      'Controlling a groundwater well: submersible and line-shaft turbine pumps, the pump-to-waste start, drawdown and the low-water cutoff, cycling limits from the well and the aquifer, and what the controller monitors to protect a pump that cannot be seen.',
+    answer:
+      'A well pump lifts groundwater from a submersible or a line-shaft turbine pump set hundreds of feet down a casing, and its controls protect a pump that cannot be inspected: a low-water cutoff from a level probe or a transducer keeps it from pumping the well dry, a pump-to-waste period at each start discards the first minutes of turbid water, minimum run and off times respect the motor and the aquifer, and the controller monitors current, flow, and drawdown for the slow signs of a failing pump or a declining well.',
+    keyPoints: [
+      'The pump is at the bottom of a hole. Everything the controller knows comes from current, flow, pressure, and level.',
+      'Low-water cutoff is the protection. A submersible run dry is destroyed in minutes.',
+      'Pump to waste at start until turbidity and residual are acceptable, then to the system.',
+      'Starts are expensive on a large submersible. The cycle is set by the tank, not the well.',
+      'Trend drawdown and specific capacity. A well declines slowly, and the trend is the only warning.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['Water', 'Pumps', 'Control', 'Level'],
+    blocks: [
+      { t: 'h2', text: 'What is down the hole' },
+      {
+        t: 'p',
+        text: 'A production well is a cased hole to an aquifer, with a screen at the bottom where the water enters. The pump is either a submersible unit, a multistage centrifugal pump coupled to a sealed motor, both hanging on the drop pipe with the power cable strapped alongside, or a line-shaft vertical turbine, whose bowls are down the well and whose motor is at the surface, driving them through a shaft in the column. A check valve above the pump holds the column full when the pump stops. A sounding tube or a transducer measures the water level. At the surface: the discharge head, a flow meter, a pump-to-waste valve and line, a sample tap, chemical injection, and the panel.',
+      },
+      {
+        t: 'p',
+        text: 'None of it can be seen. A submersible pulled for inspection is a crane, a crew, and a day. The controls are designed on the assumption that the pump will be protected by what the panel can measure, and that its condition will be inferred from trends rather than observed.',
+      },
+      { t: 'h2', text: 'The start sequence' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Call', text: 'From the tank level, the system pressure, or a schedule, through the permissives: water level above the cutoff, no fault, HOA in AUTO, minimum off time elapsed.' },
+          { title: 'Pump to waste', text: 'The pump starts with the discharge directed to waste through a valve, or with the to-system valve closed and the waste valve open. The first minutes of pumping carry sand, turbidity, and air from the column and the screen. The period is a timer, typically two to fifteen minutes, or a turbidity measurement, or both.' },
+          { title: 'Transfer to the system', text: 'The to-system valve opens, then the waste valve closes, in an order that never dead-heads the pump. Chemical feed starts with the flow.' },
+          { title: 'Run', text: 'At fixed speed, or under pressure or flow control with a drive. Current, flow, pressure, and level are monitored against their expected values.' },
+          { title: 'Stop', text: 'On the stop call, subject to minimum run time. On a drive, a slow ramp down lets the check valve close gently and the column settle; on across-the-line, a slow-closing valve or a surge relief handles the column.' },
+          { title: 'Minimum off', text: 'The pump does not restart for a set time, typically several minutes, so the motor cools and the aquifer recovers.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Never dead-head the pump',
+        text: 'A well pump running against closed valves heats the water in the bowls and, on a submersible, the motor that the water is supposed to cool. The valve sequence at transfer opens the new path before closing the old, and the controller alarms and stops the pump if flow is not confirmed within a short time after start.',
+      },
+      { t: 'h2', text: 'Protections' },
+      {
+        t: 'table',
+        head: ['Protection', 'Signal', 'Setting and note'],
+        rows: [
+          ['Low-water cutoff', 'A level transducer, a conductivity probe set above the pump intake, or an airline', 'Stops the pump when the pumping level nears the intake, with a restart above it after a delay. The single most important protection.'],
+          ['Fail to prove flow', 'Flow meter or discharge pressure', 'Pump running and no flow within 30 to 60 seconds: stop and alarm. Catches a broken shaft, a dropped pump, an air lock, a closed valve.'],
+          ['Overcurrent and undercurrent', 'Motor current from the starter or drive', 'High: a jammed or sanded pump, a failing motor. Low: a broken shaft or coupling, a pump running in air. Both against a baseline.'],
+          ['Phase monitoring', 'Phase monitor relay', 'Loss, reversal, imbalance, and undervoltage; reversal on a submersible runs it backward and unscrews some couplings.'],
+          ['Motor thermal', 'A thermal sensor where fitted, or a thermal model in the drive', 'Submersible motors depend on water flow past them for cooling; a thermal alarm at low flow is real.'],
+          ['Insulation resistance', 'A periodic test with power off', 'A submersible cable and motor that trend downward are on the way out. Test on a schedule and trend it.'],
+          ['Starts per hour', 'A counter in the controller', 'Large submersibles are limited to a handful of starts per hour and the cycle is designed around that.'],
+        ],
+      },
+      { t: 'h2', text: 'Drawdown and the aquifer' },
+      {
+        t: 'p',
+        text: 'When a well pump runs, the water level in the casing falls from the static level to a pumping level, and the difference is the drawdown. The flow divided by the drawdown is the specific capacity of the well, in gallons per minute per foot, and it is the health measurement of the well itself. As a screen clogs with mineral scale or biological growth, the drawdown at a given flow increases and the specific capacity falls, over months and years. A controller that records the static level before each start, the pumping level after a set run time, and the flow, produces the specific capacity trend, and that trend tells the utility when to rehabilitate the well before it can no longer meet demand.',
+      },
+      {
+        t: 'p',
+        text: 'The pumping level also sets the low-water cutoff margin. A well whose pumping level has fallen toward the pump intake is a well whose cutoff will start tripping, and the response is well rehabilitation, a lower pump setting, or a reduced flow, not a lower cutoff setpoint.',
+      },
+      { t: 'h2', text: 'Control modes' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Tank level', def: 'The common mode: the well fills a ground or elevated tank, starting at a low level and stopping at a high level, with the band set for the well cycling limits. The tank level control page covers the setpoints.' },
+          { term: 'System pressure', def: 'A well pumping directly into distribution, with a hydropneumatic tank or a drive holding pressure. Cycling is the risk; the tank or the drive minimum speed manages it.' },
+          { term: 'Flow control with a drive', def: 'The well delivers a set flow to a treatment process or blends with other sources. The drive minimum speed and the pump curve down the well set the range; a submersible at low speed loses cooling flow.' },
+          { term: 'Schedule and rotation', def: 'Multiple wells run in rotation to share the drawdown across the well field and to exercise every pump. The rotation logic is the lead/lag logic with wells as the pumps.' },
+        ],
+      },
+      { t: 'h2', text: 'What to trend' },
+      {
+        t: 'ul',
+        items: [
+          'Static level, pumping level, flow, and the calculated specific capacity, per run and over years.',
+          'Motor current and power against flow, for a sanded pump or a worn stage.',
+          'Run hours and starts, against the motor limits.',
+          'Pump-to-waste duration and the turbidity at transfer, for a screen that is shedding more.',
+          'Insulation resistance from each test, for the cable and motor.',
+          'Discharge pressure at a fixed flow, for a check valve or a column leak.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Why pump to waste at every start?',
+        a: 'The first water out of a well after the pump has been off carries sand and sediment that settled in the column and the screen, and air from the column. Sending it to the system delivers turbid water and fouls meters and chemical feed. A few minutes to waste, until a turbidity reading or a timer says the water is clear, is standard practice, and some regulators require it.',
+      },
+      {
+        q: 'How is a low-water cutoff set?',
+        a: 'From the pump setting and the manufacturer minimum submergence: the pump intake depth, plus the submergence required for cooling and to prevent vortexing, is the cutoff level. The transducer or probe is placed there, with a restart level enough above it that the well has recovered before the pump runs again.',
+      },
+      {
+        q: 'Should a well pump be on a drive?',
+        a: 'When the well is the source for a process that needs a controlled flow, or when pressure must be held without a large tank, yes. For a well that fills a tank, a drive adds cost and heat for little benefit, and a submersible at reduced speed can lose the cooling flow past its motor. Fixed speed with a soft starter for the column surge is common.',
+      },
+      {
+        q: 'What does a falling current with normal flow mean?',
+        a: 'Usually a worn pump: the impellers and bowls have lost clearance, the pump does less work at the same speed, and the flow will follow the current down. A sudden drop with no flow is a broken shaft or a dropped pump. Compare with the baseline and the flow.',
+      },
+    ],
+    related: [
+      '/water-wastewater/water-systems/storage/tank-level-control',
+      '/controls/instrumentation/level/hydrostatic-level',
+      '/controls/control-panels/pump-panels/soft-starters',
+      '/troubleshooting/pump-troubleshooting/pump-runs-but-no-flow',
+      '/water-wastewater/water-systems/water-pumping/pressure-control',
+      '/troubleshooting/pump-troubleshooting/pump-will-not-start',
+    ],
+  },
+  {
+    path: '/water-wastewater/water-systems/water-pumping/booster-pumps',
+    kind: 'reference',
+    title: 'Booster Pump Stations',
+    summary:
+      'Inline stations that raise pressure from one zone to another: suction pressure protection, discharge pressure control with drives, staging, the hydropneumatic tank alternative, surge and check valve behavior, and the interlocks that keep a booster from collapsing the zone it draws from.',
+    answer:
+      'A booster pump station takes water from a lower pressure zone or a tank and delivers it to a higher zone at a controlled pressure. Its controls hold discharge pressure with variable speed pumps staged to the demand, protect the suction side with a low suction pressure cutoff so the station cannot draw the lower zone below its minimum, manage the transitions so the higher zone sees no surge, and provide a bypass or a standby path for when the station stops. The suction interlock is the one that matters most and is most often set wrong.',
+    keyPoints: [
+      'Discharge pressure is the controlled variable. Suction pressure is the interlock that protects the zone behind the station.',
+      'Low suction cutoff, with a delay and a restart pressure, before the lower zone drops below its minimum.',
+      'Drives and staging as for any pressure station, with a check valve per pump and a bypass around the station.',
+      'A hydropneumatic tank replaces the drive for very small stations and adds a cycle to manage.',
+      'Trend suction and discharge together. The difference is the station; the suction alone is the zone.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['Water', 'Pumps', 'PID', 'VFD', 'Control'],
+    blocks: [
+      { t: 'h2', text: 'What the station does' },
+      {
+        t: 'p',
+        text: 'Distribution systems are divided into pressure zones by elevation. Water reaches the higher zones through booster stations: pumps installed in the main, taking suction from the lower zone and discharging into the higher one, or from a ground storage tank into a zone above it. Unlike a plant high-service station, an inline booster has no reservoir of its own on the suction side; it is drawing from a pressurized main that other customers share. That is the defining control problem: the station can hold its discharge pressure perfectly while pulling the suction zone down to the point where customers behind it lose pressure and the main goes negative.',
+      },
+      { t: 'h2', text: 'Discharge control' },
+      {
+        t: 'p',
+        text: 'The discharge side is a pressure control station, and the pressure control page covers the loop: a pressure transmitter downstream of the check valves, a drive on each pump, a PID loop holding setpoint, staging on output and time, a minimum speed, and a deadband. Booster-specific settings follow from the zone above. The setpoint may vary by time of day where the upper zone has a tank that fills at night, and the loop may be given a flow limit so that the station cannot deliver more than the upper zone main can take.',
+      },
+      { t: 'h2', text: 'Suction protection' },
+      {
+        t: 'p',
+        text: 'The suction pressure transmitter is the most important instrument in the station. It protects the zone the station draws from and it protects the pumps from cavitation.',
+      },
+      {
+        t: 'table',
+        head: ['Function', 'Setting', 'Behavior'],
+        rows: [
+          ['Low suction pressure alarm', 'A few psi above the cutoff', 'Alarm to SCADA; the station keeps running'],
+          ['Low suction pressure cutoff', 'The lower zone minimum pressure at the station, commonly around 20 psi where that is the required minimum at the customer, with margin for the elevation difference', 'After a short delay of a few seconds to ride through transients, the pumps stop or reduce speed to a minimum; the station does not restart until suction recovers to a restart pressure with a delay'],
+          ['Suction pressure limiting', 'A second controller or an override', 'Instead of stopping, the station reduces speed to hold suction at the minimum, giving the upper zone what the lower can spare. Better than a cutoff where a stop would empty the upper zone'],
+          ['Suction pressure high', 'Above the normal range', 'Indicates the lower zone is overpressured or a valve has changed; alarm only'],
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Negative pressure in a main is a contamination event',
+        text: 'A booster that draws its suction main below atmospheric pressure can pull groundwater and whatever is in it through any leak or a cross connection into the drinking water. The low suction cutoff is a public health protection, not an equipment protection, and it is set with margin, tested at commissioning, and never bypassed to keep the upper zone supplied.',
+      },
+      { t: 'h2', text: 'Staging and transitions' },
+      {
+        t: 'p',
+        text: 'Booster stations are often duplex or triplex with identical pumps on drives, staged on controller output and time as the pressure control page describes. The transitions get extra attention because both zones feel them: a pump starting across the line drops the suction pressure and spikes the discharge; a pump stopping abruptly lets the check valve slam and sends a surge into the upper zone. Drives with ramps, a slow-closing check valve or a surge anticipator on the discharge, and staging that changes the total output gently handle it. Where the station is the only supply to the upper zone, the staging logic keeps at least one pump running through every transition.',
+      },
+      { t: 'h2', text: 'The hydropneumatic alternative' },
+      {
+        t: 'p',
+        text: 'A very small booster, a few homes on a hill, may use a fixed-speed pump and a hydropneumatic tank instead of a drive. The tank holds a cushion of air over the water; the pump runs to a cut-out pressure and stops, and the tank supplies demand until the cut-in pressure. The controls are a pressure switch or a transmitter with two setpoints, a starts-per-hour check against the tank drawdown, and an air charge maintenance routine. The waterlogged tank, where the air cushion has dissolved into the water and the pump short cycles, is the failure mode; a bladder tank or an air compressor with a level control prevents it.',
+      },
+      { t: 'h2', text: 'Bypass and standby' },
+      {
+        t: 'p',
+        text: 'When the station stops, on power loss, on the suction cutoff, or for maintenance, the upper zone needs a path. A bypass line around the station with a check valve lets the lower zone pressure feed the upper zone at whatever the elevation difference allows, and a pressure-reducing valve in the bypass may be needed where the lower zone pressure is high. Where the upper zone has a tank, the tank carries the zone through the outage and the station restarts on tank level. Where it has neither, a generator and a spare pump are the standby, and the outage time to low pressure is calculated and known.',
+      },
+      { t: 'h2', text: 'Instrumentation and trending' },
+      {
+        t: 'ul',
+        items: [
+          'Suction pressure and discharge pressure, trended together. The difference is the station head; the suction trace alone shows what the station is doing to the lower zone.',
+          'Station flow, for staging, for the flow limit, and for the zone demand record.',
+          'Pump speeds and currents, for staging health and wear.',
+          'Upper zone tank level where there is one, as the outer loop or the override.',
+          'Starts per pump, cutoff events, and low suction alarms, as the record of whether the station is sized for the zone.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Why does the station keep tripping on low suction in the evening?',
+        a: 'The lower zone cannot supply the station and its own customers at evening peak. The cutoff is doing its job. The fix is a larger main to the station, a tank on the suction side, a suction pressure limiting mode that reduces output rather than stopping, or a schedule that fills the upper zone tank before the peak.',
+      },
+      {
+        q: 'Where should the discharge pressure transmitter be?',
+        a: 'Downstream of the check valves and the station discharge valve, on the main leaving the station, so it reads what the zone sees and is not affected by which pump is running. A transmitter on an individual pump discharge reads that pump and confuses the staging.',
+      },
+      {
+        q: 'Can the booster be controlled on the upper zone tank level instead of pressure?',
+        a: 'Where the upper zone has a tank, the tank level is the natural outer loop: the station runs to fill the tank and the tank holds the zone pressure. Pressure control at the station is then a limit rather than the primary loop. Where there is no tank, pressure at the station is the only variable available.',
+      },
+      {
+        q: 'How is the low suction cutoff tested?',
+        a: 'At commissioning, by throttling the suction valve slowly with the pumps running until the transmitter reaches the cutoff, and confirming the pumps stop after the delay and restart after recovery. The transmitter is calibrated against a gauge first. The test is repeated on a schedule, because a bypassed cutoff is invisible until the day it matters.',
+      },
+    ],
+    related: [
+      '/water-wastewater/water-systems/water-pumping/pressure-control',
+      '/water-wastewater/water-systems/storage/tank-level-control',
+      '/controls/control-panels/pump-panels/vfd',
+      '/controls/instrumentation/pressure/pressure-transmitters',
+      '/troubleshooting/pump-troubleshooting/pump-short-cycles',
+      '/how-to/plc-how-to/create-a-pid-loop',
+    ],
+  },
+  {
+    path: '/water-wastewater/water-systems/storage/elevated-tanks',
+    kind: 'reference',
+    title: 'Elevated Tank Control',
+    summary:
+      'The tank on legs that sets the zone pressure: how level equals pressure, the operating band, the altitude valve and its telemetry, turnover for water quality, filling by pumps far away, freeze protection, and what the level signal does when the tank is holding the system together.',
+    answer:
+      'An elevated tank floats on the distribution system, so its level is the zone pressure and the zone pressure is its level. The controls run the supply pumps to hold the level in an operating band chosen for pressure, fire reserve, and turnover; an altitude valve or the pumps prevent overflow; the level is telemetered to the pumps that fill it, often miles away; and the level trend is the single best picture of what the zone is doing. Because the tank keeps the zone pressurized when everything else has failed, its level signal, its telemetry, and its overflow protection deserve redundancy.',
+    keyPoints: [
+      'Level is pressure: one foot of water is 0.433 psi at every customer below it.',
+      'The operating band balances pressure at the top, fire reserve at the bottom, and turnover between them.',
+      'Overflow protection is independent of the fill control: an altitude valve, a high-level float, or both.',
+      'The level telemetry runs the pumps. Its loss is handled by a defined fallback, never by a frozen value.',
+      'A tank that never drops does not turn over, and stale water is a water quality violation waiting to happen.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['Water', 'Level', 'Telemetry', 'Control', 'SCADA'],
+    blocks: [
+      { t: 'h2', text: 'Why the tank is in charge' },
+      {
+        t: 'p',
+        text: 'A tank on a tower, open to the distribution system, holds the zone at a pressure equal to the height of water in it above each customer. Pumps fill it; demand drains it; the pressure everyone sees is set by the water surface, not by any pump. That is the reason the tank exists: it decouples pressure from pumping, supplies peak demand and fire flow from storage, and keeps the zone pressurized through a power outage for as long as the water lasts. Every control decision about the zone starts from the tank level.',
+      },
+      { t: 'h2', text: 'The operating band' },
+      {
+        t: 'table',
+        head: ['Level', 'What it means', 'Set by'],
+        rows: [
+          ['Overflow', 'Water leaves through the overflow pipe', 'The tank; the altitude valve or the high-level cutoff sits below it'],
+          ['High level, pumps stop', 'The top of the normal band', 'Near the top of the bowl, with margin below the overflow; the zone pressure at this level is the maximum customers see'],
+          ['Low level, pumps start', 'The bottom of the normal band', 'Deep enough that the daily cycle turns the water over; high enough that pressure and fire reserve are kept'],
+          ['Fire reserve', 'The volume below the operating band held for fire flow', 'The fire flow requirement times its duration; the operating band sits above it'],
+          ['Low-low', 'Pressure at the highest customer approaches the minimum', 'Alarm and emergency actions: additional sources, pressure zone valves'],
+        ],
+      },
+      {
+        t: 'p',
+        text: 'The band is chosen on a drawing with the elevations of the tank and the highest and lowest customers, and it is checked against the pressure range the code and the utility allow. A tall tank with a deep band gives a wide pressure swing; a shallow band gives steady pressure and poor turnover. Utilities often run a deeper band in summer for turnover and a shallower one in winter for freeze protection, and the setpoints are seasonal parameters in the controller, not constants.',
+      },
+      { t: 'h2', text: 'Filling' },
+      {
+        t: 'p',
+        text: 'The pumps that fill an elevated tank are rarely at the tank. They are at a plant, a well, or a booster station, sometimes miles away, and they run on the tank level received over telemetry. The tank level control page covers the setpoints and the fallback when the level signal is lost; the elevated tank adds the pressure consequences. A pump station running at full output into a zone whose tank is nearly full raises pressure above the band until the tank absorbs it, and a station that stops abruptly lets the zone pressure drop to the tank level in seconds. Filling is therefore done at a controlled rate, with the station output limited to what the zone main can carry, and the stop is ramped where the pumps have drives.',
+      },
+      { t: 'h2', text: 'Overflow protection' },
+      {
+        t: 'p',
+        text: 'An elevated tank that overflows wastes water, damages the tower and the ground beneath it, and in cold weather builds ice on the structure. The fill control stops the pumps at the high level, and something independent of that control must stop the water if it fails.',
+      },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Altitude valve', def: 'A hydraulic valve in the tank inlet that closes on the pressure of a full tank and opens as the tank drains. It works with no power and no telemetry. Its position is telemetered, because a closed altitude valve with pumps still running dead-heads the station and raises zone pressure.' },
+          { term: 'High-level float or switch', def: 'A second level device on its own circuit that stops the pumps through the telemetry as a hardwired signal or a separate point, and alarms.' },
+          { term: 'Pump station overpressure cutoff', def: 'A discharge pressure high limit at the pump station that stops the pumps when the zone pressure indicates a full tank and a closed valve. The last line.' },
+          { term: 'Overflow detection', def: 'A switch in the overflow pipe or a flow indication that alarms an overflow in progress, so it is known within minutes rather than at the next drive-by.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Telemeter the altitude valve position',
+        text: 'An altitude valve that has closed is doing its job and creating a new condition: the pump station is pumping into a closed system. Position feedback on the valve, sent with the level, lets the controller stop the pumps and the operator see why the tank is not filling. Without it, the symptoms are high pressure at the station and a level that has stopped rising, and the diagnosis takes a site visit.',
+      },
+      { t: 'h2', text: 'Water quality and turnover' },
+      {
+        t: 'p',
+        text: 'Water in a tank ages. Chlorine residual decays, temperature stratifies in summer, and a tank that sits near full with a small daily draw can hold water for days or weeks, long enough to lose its residual and grow nitrifying bacteria in a chloraminated system. The operating band is the first tool: a band deep enough that the daily cycle exchanges a meaningful fraction of the volume. Mixing systems, inlet nozzles that induce circulation, and scheduled deep drawdowns are the others. The controller can compute the turnover from the level trend and the tank geometry and alarm when the average age exceeds a limit, which is a better indicator than the residual sample taken once a week at the base.',
+      },
+      { t: 'h2', text: 'Cold weather' },
+      {
+        t: 'p',
+        text: 'An elevated tank in a cold climate ices from the surface and the riser. Turnover keeps the water moving; a shallower winter band keeps the surface high and the ice layer thin; heaters in the riser and the valve pit keep the pipes from freezing. The level transmitter, whether a pressure transducer at the base of the riser or a radar in the bowl, needs its own protection: a pressure transmitter in a heated pit, a radar with a sunshade and a heated antenna where ice forms on the surface. A frozen level signal in February is the classic elevated tank failure.',
+      },
+      { t: 'h2', text: 'The level signal' },
+      {
+        t: 'p',
+        text: 'The tank level is usually measured as pressure at the base of the riser, which reads the height of water above it directly, and it is often the only measurement at the tank. The signal is transmitted to the pump station and SCADA by radio, cellular, or leased line, and everything about the zone depends on it.',
+      },
+      {
+        t: 'ul',
+        items: [
+          'Two measurements where the tank is critical: a pressure transmitter at the base and a radar or a second transmitter, compared in the controller.',
+          'A timestamp and a validity flag on the received level at the pump station, with the fallback on stale or bad data defined in the narrative: a fixed schedule, local discharge pressure control, or hold and alarm.',
+          'A local indication at the tank site for the technician and for a manual comparison against a sight gauge or a tape at the hatch.',
+          'The level trend on SCADA at the highest resolution the telemetry allows, with the pump run status from the filling station overlaid.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'How full should the tank be kept?',
+        a: 'In the operating band, which is chosen for pressure, fire reserve, and turnover, not as full as possible. A tank held near the top has the best pressure and the worst water age. Most utilities cycle through a band of several feet daily and set the band seasonally.',
+      },
+      {
+        q: 'Why does the zone pressure swing through the day?',
+        a: 'Because the tank level swings through the operating band, and pressure is level. A deep band gives a wide swing. If the swing is objectionable, the band is shallower, at the cost of turnover, or the zone gets a pressure-regulating arrangement for the affected customers.',
+      },
+      {
+        q: 'What happens to the zone when the telemetry fails?',
+        a: 'Whatever the fallback in the control narrative says. The pump station cannot see the tank, and it runs a defined program: a time-based schedule sized to average demand, control on its own discharge pressure with limits that approximate the tank band, or hold the last state for a limited time and alarm. The altitude valve and the high-level float protect the tank from overflow while the fallback runs.',
+      },
+      {
+        q: 'Can the tank level be used to detect a main break?',
+        a: 'Yes, and it is one of the better uses of the trend. A level that falls faster than the demand history at that hour, while the pumps run as usual, is water leaving the zone somewhere. A rate-of-fall alarm on the tank level, compared with a demand profile, catches large breaks before the phones ring.',
+      },
+    ],
+    related: [
+      '/water-wastewater/water-systems/storage/tank-level-control',
+      '/water-wastewater/water-systems/water-pumping/pressure-control',
+      '/controls/instrumentation/level/hydrostatic-level',
+      '/controls/instrumentation/level/radar-level',
+      '/water-wastewater/water-systems/water-pumping/booster-pumps',
+      '/controls/plc-systems/analog-control/signal-validation',
+    ],
+  },
+  {
+    path: '/water-wastewater/water-systems/water-treatment/disinfection',
+    kind: 'reference',
+    title: 'Disinfection Control',
+    summary:
+      'Controlling chlorine and chloramine dosing at a water plant: the CT concept and how contact time is credited, flow-paced and residual-trimmed feed, gas, hypochlorite, and on-site generation systems, the point-of-entry residual as the compliance measurement, and the interlocks that stop a feed system from over- or under-dosing.',
+    answer:
+      'Disinfection control feeds chlorine, or chlorine and ammonia for chloramination, at a dose that achieves the required CT, the product of residual concentration and contact time, and holds a target residual at the point of entry to distribution. The feed is paced to flow with a feedforward, trimmed by a residual analyzer feedback, and interlocked so that loss of flow, loss of sample, or an analyzer fault cannot drive the dose to an extreme. The residual analyzer at the point of entry is the compliance instrument, and the record it produces is what the regulator reads.',
+    keyPoints: [
+      'The regulatory requirement is CT: residual times contact time, credited by the contact tank geometry and the flow.',
+      'Flow-paced feedforward does the work; residual feedback trims it slowly.',
+      'Loss of sample flow to the analyzer is a hardwired interlock to the feed, not an alarm.',
+      'Chloramination adds an ammonia feed and a ratio to hold. The order of addition and the ratio decide the chemistry.',
+      'The point-of-entry residual and the CT calculation are compliance records. Log them at the required interval with validated data.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 11,
+    tags: ['Water', 'Control', 'Instrumentation', 'PID'],
+    blocks: [
+      { t: 'h2', text: 'What is being controlled' },
+      {
+        t: 'p',
+        text: 'Disinfection kills or inactivates pathogens by exposing them to a disinfectant residual for a period of time. The surface water treatment rules express the requirement as CT: the residual concentration in mg/L multiplied by the contact time in minutes, compared with a required CT that depends on the disinfectant, the temperature, the pH, and the log inactivation the plant must achieve. The control system feeds enough disinfectant to hold a residual at the end of the contact tank that, at the current flow through the tank, gives the required CT with margin, and then feeds whatever more is needed to hold a residual at the point of entry to distribution, so that the water carries a residual to the customers.',
+      },
+      {
+        t: 'p',
+        text: 'Two things about that are unusual for a control loop. The controlled variable is measured a long way downstream of the actuator, through a contact tank with a hydraulic residence time of tens of minutes, so the loop has an enormous dead time. And the compliance is a calculation, CT, that the controller can perform continuously from the residual, the flow, and the tank geometry, which makes the calculation itself a control system deliverable.',
+      },
+      { t: 'h2', text: 'CT in the controller' },
+      {
+        t: 'formula',
+        expr: 'CT = C × T₁₀ = C × (V / Q) × (T₁₀ / T)',
+        where: [
+          'C = disinfectant residual at the contact tank outlet, in mg/L',
+          'V = contact tank volume, in gallons',
+          'Q = flow through the tank, in gallons per minute',
+          'T₁₀ / T = the baffling factor of the tank, from a tracer study or the regulatory table, typically 0.1 for an unbaffled tank to 0.7 or better for a serpentine one',
+          'CT is compared with the required CT for the temperature and pH from the regulatory tables',
+        ],
+      },
+      {
+        t: 'p',
+        text: 'The controller computes CT continuously, compares it with the required CT for the current temperature and pH, and alarms when the margin falls below a limit. At low temperature the required CT rises; at high flow the contact time falls; a plant that runs near its CT limit in winter at peak flow is a plant that needs the calculation on the screen. The calculation also supports a residual setpoint that floats with flow and temperature, raising the residual when contact time is short and lowering it when it is long, which saves chemical and reduces disinfection byproducts.',
+      },
+      { t: 'h2', text: 'Feed control' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Flow pacing', text: 'The feedforward. The dose in mg/L times the flow gives the feed rate; the controller sets the feeder output from the flow and the dose setpoint. This alone holds the residual reasonably well when demand and water quality are steady.' },
+          { title: 'Residual trim', text: 'A slow PID loop on the residual analyzer, adjusting the dose setpoint up or down within limits. Because of the contact tank dead time, the loop is tuned very slowly, with a long integral time and a small gain, and often with a sample-and-hold or a dead time compensator.' },
+          { title: 'Demand compensation', text: 'Where the raw water chlorine demand varies, from turbidity, organics, or ammonia, a second analyzer at the injection point or a demand calculation from the raw water quality adjusts the feedforward before the residual loop sees the change.' },
+          { title: 'Limits', text: 'A minimum and maximum dose, a maximum feeder output, and a rate-of-change limit, so that no combination of feedforward and trim can drive the feed to an extreme.' },
+          { title: 'Manual and fallback', text: 'Manual dose entry for the operator, and a fallback to flow pacing at the last good dose when the residual analyzer is invalid.' },
+        ],
+      },
+      { t: 'h2', text: 'Feed systems' },
+      {
+        t: 'table',
+        head: ['System', 'How the dose is delivered', 'Control interface', 'Notes'],
+        rows: [
+          ['Chlorine gas', 'A vacuum regulator at the cylinder or container, an automatic gas feeder with a modulating valve, an ejector that draws the gas into carrier water', 'A 4-20 mA signal to the feeder valve; feed rate feedback from the rotameter transmitter', 'Leak detection, room ventilation interlocks, and cylinder changeover are part of the control scope; the ejector water supply is an interlock'],
+          ['Sodium hypochlorite', 'A metering pump, diaphragm or peristaltic, from a bulk tank or day tank', 'Speed and stroke by 4-20 mA or a pulse signal; pump running and loss-of-prime feedback', 'Hypochlorite degrades with heat and time and off-gasses; the dose calculation uses the current strength, which is measured, and the pump loses prime on gas bubbles'],
+          ['On-site generation', 'A brine electrolysis system producing dilute hypochlorite into a storage tank, fed to the process by metering pumps', 'The generator runs on tank level; the feed pumps as for hypochlorite', 'The generator is its own packaged control system; the feed control is the same as bulk hypochlorite at a known strength'],
+          ['Chloramination', 'Chlorine as above plus an ammonia feed: aqueous ammonia or ammonium sulfate by metering pump', 'A ratio controller holds the chlorine-to-ammonia ratio, typically near 4 to 1 by weight, from the two feed rates', 'Order of addition and mixing decide whether monochloramine forms; free ammonia and monochloramine analyzers close the loop'],
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'safety',
+        title: 'Chlorine gas',
+        text: 'A chlorine gas feed room has leak detectors, ventilation, an emergency scrubber where required, and interlocks that stop the feed and alarm on a leak. Those interlocks are hardwired, tested on a schedule, and never bypassed for operational convenience. The control system integrates them; it does not replace them.',
+      },
+      { t: 'h2', text: 'Interlocks' },
+      {
+        t: 'ul',
+        items: [
+          'Loss of plant flow stops the feed. A feeder that runs with no flow delivers concentrated chemical into a stagnant pipe.',
+          'Loss of sample flow to the residual analyzer drops the residual loop to manual at the last good dose and alarms. The analyzer reads low with no sample, and the loop would raise the dose without limit.',
+          'Analyzer bad quality, out of range, or frozen does the same.',
+          'Feeder fault, loss of prime, or loss of ejector water alarms and, where a standby feeder exists, transfers to it.',
+          'A high residual at the point of entry above a limit alarms and, at a set higher limit, stops the feed.',
+          'Day tank low level stops the feed and alarms before the pump runs dry.',
+          'For chloramination, loss of either feed stops the other, because free chlorine without ammonia, or ammonia without chlorine, sent to a chloraminated system is a water quality event.',
+        ],
+      },
+      { t: 'h2', text: 'The compliance record' },
+      {
+        t: 'p',
+        text: 'The residual at the point of entry, the CT calculation, the temperature, and the pH are recorded at the interval the rule requires, commonly every 15 minutes for the residual with a daily minimum reported. The historian collects them from validated tags: a residual with bad quality or a lost sample is recorded as invalid, not as zero, and the report shows the gap and the reason. The residual analyzer at the point of entry is calibrated and verified against a grab sample on the schedule the chlorine analyzer page describes, and the calibration record sits beside the residual record.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Why is the residual loop so slow to correct?',
+        a: 'The contact tank. A dose change at the injection point reaches the outlet analyzer after the hydraulic residence time, which may be 30 minutes or more, and the loop cannot respond to what it has not seen. The feedforward on flow does the fast work; the residual loop adjusts the dose over hours. Tuning it faster produces a slow oscillation of the residual through the day.',
+      },
+      {
+        q: 'What residual should we target at the point of entry?',
+        a: 'Enough to satisfy the CT requirement at the contact tank outlet under the worst expected temperature and flow, plus enough to carry a detectable residual to the far end of distribution, and below the level that forms excessive disinfection byproducts or draws taste complaints. The utility sets it with its regulator; the control system holds it and records it.',
+      },
+      {
+        q: 'Should the dose be controlled on the point-of-entry residual or the contact tank outlet residual?',
+        a: 'The contact tank outlet residual is the CT measurement and the primary control point. The point-of-entry residual is the compliance measurement for distribution and may be trimmed by a second, downstream feed point where the plant has one. Controlling the single feed on the point-of-entry residual alone adds the clearwell residence time to the loop dead time and makes it worse.',
+      },
+      {
+        q: 'How do we handle hypochlorite strength decay in the dose calculation?',
+        a: 'Measure the strength when a delivery arrives and periodically after, enter it as a parameter, and let the controller compute the feed rate from the dose and the current strength. A controller that assumes 12.5 percent from a tank that has decayed to 9 percent under-doses by a quarter, and the residual loop chases it until it runs out of range.',
+      },
+    ],
+    related: [
+      '/controls/instrumentation/analytical/chlorine',
+      '/controls/instrumentation/analytical/ph',
+      '/controls/plc-systems/analog-control/pid',
+      '/controls/plc-systems/analog-control/signal-validation',
+      '/controls/instrumentation/flow/magnetic-flowmeters',
+      '/how-to/plc-how-to/create-a-pid-loop',
+    ],
+  },
 ];

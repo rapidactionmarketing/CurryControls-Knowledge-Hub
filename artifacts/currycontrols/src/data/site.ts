@@ -35,11 +35,11 @@ export const OWNERSHIP_NOTICE = {
   title: 'Before you continue',
   /** Opening line, shown above the ownership statement. */
   intro:
-    'Welcome to CurryControls.com, an independent knowledge hub for controls and automation. Please read the following before you continue.',
+    'Welcome to CurryControls.com, Eric Sullivan’s personal knowledge base for controls and automation. Please read the following before you continue.',
   paragraphs: [
-    'CurryControls.com is currently owned and maintained by Eric Sullivan.',
-    'Eric Sullivan is not affiliated with Curry Controls Company. Eric previously worked with Curry Controls Company and left the company in 2021. He is currently employed by General Control Systems, Inc.',
-    'General Control Systems, Inc. is a separate company and is not affiliated with Curry Controls Company.',
+    'CurryControls.com is independently owned and maintained by Eric Sullivan. It is his personal knowledge base containing technical notes, references, calculators, tools, and projects.',
+    'This website is not affiliated with, sponsored by, endorsed by, or operated by Curry Controls Company.',
+    'This website is also not affiliated with, sponsored by, endorsed by, or operated by General Control Systems, Inc. Nothing on this site represents the official views, materials, or services of either company.',
   ],
   disclaimerLinkLabel: 'Read the information disclaimer',
   acknowledgeLabel:
@@ -62,7 +62,7 @@ export const DISCLAIMERS = {
   safety:
     'Work on energized industrial equipment carries risk of injury or death. Follow NFPA 70E, your employer’s electrical safety program, and lockout/tagout procedures. Nothing here replaces qualified supervision.',
   independence:
-    'CurryControls.com is independently owned by Eric Sullivan and is not affiliated with Curry Controls Company.',
+    'CurryControls.com is Eric Sullivan’s personal knowledge base. It is independently owned and is not affiliated with Curry Controls Company or General Control Systems, Inc.',
   projects: 'A Personal Project of Eric Sullivan',
 
   /** One line, used wherever there is room for only one: the notice, the footer, compact blocks. */

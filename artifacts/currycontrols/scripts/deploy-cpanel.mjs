@@ -13,10 +13,13 @@
  * Fileman::fileop, which is the only interface that exposes it.
  *
  * Required environment (set these as Replit Secrets):
- *   CPANEL_HOST     hostname only, no scheme (e.g. server.hosting.com)
- *   CPANEL_USER     cPanel account username
- *   CPANEL_TOKEN    cPanel API token
- *   CPANEL_DOCROOT  absolute document root of the addon domain
+ *   CPANEL_HOST or HOSTING_COM_CPANEL_HOST
+ *   CPANEL_USER or HOSTING_COM_CPANEL_USERNAME
+ *   CPANEL_TOKEN or HOSTING_COM_CPANEL_API_TOKEN
+ *   CPANEL_DOCROOT or HOSTING_COM_CPANEL_DOCROOT
+ *
+ * For this project, CPANEL_DOCROOT defaults to the CurryControls addon-domain
+ * directory under the cPanel home directory when it is not set explicitly.
  * Optional:
  *   CPANEL_PORT     defaults to 2083
  *   CPANEL_STAGING  where to put the archive, defaults to the account home
@@ -45,12 +48,31 @@ function required(name) {
   return value;
 }
 
-const HOST = required('CPANEL_HOST').replace(/^https?:\/\//, '').replace(/\/.*$/, '');
-const USER = required('CPANEL_USER');
-const TOKEN = required('CPANEL_TOKEN');
-const DOCROOT = required('CPANEL_DOCROOT').replace(/\/+$/, '');
+function firstValue(...names) {
+  return names.map((name) => process.env[name]).find(Boolean);
+}
+
+function requiredAny(...names) {
+  const value = firstValue(...names);
+  if (!value) {
+    console.error(`[deploy] missing required environment variable ${names.join(' or ')}`);
+    process.exit(1);
+  }
+  return value;
+}
+
+const HOST = requiredAny('CPANEL_HOST', 'HOSTING_COM_CPANEL_HOST')
+  .replace(/^https?:\/\//, '')
+  .replace(/\/.*$/, '');
+const USER = requiredAny('CPANEL_USER', 'HOSTING_COM_CPANEL_USERNAME');
+const TOKEN = requiredAny('CPANEL_TOKEN', 'HOSTING_COM_CPANEL_API_TOKEN');
+const DOMAIN = process.env['CPANEL_DOMAIN'] ?? 'currycontrols.com';
+const DOCROOT = (
+  firstValue('CPANEL_DOCROOT', 'HOSTING_COM_CPANEL_DOCROOT') ??
+  `/home/${USER}/${DOMAIN}`
+).replace(/\/+$/, '');
 const PORT = process.env['CPANEL_PORT'] ?? '2083';
-const SITE_URL = process.env['SITE_URL']?.replace(/\/+$/, '');
+const SITE_URL = (process.env['SITE_URL'] ?? `https://${DOMAIN}`).replace(/\/+$/, '');
 
 // cPanel home directories are /home/<user>. Staging the archive there keeps it
 // out of the document root and needs no mkdir.

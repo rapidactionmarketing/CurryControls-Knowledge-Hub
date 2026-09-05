@@ -13,7 +13,7 @@ import { SearchPage } from '@/pages/search';
 import { ContactPage } from '@/pages/contact';
 import { ArticlesPage, isArticleCategory } from '@/pages/articles';
 import { ProjectDetailPage, ProjectsPage } from '@/pages/projects';
-import { AboutEricPage, AboutSitePage } from '@/pages/about';
+import { AboutEricPage, AboutSitePage, OwnershipPage } from '@/pages/about';
 import { AnalyticsPage } from '@/pages/analytics';
 import { GlossaryIndexPage, GlossaryTermPage, isGlossarySlug } from '@/pages/glossary';
 import { FaqHubPage, SiteMapPage, TopicPage, TopicsIndexPage, isTagSlug } from '@/pages/discovery';
@@ -87,6 +87,7 @@ export function Routes() {
   if (path === '/editorial-standards') return <EditorialStandardsPage />;
 
   if (path === '/about/site') return <AboutSitePage />;
+  if (path === '/about/ownership') return <OwnershipPage />;
   if (path === '/about/eric-sullivan') return <AboutEricPage />;
   if (path === '/about/personal-projects') return <Redirect to="/tools-projects" replace />;
   if (path === '/about/contact-eric') return <Redirect to="/contact" replace />;

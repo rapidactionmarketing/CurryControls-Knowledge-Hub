@@ -1,15 +1,17 @@
 import { Link } from 'wouter';
 import { Phone } from 'lucide-react';
 import { CONTACT } from '@/data/site';
+import { LEGAL } from '@/data/site-legal';
 import { SitesMenu } from './sites-menu';
 
 /**
  * Permanent contact bar above the primary header.
  *
- * The phone number is Eric Sullivan's direct contact for CurryControls.com.
- * It is deliberately NOT presented as a Curry Controls Company, Revere
- * Control Systems, Inc., or General Control Systems, Inc. number; see
- * AFFILIATION in the site data.
+ * The phone number is Eric Sullivan's direct contact for CurryControls.com
+ * and his personal projects. It is deliberately NOT presented as a Curry
+ * Controls Company, Revere Control Systems, Inc., S.J. Electro Systems, LLC,
+ * or General Control Systems, Inc. number; see PHONE_STATEMENT in the legal
+ * record.
  */
 export function UtilityBar() {
   return (
@@ -35,7 +37,8 @@ export function UtilityBar() {
             data-phone-placement="utility-bar"
             className="group flex items-center gap-2 rounded px-1 py-1"
             data-testid="link-phone-utility"
-            aria-label={`Call Eric Sullivan at ${CONTACT.phoneDisplay}`}
+            title={LEGAL.phoneLabel}
+            aria-label={`${LEGAL.phoneLabel}, call ${CONTACT.phoneDisplay}`}
           >
             <span className="grid size-6 shrink-0 place-items-center rounded-full bg-white/12 ring-1 ring-white/25">
               <Phone size={12} aria-hidden="true" />

@@ -415,7 +415,7 @@ export const INSTRUMENTATION_CALCULATORS: Calculator[] = [
           ...(where === 'both'
             ? [
                 {
-                  label: 'Correct flow if extraction were applied once',
+                  label: 'Flow if extraction were applied once',
                   value: fmt(correctFlow, 3),
                   unit,
                   status: 'over' as const,

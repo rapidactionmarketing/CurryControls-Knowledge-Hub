@@ -5,6 +5,7 @@ import { Breadcrumbs } from '@/components/blocks/breadcrumbs';
 import { ContentBlocks, TableOfContents } from '@/components/blocks/content-blocks';
 import { ContactCta } from '@/components/blocks/contact-cta';
 import { DisclaimerBox } from '@/components/blocks/disclaimer';
+import { CodeStandardNotice, TroubleshootingNotice, referencesStandards } from '@/components/blocks/technical-notices';
 import { FaqSection } from '@/components/blocks/faq-section';
 import { RelatedContent } from '@/components/blocks/related-content';
 import { SequentialNav } from '@/components/blocks/sequential-nav';
@@ -35,6 +36,10 @@ export function EntryPage({ entry, nav }: { entry: Entry; nav: NavEntry }) {
     entry.kind === 'howto' ||
     isTroubleshooting ||
     entry.blocks.some((block) => block.t === 'callout' && block.kind === 'safety');
+  // The code and standard notice appears wherever a code or standard is cited.
+  const citesStandards = referencesStandards(
+    [entry.title, entry.summary, entry.answer, ...entry.tags, JSON.stringify(entry.blocks)].join(' '),
+  );
 
   return (
     <>
@@ -149,9 +154,13 @@ export function EntryPage({ entry, nav }: { entry: Entry; nav: NavEntry }) {
               </section>
             )}
 
+            {isTroubleshooting && <TroubleshootingNotice className="mt-6" />}
+
             <div className="mt-9">
               <ContentBlocks blocks={entry.blocks} />
             </div>
+
+            {citesStandards && <CodeStandardNotice className="mt-8" />}
 
             {entry.faqs && <FaqSection faqs={entry.faqs} />}
 

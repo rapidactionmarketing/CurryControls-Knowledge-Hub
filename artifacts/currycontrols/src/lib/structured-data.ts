@@ -7,7 +7,8 @@
  * question it answers, and where it sits in the taxonomy.
  */
 
-import { AFFILIATION, CONTACT, SITE } from '@/data/site';
+import { CONTACT, SITE } from '@/data/site';
+import { LEGAL } from '@/data/site-legal';
 import type { Entry } from '@/data/content';
 import type { NavEntry } from '@/data/nav-index';
 import { describe } from '@/data/nav-index';
@@ -35,6 +36,7 @@ export function personSchema(): JsonLd {
     url: absoluteUrl('/about/eric-sullivan'),
     telephone: CONTACT.phoneE164,
     jobTitle: 'Controls and Automation Professional',
+    disambiguatingDescription: `Registrant and operator of ${SITE.name} in his individual capacity.`,
     knowsAbout: [
       'Programmable Logic Controllers',
       'SCADA Systems',
@@ -62,7 +64,7 @@ export function websiteSchema(): JsonLd {
     alternateName: SITE.tagline,
     url: SITE.url,
     description: SITE.description,
-    disambiguatingDescription: AFFILIATION.short,
+    disambiguatingDescription: LEGAL.footer,
     inLanguage: 'en-US',
     publisher: { '@id': PERSON_ID },
     potentialAction: {
@@ -265,6 +267,20 @@ export function contactPageSchema(): JsonLd {
     description: `Contact ${CONTACT.person} about CurryControls.com, a controls or automation topic, or one of his personal projects. Phone ${CONTACT.phoneDisplay}.`,
     isPartOf: { '@id': SITE_ID },
     mainEntity: { '@id': PERSON_ID },
+  };
+}
+
+/** An About or ownership page. The subject is the site and the person who operates it. */
+export function aboutPageSchema(name: string, path: string, description: string): JsonLd {
+  return {
+    '@type': 'AboutPage',
+    name,
+    url: absoluteUrl(path),
+    description,
+    isPartOf: { '@id': SITE_ID },
+    about: { '@id': SITE_ID },
+    mainEntity: { '@id': PERSON_ID },
+    inLanguage: 'en-US',
   };
 }
 

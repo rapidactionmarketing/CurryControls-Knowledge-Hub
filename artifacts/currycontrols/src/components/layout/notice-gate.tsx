@@ -1,44 +1,42 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Check, FileText, ShieldCheck } from 'lucide-react';
-import { DISCLAIMERS, OWNERSHIP_NOTICE, SITE_DISCLAIMER } from '@/data/site';
+import { LegalSectionView } from '@/components/blocks/legal-blocks';
+import { INFORMATION_DISCLAIMER, NOTICE_POPUP } from '@/data/site-legal';
 
 /**
- * First-visit notice, in two views inside one dialog.
+ * First-visit notice: the ownership, registration, and non-affiliation
+ * statement followed by the technical information notice, shown as a white
+ * card over a dark navy overlay before the site is used.
  *
- * View 1 is the ownership notice. It cannot be accepted until the reader has
- * opened the information disclaimer (view 2), scrolled it to the end, and then
- * ticked the acknowledgement. The gate is deliberate: the disclaimer is the
- * part that matters, and a button on its own lets it go unread.
+ * Every word comes from the legal record. The notice is informational: the
+ * visitor reads it and acknowledges it with one button. A second view inside
+ * the same dialog shows the full Information & Calculator Disclaimer, so it
+ * can be read without leaving the notice.
  *
- * Shown once per browser session. Escape never dismisses the notice; inside
- * the disclaimer view it returns to the notice without marking the disclaimer
- * read. Content that fits without scrolling counts as read on open, so a tall
- * screen is never asked to scroll something that has no scrollbar.
+ * Shown once per browser session (sessionStorage). Escape never dismisses the
+ * notice; inside the disclaimer view it returns to the notice. Focus stays
+ * inside the dialog while it is open.
  */
 export function NoticeGate() {
   const [ready, setReady] = useState(false);
-  const [accepted, setAccepted] = useState(true);
+  const [acknowledged, setAcknowledged] = useState(true);
   const [view, setView] = useState<'notice' | 'disclaimer'>('notice');
-  const [disclaimerRead, setDisclaimerRead] = useState(false);
-  const [acknowledged, setAcknowledged] = useState(false);
 
   const panelRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const openRef = useRef<HTMLButtonElement>(null);
-  const checkboxRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     let seen = false;
     try {
-      seen = sessionStorage.getItem(OWNERSHIP_NOTICE.storageKey) === 'true';
+      seen = sessionStorage.getItem(NOTICE_POPUP.storageKey) === 'true';
     } catch {
       seen = false;
     }
-    setAccepted(seen);
+    setAcknowledged(seen);
     setReady(true);
   }, []);
 
-  const visible = ready && !accepted;
+  const visible = ready && !acknowledged;
 
   // Scroll lock, focus trap, and Escape handling.
   useEffect(() => {
@@ -49,16 +47,15 @@ export function NoticeGate() {
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        if (view === 'disclaimer') {
-          event.preventDefault();
-          setView('notice');
-        }
+        // Escape never bypasses the notice. Inside the disclaimer it goes back.
+        event.preventDefault();
+        if (view === 'disclaimer') setView('notice');
         return;
       }
       if (event.key !== 'Tab' || !panelRef.current) return;
       const focusable = [
         ...panelRef.current.querySelectorAll<HTMLElement>(
-          'button:not([disabled]), a[href], input:not([disabled]), [tabindex]:not([tabindex="-1"])',
+          'button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])',
         ),
       ];
       if (focusable.length === 0) return;
@@ -80,38 +77,31 @@ export function NoticeGate() {
     };
   }, [visible, view]);
 
-  // Where focus lands as the views change.
+  // Where focus lands as the views change. The notice view focuses the dialog
+  // itself, at the top, so the heading is the first thing seen and read; the
+  // button is one Tab away. The disclaimer view focuses its scroll region.
   useEffect(() => {
     if (!visible) return;
-    if (view === 'disclaimer') scrollRef.current?.focus();
-    else (disclaimerRead ? checkboxRef.current : openRef.current)?.focus();
-  }, [visible, view, disclaimerRead]);
-
-  const checkScrolled = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 4) setDisclaimerRead(true);
-  }, []);
-
-  useEffect(() => {
-    if (!visible || view !== 'disclaimer') return;
-    checkScrolled();
-    window.addEventListener('resize', checkScrolled);
-    return () => window.removeEventListener('resize', checkScrolled);
-  }, [visible, view, checkScrolled]);
+    if (view === 'disclaimer') {
+      scrollRef.current?.focus({ preventScroll: true });
+      return;
+    }
+    const panel = panelRef.current;
+    if (panel) {
+      panel.scrollTop = 0;
+      panel.focus({ preventScroll: true });
+    }
+  }, [visible, view]);
 
   if (!visible) return null;
 
-  const canAccept = disclaimerRead && acknowledged;
-
-  const accept = () => {
-    if (!canAccept) return;
+  const acknowledge = () => {
     try {
-      sessionStorage.setItem(OWNERSHIP_NOTICE.storageKey, 'true');
+      sessionStorage.setItem(NOTICE_POPUP.storageKey, 'true');
     } catch {
       // If storage is unavailable, allow entry rather than trapping the visitor.
     }
-    setAccepted(true);
+    setAcknowledged(true);
   };
 
   const titleId = 'ownership-notice-title';
@@ -120,110 +110,86 @@ export function NoticeGate() {
     <div className="cc-notice-backdrop">
       <div
         ref={panelRef}
-        className="cc-notice p-6 sm:p-8"
+        className="cc-notice p-6 sm:p-8 outline-none"
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
+        tabIndex={-1}
         data-testid="notice-gate"
         data-view={view}
       >
         {view === 'notice' ? (
           <>
             <div className="mb-5 flex items-start gap-4">
-              <span className="grid size-10 shrink-0 place-items-center rounded-full bg-white/10 text-white">
+              <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[hsl(var(--surface))] text-[hsl(var(--navy))] ring-1 ring-[hsl(var(--rule))]">
                 <ShieldCheck size={19} aria-hidden="true" />
               </span>
               <div>
-                <p className="cc-eyebrow text-white/70">Important information</p>
-                <h2 id={titleId} className="cc-h2 mt-1 text-white">
-                  {OWNERSHIP_NOTICE.title}
+                <p className="cc-eyebrow">Please read before continuing</p>
+                <h2 id={titleId} className="cc-h2 mt-1 text-[hsl(var(--navy))]">
+                  {NOTICE_POPUP.heading}
                 </h2>
               </div>
             </div>
 
-            <p className="text-[0.95rem] leading-7 text-white" data-testid="notice-intro">
-              {OWNERSHIP_NOTICE.intro}
-            </p>
-
-            <div id="ownership-notice-body" className="mt-4 space-y-3.5">
-              {OWNERSHIP_NOTICE.paragraphs.map((paragraph) => (
-                <p key={paragraph} className="text-[0.925rem] leading-7 text-white/90">
+            <div id="ownership-notice-body" className="space-y-3" data-testid="notice-body">
+              {NOTICE_POPUP.paragraphs.map((paragraph) => (
+                <p key={paragraph} className="text-[0.92rem] leading-7 text-[hsl(var(--ink))]">
                   {paragraph}
                 </p>
               ))}
             </div>
 
-            <div className="mt-5 rounded border border-white/20 bg-white/5 p-4" data-testid="notice-risk">
-              <p className="text-[0.875rem] leading-6 text-white/90">{DISCLAIMERS.risk}</p>
+            <section
+              className="mt-6 rounded border border-[hsl(var(--rule))] bg-[hsl(var(--surface))] p-4 sm:p-5"
+              aria-labelledby="technical-notice-heading"
+              data-testid="notice-technical"
+            >
+              <h3
+                id="technical-notice-heading"
+                className="cc-mono text-[0.7rem] font-bold uppercase tracking-[0.12em] text-[hsl(var(--navy))]"
+              >
+                {NOTICE_POPUP.technicalNotice.heading}
+              </h3>
+              {NOTICE_POPUP.technicalNotice.paragraphs.map((paragraph) => (
+                <p key={paragraph} className="mt-2 text-[0.875rem] leading-6.5 text-[hsl(var(--ink))]">
+                  {paragraph}
+                </p>
+              ))}
               <button
-                ref={openRef}
                 type="button"
                 onClick={() => setView('disclaimer')}
-                className="mt-3 inline-flex items-center gap-2 text-[0.875rem] font-semibold text-white"
+                className="cc-btn cc-btn-outline mt-4"
                 data-testid="button-open-disclaimer"
               >
                 <FileText size={15} aria-hidden="true" />
-                <span className="underline underline-offset-2">{OWNERSHIP_NOTICE.disclaimerLinkLabel}</span>
-                {disclaimerRead && (
-                  <span className="inline-flex items-center gap-1 text-[0.78rem] font-normal text-white/70">
-                    <Check size={13} aria-hidden="true" />
-                    read
-                  </span>
-                )}
+                {NOTICE_POPUP.disclaimerLinkLabel}
               </button>
-            </div>
+            </section>
 
-            <label
-              className={`mt-5 flex items-start gap-3 ${disclaimerRead ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}
-              data-testid="notice-acknowledge"
-            >
-              <input
-                ref={checkboxRef}
-                type="checkbox"
-                className="mt-1 size-4 shrink-0 accent-white"
-                checked={acknowledged}
-                disabled={!disclaimerRead}
-                onChange={(event) => setAcknowledged(event.target.checked)}
-                aria-describedby="acknowledge-help"
-                data-testid="checkbox-acknowledge"
-              />
-              <span className="text-[0.875rem] leading-6 text-white">{OWNERSHIP_NOTICE.acknowledgeLabel}</span>
-            </label>
-            <p
-              id="acknowledge-help"
-              className="mt-1.5 pl-7 text-[0.78rem] leading-5 text-white/65"
-              data-testid="acknowledge-help"
-              aria-live="polite"
-            >
-              {disclaimerRead
-                ? 'Tick the box, then continue.'
-                : 'Open the information disclaimer and read it to the end to enable this.'}
-            </p>
-
-            <div className="mt-5 border-t border-white/20 pt-5">
-              <p className="text-[0.78rem] leading-5 text-white/65">{OWNERSHIP_NOTICE.footnote}</p>
+            <div className="mt-5 flex flex-col gap-4 border-t border-[hsl(var(--rule))] pt-5 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-[0.78rem] leading-5 text-[hsl(var(--ink-2))]">{NOTICE_POPUP.footnote}</p>
               <button
                 type="button"
-                onClick={accept}
-                disabled={!canAccept}
-                className="cc-btn mt-4 w-full bg-white text-[hsl(var(--navy))] disabled:cursor-not-allowed disabled:opacity-45 sm:w-auto"
+                onClick={acknowledge}
+                className="cc-btn cc-btn-primary w-full sm:w-auto"
                 data-testid="button-accept-notice"
               >
                 <Check size={16} aria-hidden="true" />
-                {OWNERSHIP_NOTICE.buttonLabel}
+                {NOTICE_POPUP.buttonLabel}
               </button>
             </div>
           </>
         ) : (
           <>
             <div className="mb-4 flex items-start gap-4">
-              <span className="grid size-10 shrink-0 place-items-center rounded-full bg-white/10 text-white">
+              <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[hsl(var(--surface))] text-[hsl(var(--navy))] ring-1 ring-[hsl(var(--rule))]">
                 <FileText size={19} aria-hidden="true" />
               </span>
               <div>
-                <p className="cc-eyebrow text-white/70">Information disclaimer</p>
-                <h2 id={titleId} className="cc-h2 mt-1 text-white">
-                  {SITE_DISCLAIMER.title}
+                <p className="cc-eyebrow">Full disclaimer</p>
+                <h2 id={titleId} className="cc-h2 mt-1 text-[hsl(var(--navy))]">
+                  {INFORMATION_DISCLAIMER.title}
                 </h2>
               </div>
             </div>
@@ -231,57 +197,36 @@ export function NoticeGate() {
             <div
               ref={scrollRef}
               tabIndex={0}
-              onScroll={checkScrolled}
               className="cc-notice-scroll"
-              aria-describedby="disclaimer-scroll-status"
+              aria-label={INFORMATION_DISCLAIMER.title}
               data-testid="disclaimer-scroll"
             >
-              {SITE_DISCLAIMER.paragraphs.map((paragraph) => (
-                <p key={paragraph.slice(0, 40)}>{paragraph}</p>
+              {INFORMATION_DISCLAIMER.sections.map((section) => (
+                <LegalSectionView key={section.id} section={section} level={3} />
               ))}
-              <h3>Calculators</h3>
-              <p>{DISCLAIMERS.calculator}</p>
-              <h3>Reference tables</h3>
-              <p>{DISCLAIMERS.tables}</p>
-              <h3>Code compliance</h3>
-              <p>{DISCLAIMERS.codeAuthority}</p>
-              <h3>Safety</h3>
-              <p>{DISCLAIMERS.safety}</p>
-              <h3>Manufacturers and standards</h3>
-              <p>{DISCLAIMERS.endorsement}</p>
-              <h3>Ownership</h3>
-              <p>{DISCLAIMERS.independence}</p>
-              <p data-testid="disclaimer-end">End of disclaimer.</p>
+              <p className="mt-4 text-[0.8rem] text-[hsl(var(--ink-2))]">
+                This disclaimer is also published at {INFORMATION_DISCLAIMER.path} and is linked from every page.
+              </p>
             </div>
 
-            <p
-              id="disclaimer-scroll-status"
-              className="mt-3 text-[0.8rem] leading-5 text-white/70"
-              aria-live="polite"
-              data-testid="disclaimer-status"
-            >
-              {disclaimerRead ? 'You have reached the end.' : 'Scroll to the end to continue.'}
-            </p>
-
-            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <button
                 type="button"
                 onClick={() => setView('notice')}
-                className="cc-btn w-full border border-white/30 text-white sm:w-auto"
+                className="cc-btn cc-btn-outline w-full sm:w-auto"
                 data-testid="button-disclaimer-back"
               >
                 <ArrowLeft size={15} aria-hidden="true" />
-                Back
+                Back to the notice
               </button>
               <button
                 type="button"
-                disabled={!disclaimerRead}
-                onClick={() => setView('notice')}
-                className="cc-btn w-full bg-white text-[hsl(var(--navy))] disabled:cursor-not-allowed disabled:opacity-45 sm:w-auto"
-                data-testid="button-disclaimer-done"
+                onClick={acknowledge}
+                className="cc-btn cc-btn-primary w-full sm:w-auto"
+                data-testid="button-accept-notice-from-disclaimer"
               >
-                <Check size={15} aria-hidden="true" />
-                I have read this
+                <Check size={16} aria-hidden="true" />
+                {NOTICE_POPUP.buttonLabel}
               </button>
             </div>
           </>

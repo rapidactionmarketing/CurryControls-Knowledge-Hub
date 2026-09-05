@@ -7,7 +7,8 @@ import { ContactCta } from '@/components/blocks/contact-cta';
 import { Disclaimer } from '@/components/blocks/disclaimer';
 import { Icon } from '@/components/icon';
 import { SearchDialog } from '@/components/search/search-dialog';
-import { AFFILIATION, CONTACT, SITE } from '@/data/site';
+import { CONTACT, SITE } from '@/data/site';
+import { LEGAL } from '@/data/site-legal';
 import { KNOWLEDGE_SECTIONS } from '@/data/navigation';
 import { getEntry, getChildren, countDescendants } from '@/data/nav-index';
 import { ENTRIES, ENTRIES_BY_RECENCY, entriesOfKind } from '@/data/content';
@@ -269,18 +270,17 @@ export function HomePage() {
         <div className="cc-container grid gap-8 lg:grid-cols-[1.2fr_1fr]">
           <div>
             <p className="cc-eyebrow">About</p>
-            <h2 className="cc-h2 mt-1.5">About CurryControls.com</h2>
-            <div className="mt-3 space-y-3 text-[0.94rem] leading-7 text-[hsl(var(--ink-2))]">
-              {AFFILIATION.paragraphs.map((paragraph) => (
+            <h2 className="cc-h2 mt-1.5">{LEGAL.home.heading}</h2>
+            <div className="mt-3 space-y-3 text-[0.94rem] leading-7 text-[hsl(var(--ink-2))]" data-testid="home-about">
+              {LEGAL.home.paragraphs.map((paragraph) => (
                 <p key={paragraph}>{paragraph}</p>
               ))}
-              <p>
-                This site is being developed as an independent technical information resource focused
-                on control systems, automation, instrumentation, engineering, and the water and
-                wastewater industry.
-              </p>
+              <p>{LEGAL.purpose}</p>
             </div>
             <div className="mt-5 flex flex-wrap gap-3">
+              <Link href={LEGAL.ownershipPage.path} className="cc-btn cc-btn-primary" data-testid="link-home-ownership">
+                {LEGAL.ownershipPage.homeLinkLabel}
+              </Link>
               <Link href="/about/site" className="cc-btn cc-btn-outline">
                 About this site
               </Link>

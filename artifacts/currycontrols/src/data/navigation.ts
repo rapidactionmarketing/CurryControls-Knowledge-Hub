@@ -643,7 +643,8 @@ const ABOUT: NavSection = {
   blurb: 'Who runs this site, and how to reach him.',
   summary: 'About CurryControls.com, about Eric Sullivan, and how to get in touch.',
   children: [
-    n('About CurryControls.com', { slug: 'site', summary: 'What this site is, who owns it, and what it is not.' }),
+    n('About CurryControls.com', { slug: 'site', summary: 'What this site is, who registered and operates it, and what it is not.' }),
+    n('Ownership & Non-Affiliation', { slug: 'ownership', summary: 'Who registered and operates CurryControls.com, how the current registration came about, and the companies the site is not affiliated with.' }),
     n('About Eric Sullivan', { slug: 'eric-sullivan', summary: 'Background in electrical systems, controls, and water and wastewater automation.' }),
     n('Personal Projects', { slug: 'personal-projects', summary: "Eric Sullivan's independent software projects." }),
     n('Contact Eric', { slug: 'contact-eric', summary: 'Reach Eric Sullivan directly at 863-698-8266.' }),

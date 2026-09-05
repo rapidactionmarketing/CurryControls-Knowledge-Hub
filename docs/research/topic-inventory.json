@@ -3,9 +3,9 @@
   "site": "https://www.currycontrols.com",
   "counts": {
     "taxonomyNodes": 530,
-    "written": 29,
+    "written": 37,
     "hubs": 77,
-    "placeholders": 393,
+    "placeholders": 385,
     "bespoke": 22,
     "glossary": 125,
     "calculators": 35,
@@ -840,7 +840,7 @@
           "path": "/controls/scada-hmi/hmi-design/isa-101",
           "title": "ISA-101",
           "depth": 3,
-          "status": "placeholder",
+          "status": "written",
           "summary": "The human-machine interface standard: lifecycle, style guides, and design consistency.",
           "keywords": [],
           "featured": true
@@ -1400,7 +1400,7 @@
           "path": "/controls/instrumentation/level/wet-well-level",
           "title": "Wet Well Level",
           "depth": 3,
-          "status": "placeholder",
+          "status": "written",
           "summary": "The measurement that runs a lift station, and the failure modes that flood one.",
           "keywords": [],
           "featured": true
@@ -1580,7 +1580,7 @@
           "path": "/controls/instrumentation/signals/4-20-ma-signals",
           "title": "4-20 mA Signals",
           "depth": 3,
-          "status": "placeholder",
+          "status": "written",
           "summary": "The current loop from the instrument side: wiring, power, and loop checks.",
           "keywords": [],
           "featured": true
@@ -1760,7 +1760,7 @@
           "path": "/controls/control-panels/panel-design/sccr",
           "title": "SCCR",
           "depth": 3,
-          "status": "placeholder",
+          "status": "written",
           "summary": "Short-circuit current rating: how it is determined and why the label number is not optional.",
           "keywords": [],
           "featured": true
@@ -2313,7 +2313,7 @@
           "path": "/water-wastewater/water-systems/water-pumping/pressure-control",
           "title": "Pressure Control",
           "depth": 3,
-          "status": "placeholder",
+          "status": "written",
           "summary": "Holding discharge pressure on a distribution system without hunting.",
           "keywords": [],
           "featured": true
@@ -2363,7 +2363,7 @@
           "path": "/water-wastewater/water-systems/storage/tank-level-control",
           "title": "Tank Level Control",
           "depth": 3,
-          "status": "placeholder",
+          "status": "written",
           "summary": "Level-driven fill and draw control, and the setpoints that keep a tank turning over.",
           "keywords": [],
           "featured": true
@@ -3748,7 +3748,7 @@
           "path": "/engineering-library/drawings/p-and-id-drawings",
           "title": "P&IDs",
           "depth": 2,
-          "status": "placeholder",
+          "status": "written",
           "summary": "Piping and instrumentation diagrams: how to read one and what the tag bubbles mean.",
           "keywords": [],
           "featured": true
@@ -3868,7 +3868,7 @@
           "path": "/engineering-library/control-documentation/control-narratives",
           "title": "Control Narratives",
           "depth": 2,
-          "status": "placeholder",
+          "status": "written",
           "summary": "The document that says what the system does, in the words the owner will hold you to.",
           "keywords": [],
           "featured": true
@@ -5607,6 +5607,19 @@
       "updated": "2026-07-24"
     },
     {
+      "path": "/controls/scada-hmi/hmi-design/isa-101",
+      "title": "ISA-101: Human Machine Interfaces",
+      "kind": "reference",
+      "tags": [
+        "SCADA",
+        "HMI",
+        "ISA",
+        "Standards",
+        "HMI Design"
+      ],
+      "updated": "2026-09-05"
+    },
+    {
       "path": "/controls/instrumentation/signals/ground-loops",
       "title": "Ground Loops in Instrumentation",
       "kind": "reference",
@@ -5643,6 +5656,32 @@
       "updated": "2026-08-01"
     },
     {
+      "path": "/controls/instrumentation/signals/4-20-ma-signals",
+      "title": "4-20 mA Signals from the Instrument Side",
+      "kind": "reference",
+      "tags": [
+        "Instrumentation",
+        "4-20 mA",
+        "Signals",
+        "Analog",
+        "Loop"
+      ],
+      "updated": "2026-09-05"
+    },
+    {
+      "path": "/controls/instrumentation/level/wet-well-level",
+      "title": "Wet Well Level Measurement",
+      "kind": "reference",
+      "tags": [
+        "Instrumentation",
+        "Level",
+        "Lift Stations",
+        "Wastewater",
+        "Pumps"
+      ],
+      "updated": "2026-09-05"
+    },
+    {
       "path": "/controls/control-panels/panel-design/ul-508a",
       "title": "UL 508A Industrial Control Panels",
       "kind": "reference",
@@ -5667,6 +5706,19 @@
       "updated": "2026-08-18"
     },
     {
+      "path": "/controls/control-panels/panel-design/sccr",
+      "title": "Short-Circuit Current Rating (SCCR)",
+      "kind": "reference",
+      "tags": [
+        "Control Panels",
+        "SCCR",
+        "UL 508A",
+        "NEC",
+        "Panel Design"
+      ],
+      "updated": "2026-09-05"
+    },
+    {
       "path": "/water-wastewater/wastewater-systems/lift-stations/duplex-lift-stations",
       "title": "Duplex Lift Station Controls",
       "kind": "reference",
@@ -5689,6 +5741,34 @@
         "Control"
       ],
       "updated": "2026-08-30"
+    },
+    {
+      "path": "/water-wastewater/water-systems/water-pumping/pressure-control",
+      "title": "Distribution Pressure Control",
+      "kind": "reference",
+      "tags": [
+        "Water",
+        "Pumps",
+        "PID",
+        "Control",
+        "VFD",
+        "Pressure"
+      ],
+      "updated": "2026-09-05"
+    },
+    {
+      "path": "/water-wastewater/water-systems/storage/tank-level-control",
+      "title": "Tank Level Control",
+      "kind": "reference",
+      "tags": [
+        "Water",
+        "Level",
+        "Storage",
+        "Telemetry",
+        "Pumps",
+        "SCADA"
+      ],
+      "updated": "2026-09-05"
     },
     {
       "path": "/cybersecurity/ot-security/ot-vs-it-security",
@@ -5808,6 +5888,32 @@
         "Industrial Networks"
       ],
       "updated": "2026-08-16"
+    },
+    {
+      "path": "/engineering-library/drawings/p-and-id-drawings",
+      "title": "How to Read a P&ID",
+      "kind": "reference",
+      "tags": [
+        "Drawings",
+        "P&ID",
+        "ISA",
+        "Instrumentation",
+        "Engineering"
+      ],
+      "updated": "2026-09-05"
+    },
+    {
+      "path": "/engineering-library/control-documentation/control-narratives",
+      "title": "Control Narratives",
+      "kind": "reference",
+      "tags": [
+        "Documentation",
+        "Control Narrative",
+        "Engineering",
+        "Commissioning",
+        "FAT"
+      ],
+      "updated": "2026-09-05"
     }
   ],
   "glossary": [
@@ -6692,19 +6798,35 @@
   ],
   "tags": [
     {
+      "tag": "Instrumentation",
+      "count": 9
+    },
+    {
       "tag": "PLC",
       "count": 9
     },
     {
       "tag": "Wastewater",
+      "count": 8
+    },
+    {
+      "tag": "Pumps",
       "count": 7
     },
     {
-      "tag": "Instrumentation",
-      "count": 6
+      "tag": "Analog",
+      "count": 5
     },
     {
-      "tag": "Analog",
+      "tag": "SCADA",
+      "count": 5
+    },
+    {
+      "tag": "4-20 mA",
+      "count": 4
+    },
+    {
+      "tag": "Control",
       "count": 4
     },
     {
@@ -6716,7 +6838,7 @@
       "count": 4
     },
     {
-      "tag": "Pumps",
+      "tag": "Level",
       "count": 4
     },
     {
@@ -6724,15 +6846,11 @@
       "count": 4
     },
     {
-      "tag": "4-20 mA",
-      "count": 3
+      "tag": "Water",
+      "count": 4
     },
     {
       "tag": "Communications",
-      "count": 3
-    },
-    {
-      "tag": "Control",
       "count": 3
     },
     {
@@ -6741,6 +6859,10 @@
     },
     {
       "tag": "Fundamentals",
+      "count": 3
+    },
+    {
+      "tag": "Lift Stations",
       "count": 3
     },
     {
@@ -6756,7 +6878,11 @@
       "count": 3
     },
     {
-      "tag": "SCADA",
+      "tag": "Signals",
+      "count": 3
+    },
+    {
+      "tag": "Standards",
       "count": 3
     },
     {
@@ -6764,15 +6890,19 @@
       "count": 2
     },
     {
+      "tag": "Engineering",
+      "count": 2
+    },
+    {
       "tag": "Ethernet",
       "count": 2
     },
     {
-      "tag": "Level",
+      "tag": "HMI",
       "count": 2
     },
     {
-      "tag": "Lift Stations",
+      "tag": "ISA",
       "count": 2
     },
     {
@@ -6784,6 +6914,10 @@
       "count": 2
     },
     {
+      "tag": "PID",
+      "count": 2
+    },
+    {
       "tag": "Scaling",
       "count": 2
     },
@@ -6792,15 +6926,7 @@
       "count": 2
     },
     {
-      "tag": "Signals",
-      "count": 2
-    },
-    {
-      "tag": "Standards",
-      "count": 2
-    },
-    {
-      "tag": "Water",
+      "tag": "UL 508A",
       "count": 2
     },
     {
@@ -6812,6 +6938,30 @@
       "count": 1
     },
     {
+      "tag": "Commissioning",
+      "count": 1
+    },
+    {
+      "tag": "Control Narrative",
+      "count": 1
+    },
+    {
+      "tag": "Control Panels",
+      "count": 1
+    },
+    {
+      "tag": "Documentation",
+      "count": 1
+    },
+    {
+      "tag": "Drawings",
+      "count": 1
+    },
+    {
+      "tag": "FAT",
+      "count": 1
+    },
+    {
       "tag": "Flow",
       "count": 1
     },
@@ -6820,7 +6970,7 @@
       "count": 1
     },
     {
-      "tag": "HMI",
+      "tag": "HMI Design",
       "count": 1
     },
     {
@@ -6848,15 +6998,31 @@
       "count": 1
     },
     {
+      "tag": "Loop",
+      "count": 1
+    },
+    {
+      "tag": "NEC",
+      "count": 1
+    },
+    {
       "tag": "Networking",
       "count": 1
     },
     {
-      "tag": "PID",
+      "tag": "P&ID",
+      "count": 1
+    },
+    {
+      "tag": "Panel Design",
       "count": 1
     },
     {
       "tag": "Power",
+      "count": 1
+    },
+    {
+      "tag": "Pressure",
       "count": 1
     },
     {
@@ -6868,15 +7034,27 @@
       "count": 1
     },
     {
+      "tag": "SCCR",
+      "count": 1
+    },
+    {
       "tag": "Segmentation",
       "count": 1
     },
     {
-      "tag": "UL 508A",
+      "tag": "Storage",
+      "count": 1
+    },
+    {
+      "tag": "Telemetry",
       "count": 1
     },
     {
       "tag": "Utilities",
+      "count": 1
+    },
+    {
+      "tag": "VFD",
       "count": 1
     }
   ]

@@ -527,4 +527,139 @@ export const INSTRUMENTATION_ENTRIES: Entry[] = [
       '/troubleshooting/instrumentation-troubleshooting/4-20-ma-signal-unstable',
     ],
   },
+  {
+    path: '/controls/instrumentation/level/wet-well-level',
+    kind: 'reference',
+    title: 'Wet Well Level Measurement',
+    summary:
+      'How lift station wet well level is measured, which technology suits which well, the failure modes that flood a station, and why the high level float must stay hardwired.',
+    answer:
+      'Wet well level is the measurement that runs a lift station: it starts and stops the pumps and raises the alarms. Most stations use a submersible pressure transducer for the continuous level, with a non-contact ultrasonic or radar unit as the alternative where grease and rags foul the transducer. Whatever measures the level for control, an independent high level float wired to the alarm and to a pump start is what keeps the station from flooding when the transducer fails.',
+    keyPoints: [
+      'The continuous level signal drives lead, lag, and off setpoints; the floats are the backup, and both are needed.',
+      'Submersible transducers are cheap and accurate but foul with grease and rags and must be hung where they can be pulled.',
+      'Ultrasonic sensors lose their echo in foam and turbulence; radar tolerates both and has become the non-contact default.',
+      'A high level float wired independently of the controller is the last line of defense and must not depend on the PLC.',
+      'Most level failures are gradual: drift, fouling, and cable damage, which is why reading disagreement between the transducer and the floats is an alarm in itself.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['Instrumentation', 'Level', 'Lift Stations', 'Wastewater', 'Pumps'],
+    blocks: [
+      { t: 'h2', text: 'What the measurement has to do' },
+      {
+        t: 'p',
+        text: 'A lift station is a hole in the ground that fills with sewage and a set of pumps that empty it. The level in the well is the only variable the control system has. It decides when the lead pump starts, when the lag pump joins it, when they stop, when to alarm, and when to declare an emergency. Everything else in the station is downstream of getting that one number right.',
+      },
+      {
+        t: 'p',
+        text: 'The environment is as hostile as instrumentation gets. The liquid carries grease, rags, grit, and gas. Fat congeals on anything below the surface. Hydrogen sulfide attacks metal and electronics. Turbulence from the inflow and the pumps churns the surface, and foam forms on it. A level instrument in a wet well is not measuring a still tank of clean water, and the choice of technology follows from that.',
+      },
+      { t: 'h2', text: 'Submersible pressure transducers' },
+      {
+        t: 'p',
+        text: 'The most common continuous level instrument in a lift station is a pressure transducer hung on its cable near the bottom of the well. It measures the hydrostatic pressure of the liquid above it, which is proportional to depth, and outputs 4 to 20 mA over a vented cable so that atmospheric pressure changes cancel. It is inexpensive, accurate within a fraction of an inch, and unaffected by foam, vapor, or what is floating on the surface.',
+      },
+      {
+        t: 'p',
+        text: 'Its weakness is that it is in the sewage. Grease builds up on the diaphragm and shifts the reading. Rags wrap the cable and the transducer. The vent tube in the cable clogs or takes on moisture, which shows up as a slow drift with the weather. And the cable itself is in the path of the pump intake and of anything that gets pulled out of the well. It has to be installed where it can be lifted for cleaning without entering the well, on a stainless cable or a rigid stilling tube, and it has to be cleaned on a schedule.',
+      },
+      { t: 'h2', text: 'Ultrasonic and radar' },
+      {
+        t: 'p',
+        text: 'A non-contact instrument mounted at the top of the well measures the distance to the surface and subtracts it from the well depth. Nothing is in the liquid, so there is nothing to foul. Ultrasonic units have done this for decades and are still common; radar units have replaced them on new work because they solve the problems ultrasonics have in a wet well.',
+      },
+      {
+        t: 'table',
+        caption: 'Ultrasonic and radar in a wet well',
+        head: ['Concern', 'Ultrasonic', 'Radar'],
+        rows: [
+          ['Foam on the surface', 'Absorbs the echo; reading is lost or false', 'Largely unaffected'],
+          ['Turbulence and splashing', 'Scattered echo, noisy reading', 'Better, still benefits from a stilling location'],
+          ['Vapor, temperature, and gas', 'Speed of sound changes; needs compensation', 'Unaffected'],
+          ['Condensation on the sensor face', 'Attenuates the signal', 'Tolerated by most designs'],
+          ['Blanking distance near the sensor', 'Significant dead zone at the top', 'Smaller dead zone'],
+          ['Obstructions in the beam', 'Ladders, pipes, and cables cause false echoes', 'Same, narrower beam helps'],
+          ['Cost', 'Lower', 'Higher, closing every year'],
+        ],
+      },
+      {
+        t: 'p',
+        text: 'Either type has to be mounted where the beam sees liquid and nothing else, which in a small well with a ladder, a discharge pipe, and pump cables takes some care. Both need the well depth and the sensor height entered correctly at commissioning, and a wrong reference height is the most common reason a new non-contact instrument reads a foot off.',
+      },
+      { t: 'h2', text: 'Floats' },
+      {
+        t: 'p',
+        text: 'Float switches are the oldest wet well instrument and they are still in every well, because they do something the continuous instruments cannot: they fail separately. A tilting float on a cable closes a contact at a fixed level. It does not drift, it does not need scaling, and it does not care about foam. It does hang up on cables and rags, and it can be dragged by the flow, which is why floats are mounted on a stainless bracket with weights and are kept apart from each other.',
+      },
+      {
+        t: 'dl',
+        items: [
+          { term: 'High level alarm float', def: 'Set above the lag start level. Wired to the alarm dialer or telemetry and, in most designs, to force both pumps to run regardless of the controller. This is the float that matters.' },
+          { term: 'Low level cutoff float', def: 'Set below the off level. Stops the pumps before they run dry when the transducer has failed high.' },
+          { term: 'Backup pump control floats', def: 'Lead and lag start floats that take over pump control when the continuous level is declared bad, so the station keeps pumping on floats alone.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'safety',
+        title: 'The high level float does not go through the PLC',
+        text: 'Wire the high level float to the alarm and to the pump start relays directly, so that a failed controller, a failed transducer, or a failed analog input still results in an alarm and running pumps. A high level float that is only an input to the program shares every failure the program has. Entering a wet well to service any of this is confined space work.',
+      },
+      { t: 'h2', text: 'Setpoints and how the level is used' },
+      {
+        t: 'p',
+        text: 'The continuous level is compared against a set of setpoints in the controller: lead start, lag start, both stop, high level alarm, and low level alarm, in that order from the top down. The gap between start and stop is the pumping band, and it sets how often the pumps cycle. A wide band means fewer, longer runs and more storage used; a narrow band means short cycling and worn starters. The wet well control page covers the sequence and the wet well cycle calculator gives the cycle time for a given band and inflow.',
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Make the transducer prove itself against the floats',
+        text: 'When the lead start float closes, the transducer should read at or above the lead start setpoint. When it does not, the two instruments disagree and one of them is wrong. Alarm on that disagreement. It catches a fouled transducer weeks before it would otherwise be noticed, which is usually during an overflow.',
+      },
+      { t: 'h2', text: 'Failure modes' },
+      {
+        t: 'ul',
+        items: [
+          'Transducer reads high and never falls: grease on the diaphragm or a clogged vent. The pumps run continuously or the low level float stops them. Clean the transducer.',
+          'Transducer reads low and never rises: cable damaged or the transducer pulled out of the liquid by a rag. The pumps never start and the high level float saves the station. Check the cable and the reading against the floats.',
+          'Slow drift over weeks: moisture in the vent tube or a failing sensor. Compare against a tape measurement from the hatch and recalibrate or replace.',
+          'Ultrasonic loses echo during high inflow: foam or turbulence. The controller must treat a lost echo as a failed instrument and fall back to floats, not hold the last value.',
+          'Float stuck up or down: rag or cable wrap. Found by the disagreement alarm or by a level that passes a float without it changing state.',
+          'Reading correct at the well, wrong at the controller: a scaling error, a broken shield, or drive noise on the loop. The 4 to 20 mA pages cover the checks.',
+        ],
+      },
+      { t: 'h2', text: 'Choosing for a specific well' },
+      {
+        t: 'p',
+        text: 'A small station with a clean influent and a maintenance crew that visits monthly runs fine on a transducer and floats. A station with heavy grease, or one that cannot be visited often, is a candidate for radar as the primary with the transducer as the backup, so that the two technologies do not share a failure mode. Any station, whatever the primary, gets the high level float, hardwired, and a low level cutoff. The instrument that fails least in a wet well is the one that is not in the well, and the one that saves the station is the one that does not depend on anything else working.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Which level sensor is best for a lift station?',
+        a: 'A submersible pressure transducer for most stations, because it is accurate, cheap, and unaffected by foam, provided it can be pulled and cleaned. Radar where grease and rags make the transducer a maintenance problem. Floats alongside either, always.',
+      },
+      {
+        q: 'Why do I need floats if I have a level transducer?',
+        a: 'Because the transducer and the controller can both fail, and the floats fail differently. The high level float wired directly to the alarm and the pump starters keeps the station from overflowing when everything else has stopped working.',
+      },
+      {
+        q: 'Why does my ultrasonic level sensor drop out when it rains?',
+        a: 'High inflow makes turbulence and foam. Foam absorbs the ultrasonic pulse and the sensor loses its echo. The fix is either radar, which is not absorbed by foam, or a stilling arrangement that gives the sensor a calm patch of surface.',
+      },
+      {
+        q: 'How often should a wet well transducer be cleaned?',
+        a: 'On a schedule set by how fast it fouls at that station, which is learned from the disagreement between the transducer and the floats. Monthly is a common starting point in a greasy well; some clean wells go a year.',
+      },
+    ],
+    related: [
+      '/water-wastewater/wastewater-systems/lift-stations/wet-well-control',
+      '/water-wastewater/wastewater-systems/lift-stations/duplex-lift-stations',
+      '/controls/instrumentation/level/radar-level',
+      '/controls/instrumentation/signals/4-20-ma-signals',
+      '/calculators/wet-well-cycle',
+    ],
+  },
 ];

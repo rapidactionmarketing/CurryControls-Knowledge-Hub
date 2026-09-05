@@ -386,4 +386,124 @@ export const SCADA_ENTRIES: Entry[] = [
       '/controls/scada-hmi/hmi-design/faceplates',
     ],
   },
+  {
+    path: '/controls/scada-hmi/hmi-design/isa-101',
+    kind: 'reference',
+    title: 'ISA-101: Human Machine Interfaces',
+    summary:
+      'What the ISA-101 standard for human machine interfaces covers, its lifecycle from philosophy to maintenance, the display hierarchy, and what adopting it changes on a project.',
+    answer:
+      'ISA-101, formally ANSI/ISA-101.01, is the standard for human machine interfaces in process automation. It does not prescribe how a screen should look. It prescribes a lifecycle: write an HMI philosophy, derive a style guide and a toolkit from it, design displays in a hierarchy against that guide, and manage changes to all of it. The result is an HMI that is consistent, that supports situational awareness, and that can be tested against a document rather than an opinion.',
+    keyPoints: [
+      'ISA-101 is a lifecycle and management standard, not a style sheet; the style comes from the philosophy the owner writes.',
+      'Philosophy, style guide, and toolkit are the three documents everything else is built from and tested against.',
+      'Displays are organized in a hierarchy: overview, unit, detail, and diagnostic, each with a defined purpose.',
+      'Color is reserved for abnormal conditions; the normal state is quiet, which is what makes the abnormal visible.',
+      'Management of change applies to the HMI the same way it applies to the process, because an inconsistent screen is a hazard.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['SCADA', 'HMI', 'ISA', 'Standards', 'HMI Design'],
+    blocks: [
+      { t: 'h2', text: 'What the standard is' },
+      {
+        t: 'p',
+        text: 'ANSI/ISA-101.01, Human Machine Interfaces for Process Automation Systems, was published in 2015 by the International Society of Automation. It grew out of decades of incident investigations in which the operator interface was a contributing cause: alarms buried in color, critical values indistinguishable from routine ones, screens that differed from unit to unit so that an operator moving between them had to relearn the conventions. The standard is the process industry answer to that history.',
+      },
+      {
+        t: 'p',
+        text: 'It is deliberately not a style guide. It does not say that a pump must be a certain shape or that a running motor must be green. It says that the owner must decide those things, write them down, apply them everywhere, and control changes to them. The design guidance it does give, on hierarchy, on the use of color, on what an overview display is for, is guidance toward writing that document well.',
+      },
+      { t: 'h2', text: 'The lifecycle' },
+      {
+        t: 'p',
+        text: 'The standard organizes HMI work into stages, each producing something the next stage uses.',
+      },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Philosophy.', text: 'The owner states the principles: what the HMI is for, who uses it, how abnormal situations are shown, how alarms are presented, what the display hierarchy is. This is a short document with a long life; it outlasts any one project and any one platform.' },
+          { title: 'Style guide.', text: 'The philosophy made specific: the colors and what each means, the fonts, the symbols, the layout grid, the navigation model, the way a value is shown with its units and limits. Everything a designer needs to build a screen that looks like every other screen.' },
+          { title: 'Toolkit.', text: 'The style guide made reusable: the library of faceplates, symbols, and templates in the actual SCADA platform, built once and used on every display so that consistency is automatic rather than disciplined.' },
+          { title: 'Design.', text: 'The displays for a specific system, built from the toolkit, organized in the hierarchy, and reviewed against the style guide and against the operating tasks they support.' },
+          { title: 'Implementation and testing.', text: 'The displays are built, and they are tested against the design and the style guide, with operators, before they go into service.' },
+          { title: 'Operation and maintenance.', text: 'The HMI is used, and every change to it goes through management of change so that the consistency that was designed in is not eroded one screen at a time.' },
+        ],
+      },
+      { t: 'h2', text: 'The display hierarchy' },
+      {
+        t: 'p',
+        text: 'The standard describes displays in levels, each answering a different question for the operator. The levels are the part of ISA-101 most people have heard of, and they are the part most often implemented without the philosophy behind them.',
+      },
+      {
+        t: 'table',
+        caption: 'Display levels and what each is for',
+        head: ['Level', 'Name', 'Question it answers', 'What is on it'],
+        rows: [
+          ['1', 'Overview', 'Is the whole plant, or my area of it, all right?', 'Key performance values, abnormal indications, and nothing that is fine. Designed to be glanced at.'],
+          ['2', 'Unit or process', 'What is this unit doing and what needs attention?', 'The process at working detail: values, states, trends, and the controls used routinely.'],
+          ['3', 'Detail', 'What exactly is happening with this equipment or loop?', 'A single loop, drive, or piece of equipment with every parameter and control.'],
+          ['4', 'Diagnostic', 'Why is it doing that?', 'Interlock status, first-out indication, device diagnostics, and communication health.'],
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'The overview is the hardest display to design and the one most often skipped',
+        text: 'An overview that shows everything is a level 2 display with small fonts. A real overview shows what an operator needs to know that something needs attention, and leaves the rest to the level below. Deciding what to leave off is the design work.',
+      },
+      { t: 'h2', text: 'What it changes on a project' },
+      {
+        t: 'p',
+        text: 'Adopting the standard moves decisions earlier and moves them to the owner. On a project run without it, the integrator builds screens in whatever style the platform defaults to and the owner reacts to them at FAT. On a project run with it, the owner has a philosophy and a style guide before the integrator starts, the integrator builds the toolkit or uses the owner’s existing one, and FAT compares the displays to a document. Arguments about color happen once, in the style guide, instead of on every screen.',
+      },
+      {
+        t: 'dl',
+        items: [
+          { term: 'For the owner', def: 'A style guide is an asset that carries across projects and vendors. Every new screen looks like the existing ones, and a new operator learns one set of conventions.' },
+          { term: 'For the integrator', def: 'A clear acceptance criterion. A display either matches the guide or it does not. The toolkit also makes screen development faster after the first project.' },
+          { term: 'For the operator', def: 'Consistency and a quiet normal state, so that the abnormal stands out and the same thing means the same thing on every display.' },
+        ],
+      },
+      { t: 'h2', text: 'Relation to high performance HMI and ISA-18.2' },
+      {
+        t: 'p',
+        text: 'High performance HMI is a design approach, documented by several authors and consultancies, built on the same principles the standard codifies: a gray normal state, color reserved for abnormal, analog indication of values against their ranges, and a strict hierarchy. ISA-101 is the standard that makes those principles auditable through the lifecycle and the documents. A high performance HMI style guide is one legitimate answer to the philosophy the standard asks for.',
+      },
+      {
+        t: 'p',
+        text: 'ISA-18.2 covers alarm management and the two are written to work together. The alarm philosophy under 18.2 and the HMI philosophy under 101 are companion documents, and how alarms are presented on the displays is where they meet.',
+      },
+      { t: 'h2', text: 'Starting without a philosophy' },
+      {
+        t: 'p',
+        text: 'Most utilities and plants do not have an HMI philosophy, and the first project that adopts the standard has to write one. It does not need to be long. A few pages that settle the purpose of the HMI, the display hierarchy, the meaning of color, the treatment of alarms, and the rules for change will carry a style guide. Writing it before the screens exist is the whole point; writing it afterward describes what was built rather than what was intended.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Does ISA-101 require gray screens?',
+        a: 'No. It requires the owner to decide how normal and abnormal states are shown and to apply that consistently. The gray background with color reserved for abnormal conditions is the common answer because it works, but the standard prescribes the decision, not the color.',
+      },
+      {
+        q: 'Is ISA-101 mandatory?',
+        a: 'It is a consensus standard, not a regulation. It becomes mandatory on a project when the owner specifies it, which is increasingly common in water, wastewater, and process specifications.',
+      },
+      {
+        q: 'What is an HMI philosophy document?',
+        a: 'The short document, owned by the plant or utility, that states the principles the HMI is built on: purpose, users, hierarchy, use of color, alarm presentation, and change control. The style guide and the toolkit are derived from it.',
+      },
+      {
+        q: 'How does ISA-101 relate to ISA-18.2?',
+        a: 'ISA-18.2 covers alarm management and ISA-101 covers the interface. They share the lifecycle model and are meant to be applied together; how alarms appear on the displays is where the two philosophies meet.',
+      },
+    ],
+    related: [
+      '/controls/scada-hmi/hmi-design/high-performance-hmi',
+      '/controls/scada-hmi/alarm-management/isa-18-2',
+      '/controls/scada-hmi/scada-fundamentals/what-is-scada',
+      '/engineering-library/standards/isa',
+    ],
+  },
 ];

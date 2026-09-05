@@ -552,4 +552,603 @@ ELSE
       '/water-wastewater/wastewater-systems/lift-stations/wet-well-control',
     ],
   },
+  {
+    path: '/water-wastewater/wastewater-systems/lift-stations/lift-station-lead-lag',
+    kind: 'reference',
+    title: 'Lift Station Lead/Lag Control',
+    summary:
+      'How a duplex or triplex station decides when one pump is enough and when it is not: the setpoint ladder, cycle volume, the lag call, parallel pumping, and what to do when the lead pump fails.',
+    answer:
+      'Lead/lag control at a lift station starts the lead pump when wet well level reaches the lead-on setpoint, starts the lag pump if level keeps rising to the lag-on setpoint, and stops the pumps at the off setpoint. The setpoints are spaced to keep starts per hour within the pump rating, the lag call is delayed and staggered, and a pump that fails to prove is dropped from the sequence so the other pump takes its role immediately.',
+    keyPoints: [
+      'The setpoint ladder from the bottom up: low-level cutoff, all-off, lead-on, lag-on, high-level alarm, overflow.',
+      'Cycle volume between all-off and lead-on sets the starts per hour. Size it from the pump rating, not by guess.',
+      'Two pumps in parallel deliver less than twice one pump. The lag adds capacity, not double capacity.',
+      'A lag call can come from level, from lead run time, or from rate of rise. Level alone is the minimum.',
+      'When the lead fails to prove, the lag becomes the lead now, not at the next cycle.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 12,
+    tags: ['Wastewater', 'Lift Stations', 'Pumps', 'Control'],
+    blocks: [
+      { t: 'h2', text: 'What lead/lag decides' },
+      {
+        t: 'p',
+        text: 'A lift station with more than one pump has to answer two questions continuously: does the well need pumping, and does it need more than one pump. Lead/lag control is the logic that answers them. The lead pump handles normal inflow. The lag pump is called when inflow exceeds what the lead can move, and it is also the pump that takes over when the lead is out of service. Alternation, which decides which physical pump holds the lead role, is a separate function and is covered on its own page.',
+      },
+      {
+        t: 'p',
+        text: 'The panel-level view of lead/lag, including how it is built for pressure boosters and other duty-standby applications, is on the pump panel lead/lag page. This page is about the wet well: how the setpoints are chosen, how the lag call is made, and what parallel pumping actually delivers.',
+      },
+      { t: 'h2', text: 'The setpoint ladder' },
+      {
+        t: 'p',
+        text: 'Every level setpoint in a lift station is an elevation in the wet well. Listing them from the bottom up keeps the relationships straight.',
+      },
+      {
+        t: 'table',
+        head: ['Setpoint', 'What happens', 'How it is placed'],
+        rows: [
+          ['Low-level cutoff', 'All pumps stop immediately and an alarm is raised.', 'Below the all-off level, at or above the minimum submergence the pump manufacturer requires. It protects the pump from running dry if the all-off setpoint is missed.'],
+          ['All-off (stop)', 'Running pumps stop, subject to minimum run time.', 'High enough to keep the pump volute and, for submersibles, the motor cooling jacket covered. Pumping lower than the manufacturer allows draws air, loses prime, and overheats the motor.'],
+          ['Lead-on', 'The lead pump starts.', 'Above all-off by the cycle volume, which is calculated from the starts-per-hour rating. This band is where the station spends most of its life.'],
+          ['Lag-on', 'The lag pump starts.', 'Above lead-on by enough that ordinary daily peaks are handled by one pump. Typically one to two feet in a small station, more in a deep well.'],
+          ['High-level alarm', 'Alarm, and at most stations a hardwired call to both pumps.', 'Below the invert of the lowest incoming sewer. Once the well surcharges into the collection system, upstream manholes and basements are at risk.'],
+          ['Overflow', 'Wastewater leaves the system.', 'Not a setpoint, but the elevation everything else is measured against. Storage between high-level and overflow is the operator response time.'],
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'Setpoints are elevations, so record them as elevations',
+        text: 'A setpoint expressed only as a transmitter reading is lost the day the transmitter is replaced or remounted. Record each setpoint as an elevation or a depth from a fixed reference such as the top of the hatch, and record the transmitter zero against the same reference. The commissioning record should let the next person rebuild every setpoint with a tape measure.',
+      },
+      { t: 'h2', text: 'Sizing the lead-on band' },
+      {
+        t: 'p',
+        text: 'The volume between all-off and lead-on is the cycle volume. It sets how often the lead pump starts, and pump motors are rated for a maximum number of starts per hour, commonly six to ten for submersible wastewater pumps and fewer for large motors. Too small a band and the motor exceeds its rating; too large and wastewater sits in the well long enough to go septic.',
+      },
+      {
+        t: 'p',
+        text: 'For a constant-speed pump, the shortest cycle occurs when inflow is exactly half the pump capacity: the well fills as slowly as it empties. That gives the classic sizing rule.',
+      },
+      {
+        t: 'formula',
+        expr: 'V = (T × Q) / 4',
+        where: [
+          'V = cycle volume between all-off and lead-on, in gallons',
+          'T = minimum cycle time in minutes, which is 60 divided by the allowed starts per hour',
+          'Q = pump capacity at the operating point, in gallons per minute',
+        ],
+      },
+      {
+        t: 'p',
+        text: 'For a pump rated at six starts per hour, T is ten minutes. With a 500 gpm pump, the cycle volume is 1,250 gallons. In a six-foot-diameter well, which holds about 211 gallons per foot of depth, that is a band of just under six feet. In practice the well geometry is fixed and the calculation runs the other way: given the band the well can provide, the result is the number of starts to expect at the worst-case inflow, which is then compared with the motor rating.',
+      },
+      {
+        t: 'p',
+        text: 'Variable speed pumps change the arithmetic because the pump can slow to match inflow and run continuously. Even then, at very low inflow the pump reaches its minimum speed and the station cycles, so the same check applies using the capacity at minimum speed.',
+      },
+      { t: 'h2', text: 'Making the lag call' },
+      {
+        t: 'p',
+        text: 'The lag-on setpoint is the minimum. A station that calls the lag only on level will always call it eventually, but a well with large storage can spend a long time between lead-on and lag-on with the lead pump losing ground slowly. Three conditions are commonly combined.',
+      },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Level', def: 'Level reaches lag-on. This is the baseline and it must exist in every station, hardwired through a float if the station has one.' },
+          { term: 'Lead run time', def: 'The lead has run longer than a set time, typically ten to twenty minutes, without level falling. Inflow is at or above one pump capacity, and waiting for level to climb another foot gains nothing.' },
+          { term: 'Rate of rise', def: 'Level is rising faster than a set rate with the lead running. This catches storm inflow early. It needs a filtered level signal, or turbulence in the well will call the lag on noise.' },
+        ],
+      },
+      {
+        t: 'p',
+        text: 'Whatever the condition, the lag start is delayed by a few seconds after the lead start so the two inrush currents do not coincide. On a generator this matters more: two motors starting together can exceed what the set can hold, and the transfer switch sequence is often the reason a station is in trouble in the first place.',
+      },
+      { t: 'h2', text: 'What two pumps actually deliver' },
+      {
+        t: 'p',
+        text: 'The lag pump is often expected to double the station capacity. It does not. Two pumps in parallel each see a higher discharge head than one pump alone, because the force main friction loss rises with the square of flow. Each pump slides up its curve to a lower flow, and the combined flow lands somewhere between one and two times the single-pump flow. On a short force main with mostly static head the gain is close to double; on a long force main it can be as little as thirty percent.',
+      },
+      {
+        t: 'p',
+        text: 'This has two consequences for control. The lag call must come early enough to matter, because it buys less time than the pump nameplate suggests. And the capacity a station is credited with in a wet weather plan should come from the system curve, not from adding nameplates. A triplex station adds a third pump for redundancy and for the third-pump step on the system curve, which is smaller again.',
+      },
+      { t: 'h2', text: 'Stopping' },
+      {
+        t: 'p',
+        text: 'Simple stations stop everything at all-off. A better sequence stops the lag first at an intermediate lag-off level and lets the lead finish the drawdown. This reduces the number of two-pump stops, keeps the discharge velocity in the force main more consistent, and puts the alternation event at a single-pump stop where it is unambiguous. Both stops are subject to the minimum run time.',
+      },
+      {
+        t: 'p',
+        text: 'Do not use a very short minimum run time as a protective device. If level is falling faster than expected the pump is doing its job. The minimum run time exists to stop a pump from being started and stopped repeatedly by a noisy level signal at the all-off point, and a few seconds to a minute is enough.',
+      },
+      { t: 'h2', text: 'When the lead fails' },
+      {
+        t: 'p',
+        text: 'A pump is called and does not prove: no run confirmation from the starter auxiliary or the drive, an overload trip, a seal failure, a motor thermal switch, or a current that says the motor is spinning but nothing is being moved. The correct response is immediate. The lag pump takes the lead role now, the failed pump is removed from the rotation, and an alarm is raised. Waiting for level to climb to lag-on means the well rises for no reason while a healthy pump sits idle.',
+      },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Call the lead', text: 'Energize the lead output. Start a fail-to-prove timer, typically three to ten seconds.' },
+          { title: 'Check the proof', text: 'Run confirmation from the starter auxiliary contact or the drive running bit, and optionally current above a minimum. If the timer expires without proof, the pump is failed.' },
+          { title: 'Promote the lag', text: 'Set the other pump as lead, call it, and repeat the proof check. Latch a pump-failed alarm on the first pump.' },
+          { title: 'Hold the failure', text: 'Keep the failed pump out of rotation until the fault is reset locally or from SCADA by an operator who has looked at it. Automatic retry after a delay is reasonable for an overload that may be thermal, but not for a seal failure.' },
+          { title: 'Alarm the loss of redundancy', text: 'A station running on one pump is one failure from an overflow. That state deserves its own alarm and its own priority.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Prove on running, not on the output',
+        text: 'The output bit says the controller asked for the pump. The starter auxiliary contact says the contactor closed. Motor current says the motor is turning. Only current, or a flow or pressure signal, says water is moving. Use the best proof the station has, and never display the output as the run status on SCADA.',
+      },
+      { t: 'h2', text: 'What to trend' },
+      {
+        t: 'ul',
+        items: [
+          'Wet well level with pump run status overlaid. Every problem on this page shows up here first.',
+          'Starts per hour per pump. Compare with the motor rating and with the original cycle volume calculation.',
+          'Run time per cycle and drawdown rate. A slowing drawdown with the same level band means a fouled impeller, a closing check valve, or a rising force main head.',
+          'Lag calls per day. A rising count with no change in flow means the lead pump is losing capacity.',
+          'Motor current per pump. Rag-bound pumps draw high current and move little; air-bound pumps draw low current.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Should the lag pump be a bigger pump?',
+        a: 'Usually not. Identical pumps allow alternation, share spares, and behave predictably in parallel. Where a station sees a very wide flow range, one option is a small jockey pump for dry-weather flow and two larger pumps for wet weather; in that arrangement the jockey is always lead and the large pumps alternate between themselves.',
+      },
+      {
+        q: 'How far above lead-on should lag-on be?',
+        a: 'Far enough that ordinary daily peaks never reach it, and close enough that a wet weather event calls the lag before the well is most of the way to the high-level alarm. One to two feet is common. Look at a level trend over a dry month: the highest level the lead pump reached on its own is the floor for lag-on.',
+      },
+      {
+        q: 'Why does my station call the lag pump every cycle?',
+        a: 'Either the lead pump can no longer keep up, which is a capacity problem, or the lag-on setpoint is too close to lead-on. Trend the level with the run status. If level keeps rising with the lead running at normal current, look at the pump; if the lead is drawing high current, look for rags; if level rises normally but lag-on is barely above lead-on, fix the setpoints.',
+      },
+      {
+        q: 'Is a hardwired lag float still needed with a PLC?',
+        a: 'Yes. The float provides a lag call that does not depend on the transmitter, the analog input, or the processor. Wire it so that it can start the lag pump through the relay logic on its own, and also bring it into the PLC as an input so the controller knows the float has operated and can alarm the disagreement.',
+      },
+    ],
+    related: [
+      '/controls/control-panels/pump-panels/lead-lag',
+      '/how-to/plc-how-to/program-lead-lag-pumps',
+      '/water-wastewater/wastewater-systems/lift-stations/lift-station-alternation',
+      '/water-wastewater/wastewater-systems/lift-stations/duplex-lift-stations',
+      '/water-wastewater/wastewater-systems/lift-stations/wet-well-control',
+      '/controls/instrumentation/level/wet-well-level',
+    ],
+  },
+  {
+    path: '/water-wastewater/wastewater-systems/lift-stations/lift-station-alternation',
+    kind: 'reference',
+    title: 'Lift Station Pump Alternation',
+    summary:
+      'Which pump leads, how the lead role rotates, what an alternator relay does, and why equal run hours are not always the goal. Includes the logic rules that keep alternation from causing trouble.',
+    answer:
+      'Alternation rotates the lead role among the pumps in a lift station so wear is shared and every pump is exercised. The rotation usually advances at the end of each pump cycle, only among pumps that are available in auto, and is stored in retentive memory so it survives a power cycle. It can be done by a dedicated alternator relay or in the PLC, and a selector switch lets the operator fix the lead when one pump needs to be favored or rested.',
+    keyPoints: [
+      'Alternate at the all-off event, never in the middle of a cycle.',
+      'Only pumps that are available and in auto take part in the rotation.',
+      'Store the lead designation in retentive memory so a power loss does not reset it.',
+      'Equal run hours are common but not mandatory. Some utilities stagger wear deliberately.',
+      'Uneven run hours on the SCADA report are the first sign alternation has quietly stopped working.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['Wastewater', 'Lift Stations', 'Pumps', 'Programming'],
+    blocks: [
+      { t: 'h2', text: 'Why the lead role rotates' },
+      {
+        t: 'p',
+        text: 'If the same pump always led, it would accumulate most of the run hours while the other sat idle. The idle pump is the problem. Grit settles in its volute, its seal faces dry, its bearings take a set, and the first time it is needed in a storm it turns out not to work. Alternation makes both pumps run routinely, so a failure is found on an ordinary Tuesday instead of during the event the standby was bought for.',
+      },
+      {
+        t: 'p',
+        text: 'Sharing wear is the second reason and the one most people name first. Equal run hours mean the pumps age together, which simplifies maintenance planning, but it also means they reach the end of life together. Some utilities set the alternation ratio so one pump carries a larger share, for instance sixty percent, so that replacements fall in different budget years and the station never has two tired pumps at once. Either approach is defensible; the point is to choose it rather than inherit it.',
+      },
+      { t: 'h2', text: 'Alternation schemes' },
+      {
+        t: 'table',
+        head: ['Scheme', 'How it works', 'Where it fits'],
+        rows: [
+          ['Alternate every cycle', 'The lead role advances each time the station reaches all-off.', 'The default for duplex and triplex stations with identical pumps.'],
+          ['Alternate on time', 'The lead changes on a schedule, such as daily at a fixed hour, or after a set number of run hours.', 'Stations where cycles are very short or very long, or where an operator wants a predictable pattern.'],
+          ['Run-hour balancing', 'The pump with the fewest hours is chosen as lead at each cycle.', 'Triplex and larger stations, and stations where a pump has been out of service and needs to catch up. Requires accurate run-hour accumulation.'],
+          ['Fixed lead', 'One pump is always lead; the other is standby only.', 'Unequal pumps, a pump on a temporary repair, or a jockey pump arrangement. Exercise the standby on a schedule if it is fixed for long.'],
+          ['First-on, first-off', 'When both pumps run, the one that started first stops first at lag-off.', 'A refinement that shares run time within a two-pump cycle, common in PLC implementations.'],
+        ],
+      },
+      { t: 'h2', text: 'The rules that keep alternation safe' },
+      {
+        t: 'p',
+        text: 'Alternation is simple in principle and produces surprising behavior when the edge cases are not handled. These rules cover the ones that matter.',
+      },
+      {
+        t: 'ol',
+        items: [
+          'Advance the lead only at all-off, when no pump is running. Swapping roles while the lead is running turns a lag call into a confusing stop-and-start, and with both pumps running it can stop both.',
+          'Skip any pump that is not available. Not in auto, faulted, locked out, or failed to prove all remove a pump from the rotation until it is available again. With one pump available, that pump is lead every cycle, and the loss of redundancy is alarmed.',
+          'Keep the lead designation in retentive memory. A controller that boots with pump 1 as lead every time will favor pump 1 after every power event, and remote stations have many power events.',
+          'Provide a manual override. A three-position selector, 1-2, ALT, 2-1, or an equivalent SCADA setting, lets an operator fix the lead while a pump is nursed along or after a repair. The override should be visible on the HMI and alarmed if left in place for more than a set period.',
+          'Handle a lead pump that fails to prove by promoting the other pump immediately. This is covered under lead/lag; the alternation logic must not fight it by advancing the rotation back to the failed pump.',
+          'Count starts and run hours per pump in the controller, not only in SCADA. The counts are the evidence that alternation is working.',
+        ],
+      },
+      { t: 'h2', text: 'Alternator relays' },
+      {
+        t: 'p',
+        text: 'Before PLCs, and still in many small stations, alternation is done by a dedicated alternator relay. The common form is an impulse or ratchet relay: each time its coil is pulsed by the all-off event, its contacts transfer, steering the lead-on float to the other starter. Solid-state duplex alternators combine the ratchet, the lead and lag float inputs, and sometimes a selector switch into one module.',
+      },
+      {
+        t: 'p',
+        text: 'Alternator relays are reliable and easy to understand at three in the morning, which is a real virtue. Their limits are that they know nothing about pump availability unless the panel is wired to skip a pump that is not in auto, and that a stuck ratchet gives one pump every cycle with no alarm. When a PLC is added to a station that already has an alternator, decide which one is in charge. Two alternators, one in relay logic and one in the program, will disagree.',
+      },
+      {
+        t: 'code',
+        lang: 'text',
+        caption: 'Duplex alternation in structured text',
+        code: `(* Advance the lead only at all-off, and only when both pumps can take it. *)
+IF All_Off_Event AND P1_Available AND P2_Available AND Selector_Auto THEN
+    Lead_Is_P2 := NOT Lead_Is_P2;          (* retentive bit *)
+END_IF;
+
+(* Selector overrides: 1-2 fixes P1 as lead, 2-1 fixes P2. *)
+IF Selector_1_2 THEN Lead_Is_P2 := FALSE; END_IF;
+IF Selector_2_1 THEN Lead_Is_P2 := TRUE;  END_IF;
+
+(* A pump that is not available never leads. This rule wins over the selector. *)
+IF NOT P1_Available THEN Lead_Is_P2 := TRUE;  END_IF;
+IF NOT P2_Available THEN Lead_Is_P2 := FALSE; END_IF;
+
+(* The lead answers the lead call; either pump answers the lag call. *)
+P1_Call := P1_Available AND ((Lead_Call AND NOT Lead_Is_P2) OR Lag_Call);
+P2_Call := P2_Available AND ((Lead_Call AND Lead_Is_P2) OR Lag_Call);`,
+      },
+      {
+        t: 'p',
+        text: 'The order of the three rule groups is deliberate. The availability rule comes last so that a selector left on a failed pump cannot leave the station with no lead. Lead_Is_P2 lives in retentive memory. All_Off_Event is a one-scan pulse generated when the last running pump stops, not the all-off level itself, so the toggle fires once per cycle.',
+      },
+      { t: 'h2', text: 'Triplex and larger stations' },
+      {
+        t: 'p',
+        text: 'With three pumps the rotation is a sequence rather than a swap: lead, lag, and standby roles advance one step at each all-off event, so each pump takes each role in turn. Run-hour balancing becomes more attractive here because the standby role otherwise gets no hours at all during dry weather. The availability rule generalizes: build the ordered list of available pumps, then assign lead, lag, and second lag down the list from the current rotation point.',
+      },
+      { t: 'h2', text: 'When alternation stops working' },
+      {
+        t: 'p',
+        text: 'Alternation fails silently. The station keeps pumping with one pump, and nobody notices until the run-hour report shows pump 1 at 4,000 hours and pump 2 at 900, or until pump 2 is finally called in a storm and does not start. Look for these causes.',
+      },
+      {
+        t: 'table',
+        head: ['Symptom', 'Likely cause', 'Check'],
+        rows: [
+          ['One pump has most of the hours', 'Selector left in a fixed position; other pump not in auto; alternator ratchet stuck; alternation advancing on a condition that never occurs', 'Selector position and HOA positions on site; alternator contacts; the all-off event bit in the program'],
+          ['Lead changes mid-cycle', 'Alternation keyed to a level or timer event rather than all-off', 'Trend both run statuses against level; the swap shows as a stop-and-start'],
+          ['Both pumps start together every cycle', 'Lag call not conditioned on the lead role, or lag-on setpoint at or below lead-on', 'Setpoints; the lag call logic'],
+          ['Rotation resets after power loss', 'Lead bit not retentive', 'Controller memory configuration; test by cycling control power'],
+          ['Pump 2 never runs, alarm never sounds', 'No unavailable-pump alarm, and pump 2 not in auto for months', 'Add the alarm; review HOA status on SCADA'],
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Does alternation increase the number of starts?',
+        a: 'No. The station starts the same number of times for a given inflow. Alternation divides those starts between the pumps instead of putting them all on one motor. Starts per pump roughly halve.',
+      },
+      {
+        q: 'Should the alternator be in the PLC or a separate relay?',
+        a: 'Put it in one place. A PLC gives availability logic, retentive memory, counters, and SCADA visibility. A relay alternator is simpler and works with the PLC removed, which matters in a float backup scheme. A common compromise is the PLC in charge normally, with the relay alternator active only in backup mode when the PLC watchdog has dropped out.',
+      },
+      {
+        q: 'How do I alternate pumps that are different sizes?',
+        a: 'Do not. Fix the small pump as lead, use the large pump for lag and as standby, and exercise the large pump on a schedule so it is proven. Alternating unequal pumps gives a station whose capacity and cycle times change every cycle.',
+      },
+      {
+        q: 'The pumps are alternating but run hours are still uneven. Why?',
+        a: 'Check whether one pump is consistently the lag. In a strict every-cycle scheme the lag role also alternates, but with a first-on, first-off stop sequence or a run-time based lag call, one pump can end up taking most of the two-pump time. Also check that one pump is not being held out of auto for part of each day by a maintenance routine.',
+      },
+    ],
+    related: [
+      '/water-wastewater/wastewater-systems/lift-stations/lift-station-lead-lag',
+      '/controls/control-panels/pump-panels/lead-lag',
+      '/controls/plc-systems/plc-fundamentals/retentive-memory',
+      '/controls/control-panels/pump-panels/hoa',
+      '/how-to/plc-how-to/program-lead-lag-pumps',
+    ],
+  },
+  {
+    path: '/water-wastewater/wastewater-systems/lift-stations/high-level',
+    kind: 'reference',
+    title: 'Lift Station High Level',
+    summary:
+      'The alarm that stands between a lift station and an overflow: where the high-level float goes, what it must do on its own, how much response time the well provides, and how to diagnose a high level that should not be happening.',
+    answer:
+      'High level at a lift station is the wet well rising above the point the pumps should have held. It is detected by an independent float placed below the lowest incoming sewer invert, which raises a local and remote alarm and, at most stations, starts the pumps through a hardwired path that does not depend on the transmitter or the controller. The volume between the float and the overflow elevation, divided by inflow, is the time an operator has to respond.',
+    keyPoints: [
+      'The high-level float is independent of the level transmitter and the PLC. That independence is the entire point.',
+      'Place the float below the lowest incoming invert. A surcharged well backs up into the collection system.',
+      'High level should start the pumps on its own path, not only raise an alarm.',
+      'Compute the response time from storage above the float and peak inflow, and set notification to match.',
+      'A high level with pumps running is a capacity or pump problem. Without pumps running it is a control problem.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 11,
+    tags: ['Wastewater', 'Lift Stations', 'Alarms', 'Level'],
+    blocks: [
+      { t: 'h2', text: 'What high level means' },
+      {
+        t: 'p',
+        text: 'Every lift station has a level the pumps are supposed to hold the well below. When the well rises above it, something in the chain of measure, decide, and pump has failed, or inflow has exceeded what the station can move. High level is the alarm for that state. It is the most important single alarm at the station, because the next state after high level is a sanitary sewer overflow, which is a public health event, an environmental violation, and a reportable incident in most jurisdictions.',
+      },
+      {
+        t: 'p',
+        text: 'That importance is why high level gets its own sensor, its own wiring, and its own path to the pumps. Everything else at the station can share the transmitter and the controller. High level must not.',
+      },
+      { t: 'h2', text: 'The high-level float' },
+      {
+        t: 'p',
+        text: 'A high-level float is a mechanical switch in a sealed body hung on its own cable at the elevation of the alarm. It is chosen over a transmitter setpoint for one reason: it fails differently. A transmitter can read low because of fouling, a bad zero, a failed analog card, or a controller that has stopped scanning, and each of those failures looks like a normal, calm well. The float does not know what the transmitter says. When wastewater lifts it, its contact closes.',
+      },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Elevation', def: 'Below the invert of the lowest sewer entering the well, with enough margin that a wave in a turbulent well does not trip it. Above the lag-on setpoint by enough that the float is not touched in normal wet weather operation. If those two constraints cannot both be satisfied, the station has a design problem worth documenting.' },
+          { term: 'Wiring', def: 'Its own circuit, on its own terminals, to a relay that drives the alarm and the pump backup path. Also into a PLC input so the controller knows the float has operated. The PLC input is a copy, never the only path.' },
+          { term: 'Contact type', def: 'Normally open, closing on rise, is conventional for the pump call. For the alarm circuit, a normally closed contact that opens on rise gives a fail-safe indication if the cable is cut, at the cost of a nuisance alarm when it is. Many panels use a single normally open float and accept the trade-off; either is acceptable if it is documented and tested.' },
+          { term: 'Mounting', def: 'Tethered from a bracket that can be reached from the hatch without entry, on a cable long enough to swing freely and short enough not to wrap the pump cables or the guide rails. A float that fouls in rags or hangs on the pump cable is the most common reason a high-level alarm fails to sound.' },
+          { term: 'Testing', def: 'Lift it by hand from the hatch, monthly or on the utility schedule, and confirm the alarm reaches SCADA and the pumps are called. Log the test. A float that has not been tested in a year should be assumed not to work.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'safety',
+        title: 'Float service is hatch work, not well entry',
+        text: 'Hang and retrieve floats from above with the bracket and cable designed for it. Entering the well to reach a float requires a confined space permit, atmospheric testing, and an attendant. If the float cannot be serviced without entry, fix the mounting.',
+      },
+      { t: 'h2', text: 'What high level must do' },
+      {
+        t: 'p',
+        text: 'Alarm is the minimum. The better answer is alarm and act.',
+      },
+      {
+        t: 'ol',
+        items: [
+          'Sound the local alarm: a beacon and, where neighbors allow, a horn. A passerby or an operator driving past is a legitimate detection layer at a remote station.',
+          'Call SCADA with a high priority alarm that pages someone. The alarm should be its own point, not derived from the transmitter level, so it survives a transmitter failure.',
+          'Call the pumps. Through the backup relay logic, the float closes the pump call path for both pumps, subject only to the low-level cutoff float and the HOA switches in AUTO. If the controller is dead, the pumps run anyway.',
+          'Notify by an independent path where one exists. An autodialer or a cellular alarm unit on its own power gives a second route when the SCADA radio or the site power is the thing that failed.',
+        ],
+      },
+      {
+        t: 'p',
+        text: 'Do not delay the high-level alarm more than a second or two. A short debounce prevents a wave from tripping it; a long delay eats the response time the float was placed to provide.',
+      },
+      { t: 'h2', text: 'Response time' },
+      {
+        t: 'p',
+        text: 'The float is an alarm, and an alarm is only useful if someone can act before the consequence. The time available is the storage above the float divided by the inflow rate.',
+      },
+      {
+        t: 'formula',
+        expr: 't = V / Q_in',
+        where: [
+          't = time from high-level alarm to overflow, in minutes',
+          'V = wet well volume between the float elevation and the overflow elevation, in gallons, plus any surcharge storage in the incoming sewer the utility is willing to count',
+          'Q_in = inflow rate, in gallons per minute, using the wet weather peak for the design case',
+        ],
+      },
+      {
+        t: 'p',
+        text: 'A six-foot well with three feet between the float and the overflow holds about 630 gallons in that band. At a dry weather inflow of 50 gpm that is nearly thirteen minutes. At a wet weather peak of 400 gpm it is a minute and a half. The wet weather number is the one to design notification and response around. If the utility cannot get a crew to the station in that time, the answer is more storage, more pumping capacity, a permanent standby pump, or a generator with automatic transfer, and the high-level alarm history is what tells the utility which stations need it.',
+      },
+      { t: 'h2', text: 'Diagnosing a high level' },
+      {
+        t: 'p',
+        text: 'Start with one question: were the pumps running?',
+      },
+      {
+        t: 'table',
+        head: ['Condition', 'Likely causes', 'What to look at'],
+        rows: [
+          ['Pumps running, level still rising', 'Inflow above station capacity from a storm or an upstream station; a rag-bound or worn pump moving little; a partially closed discharge valve; a stuck check valve; high force main pressure from a downstream problem', 'Motor current per pump against its normal value; drawdown rate on the trend; discharge pressure; valve positions; the other stations on the same force main'],
+          ['Pumps not running, level rising', 'Transmitter reading low; controller stopped or faulted; pumps not in AUTO; phase monitor or overload lockout; control power lost; starter or drive faulted', 'The transmitter reading against a tape measure; controller status; HOA positions; fault indications on the starters or drives; control circuit voltage'],
+          ['One pump running, the other will not start', 'Lag call not made; lag pump failed to prove; alternation or availability logic holding it out', 'Lag call bit and setpoint; run confirmation and fault history for the idle pump'],
+          ['High level with the well visibly normal', 'Float hung up, fouled, or wired wrong; float tripped by turbulence; alarm point mapped to the wrong input', 'Lift and lower the float from the hatch; watch the input in the controller; check the cable for wrap'],
+        ],
+      },
+      { t: 'h2', text: 'Inflow and infiltration' },
+      {
+        t: 'p',
+        text: 'A station that reaches high level only in rain is telling the utility that the collection system is leaking in. Stormwater enters through cracked pipes, leaky manholes, and illegal roof and yard drain connections, and the station sees the whole of it. Trending level and pump run time against rainfall makes the pattern obvious. The fix is in the pipes, not the panel, but the station is where the evidence is collected, and a rate-of-rise lag call and an early high-level page are what get the utility through the storm in the meantime.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Can the high-level alarm come from the level transmitter?',
+        a: 'A high-level setpoint in the controller is useful and should exist, but it is not the high-level alarm. It shares every failure mode of the transmitter and the controller. The float is the alarm. If the transmitter and the float disagree, that disagreement is its own alarm and usually means the transmitter is wrong.',
+      },
+      {
+        q: 'Should high level start the pumps or only alarm?',
+        a: 'Start the pumps. The most common reason a station reaches high level is that the pumps were not called when they should have been. A float that only alarms leaves the pumps idle while someone drives to the site. The exception is a station where starting the pumps on a float could be unsafe, such as one with a known discharge problem, and that is a temporary condition, not a design.',
+      },
+      {
+        q: 'How high can I let the well go before it counts as an overflow?',
+        a: 'The overflow elevation is physical: the lowest point wastewater can leave the system, which may be a manhole lid upstream rather than the station itself. Surcharging the incoming sewer is not an overflow, but it backs up into laterals and basements, and in many utilities it is reportable on its own. Set the float so the well never surcharges the incoming sewer in normal failure cases.',
+      },
+      {
+        q: 'How often should the high-level float be tested?',
+        a: 'Monthly is common, and at least at every station visit. The test is a lift by hand from the hatch while someone confirms the alarm at SCADA and the pump call. Record it. The float is the one device in the station whose failure is invisible until the day it is needed.',
+      },
+    ],
+    related: [
+      '/water-wastewater/wastewater-systems/lift-stations/backup-control',
+      '/controls/instrumentation/level/floats',
+      '/water-wastewater/wastewater-systems/lift-stations/duplex-lift-stations',
+      '/water-wastewater/wastewater-systems/lift-stations/lift-station-lead-lag',
+      '/controls/scada-hmi/alarm-management/alarm-philosophy',
+    ],
+  },
+  {
+    path: '/water-wastewater/wastewater-systems/lift-stations/backup-control',
+    kind: 'reference',
+    title: 'Lift Station Backup Control',
+    summary:
+      'How a lift station keeps pumping when the transmitter, the PLC, or the SCADA link is gone: float backup logic, the control transfer relay, redundant-off protection, and how to test it with the controller actually dead.',
+    answer:
+      'Backup control is the layer of a lift station panel that runs the pumps when the primary controller cannot. It is built from floats and relays: a backup-start or high-level float calls the pumps through relay contacts that parallel the controller outputs, a redundant-off float stops them, and a control transfer relay driven by the PLC watchdog hands control to the floats when the controller fails. It is simpler than the primary system by design and is proven by testing with the primary disabled.',
+    keyPoints: [
+      'Backup control must be simpler than, and independent of, what it backs up.',
+      'A control transfer relay driven by the PLC watchdog is the cleanest hand-off between primary and backup.',
+      'Backup mode needs its own low-level protection. A redundant-off float in the run path prevents dry running.',
+      'Feed the backup relays from control power directly, not from the PLC 24 V supply.',
+      'Backup that has never been tested with the PLC dead is a drawing, not a backup.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 12,
+    tags: ['Wastewater', 'Lift Stations', 'Control', 'Panels', 'Design'],
+    blocks: [
+      { t: 'h2', text: 'What backup control is for' },
+      {
+        t: 'p',
+        text: 'The primary control at a lift station is a level transmitter feeding a PLC or RTU that runs the lead/lag sequence. Each element in that chain can fail: the transmitter can foul or drift, the analog input can die, the processor can fault, the program can be corrupted by a download gone wrong, and the 24 V supply feeding all of them can quit. Backup control is the arrangement that keeps the well from overflowing while any of those is true.',
+      },
+      {
+        t: 'p',
+        text: 'The design principle is independence. Backup does not use the transmitter, does not depend on the processor, and ideally does not depend on the same power supply. It uses floats, which are switches, and relays, which are switches driven by switches. It is deliberately dumb, because a dumb system has few ways to fail and its failures are visible.',
+      },
+      { t: 'h2', text: 'The layers' },
+      {
+        t: 'table',
+        caption: 'What fails and what covers it',
+        head: ['Failure', 'What the station loses', 'What covers it'],
+        rows: [
+          ['Level transmitter fouled, drifted, or dead', 'Continuous level; the primary sequence acts on a wrong value', 'Signal validation in the PLC, then float operation through the PLC when it gives up on the transmitter'],
+          ['Analog input card', 'Continuous level', 'Same: floats through the PLC if the processor is alive, through relays if it is not'],
+          ['PLC processor faulted or powered off', 'The whole sequence', 'Control transfer relay drops out; floats run the pumps through relay logic'],
+          ['PLC 24 V supply', 'Transmitter, inputs, processor', 'Relay logic on control transformer power, not on the PLC supply'],
+          ['SCADA communications', 'Remote visibility and alarms', 'Nothing in the pump control depends on SCADA; local alarm and autodialer cover notification'],
+          ['Site power', 'Everything', 'Generator and transfer switch; a power backup rather than a control backup, covered on its own page'],
+          ['Both pumps', 'Pumping', 'Portable pump connection and bypass; a control matter only in that the panel must be able to run a portable pump'],
+        ],
+      },
+      { t: 'h2', text: 'Float backup logic' },
+      {
+        t: 'p',
+        text: 'The minimum float set for backup is three floats: a redundant-off float, a backup-start float, and the high-level float. Many stations add a lead-start float so that backup mode has its own lead and lag. The floats operate relays, and the relay contacts are wired in parallel with the controller outputs in the starter control circuits, so either the PLC or the floats can close the pump call.',
+      },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Backup start', text: 'The backup-start float closes on rise and picks a start relay. Through the control transfer relay contacts, the start relay calls the pumps. A relay alternator can share the duty; without one, backup mode calls both pumps, which is acceptable for a mode that is supposed to be rare.' },
+          { title: 'Seal-in', text: 'The start relay seals in through its own contact and the redundant-off float, so the pumps keep running as the level falls below the start float.' },
+          { title: 'Backup stop', text: 'The redundant-off float opens on fall and drops the seal-in. The pumps stop. This float is set at or slightly above the primary all-off setpoint, and it is the only thing in backup mode that stops the pumps.' },
+          { title: 'High level', text: 'The high-level float calls the pumps through the same path and raises the alarm, so it acts as a second backup start if the backup-start float has failed.' },
+          { title: 'Low-level cutoff', text: 'Where the station has a separate low-level float, it opens the run path in every mode, primary and backup, so a controller fault and a float fault together still cannot run a pump dry.' },
+        ],
+      },
+      {
+        t: 'code',
+        lang: 'text',
+        caption: 'Backup run path, drawn as a ladder',
+        code: `   CTR (PLC       Backup-Start                                       CR1
+   healthy)       Float                                            Backup Run
+|----]/[------+------] [------+---------------------------------------( )----|
+|             |               |                                              |
+|             |   CR1   Redundant-Off Float                                   |
+|             +---] [------] [-+                                              |
+|                 (seal-in: holds until the well is pumped down)              |
+
+   CR1          HOA in AUTO    Low-Level Cutoff                       M1
+|---] [----+-------] [--------------] [--------------------------------( )----|
+|          |                                                                  |
+|  PLC     |                                                                  |
+| Out 1    |                                                                  |
+|---] [----+                                                                  |
+   (either the controller or the backup relay can call the pump)`,
+      },
+      {
+        t: 'p',
+        text: 'The high-level float is not shown; it parallels the backup-start float. The figure shows the two ideas that matter: the backup path is enabled only when the PLC is not healthy, and the backup path stops on a float that the PLC has nothing to do with.',
+      },
+      { t: 'h2', text: 'The control transfer relay' },
+      {
+        t: 'p',
+        text: 'The cleanest way to hand control between primary and backup is a single relay driven by a PLC output that the program holds on while it is running correctly. The output is the watchdog. If the processor faults, stops scanning, loses power, or is put into program mode, the output drops, the relay de-energizes, and its contacts transfer the pump call path from the PLC outputs to the float relays.',
+      },
+      {
+        t: 'p',
+        text: 'Some designs leave the float path always enabled rather than transferring it, so the floats can call the pumps at any time in parallel with the PLC. That is simpler and it works, but it has a side effect: a float that trips during normal operation quietly overrides the sequence, the PLC does not know why the pumps are running, and a failed-closed float runs the pumps continuously until the redundant-off float stops them. With a transfer relay, the floats are read by the PLC as inputs during normal operation and alarmed if they disagree with the transmitter, and they only take charge when the PLC is gone.',
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Alarm the transfer',
+        text: 'Bring the control transfer relay state back to SCADA through a path that does not need the PLC, such as an autodialer input or a spare RTU input. Backup mode is a station running with no continuous level, no history, and no lead/lag. It is a call-someone-now condition, even though the pumps are running.',
+      },
+      { t: 'h2', text: 'Power for the backup' },
+      {
+        t: 'p',
+        text: 'Feed the backup relays and the floats from the panel control transformer, on their own fused circuit, not from the 24 V DC supply that feeds the PLC. If the PLC supply fails, the backup must not fail with it. Where the floats are intrinsically safe, the barrier or relay must also be on that circuit. If the entire control circuit is 24 V DC, use two supplies with the backup relays on the second, or at least a separate branch of the first with its own fuse, and record the shared failure as a known limitation.',
+      },
+      { t: 'h2', text: 'Testing backup control' },
+      {
+        t: 'p',
+        text: 'A backup that has never taken over has not been proven. Test it at commissioning, after any change to the panel or the program, and annually.',
+      },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Announce the test', text: 'Tell the SCADA operators, and make sure the well has room. The well will rise to the backup-start float during the test.' },
+          { title: 'Confirm the starting state', text: 'Pumps in AUTO, PLC running, floats hanging free. Note the level.' },
+          { title: 'Kill the primary', text: 'Put the PLC in program mode or pull its power. Confirm the control transfer relay drops and the backup-mode alarm reaches SCADA or the dialer.' },
+          { title: 'Let the well rise', text: 'Or lift the backup-start float by hand from the hatch. Confirm the pumps start.' },
+          { title: 'Let it pump down', text: 'Confirm the pumps stop on the redundant-off float and not before. Lower the float by hand if the well cannot be pumped that low during the test.' },
+          { title: 'Test the high-level float', text: 'Lift it. Confirm the alarm and the pump call.' },
+          { title: 'Restore the primary', text: 'Return the PLC to run mode. Confirm the transfer relay picks up, the backup relays drop out, the sequence resumes on the transmitter, and the alarms clear. Record the test with the date, the tester, and the levels observed.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Test the failure, not just the floats',
+        text: 'Lifting floats with the PLC running proves the floats and the PLC inputs. It does not prove that the relays take over when the PLC is dead. The test that matters is the one where the controller is actually stopped.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Is a second PLC better than floats for backup?',
+        a: 'A second PLC needs a level signal, a program, and a power supply, so it shares more failure modes with the primary than floats do, and it has to be kept in step with every program change. It is the right answer for large stations where backup mode needs real lead/lag and alarming. For a typical duplex station, floats and relays give better independence for far less complexity.',
+      },
+      {
+        q: 'Can the backup be a dedicated pump controller with its own floats?',
+        a: 'Yes, and packaged float-backup controllers exist for exactly this. Treat them as relay logic in a box: check that they run on control transformer power, that they take over on a watchdog or transfer contact rather than fighting the PLC, and that they stop on a float you can test.',
+      },
+      {
+        q: 'Should backup mode alternate the pumps?',
+        a: 'It is nice to have and not necessary. Backup mode is a rare state that should end when someone arrives. A relay alternator in the backup path is inexpensive if the panel is being built; adding one to an existing panel is rarely worth the wiring change. Calling both pumps on the backup-start float is acceptable.',
+      },
+      {
+        q: 'What if the transmitter fails but the PLC is fine?',
+        a: 'That is the more common case, and it is handled in the PLC: the signal validation logic detects the bad signal, alarms it, and the program falls back to running the sequence on the float inputs it already reads. The relay backup is for the case where the PLC itself cannot do that.',
+      },
+    ],
+    related: [
+      '/water-wastewater/wastewater-systems/lift-stations/high-level',
+      '/controls/instrumentation/level/floats',
+      '/controls/plc-systems/analog-control/signal-validation',
+      '/controls/plc-systems/plc-fundamentals/watchdog',
+      '/engineering-library/checklists/sat',
+      '/controls/control-panels/pump-panels/hoa',
+    ],
+  },
 ];

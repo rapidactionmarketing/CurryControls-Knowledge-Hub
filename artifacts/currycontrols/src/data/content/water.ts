@@ -3486,4 +3486,1133 @@ Station_Critical := Avail_Count < 2;`,
       '/troubleshooting/pump-troubleshooting/pump-runs-but-no-flow',
     ],
   },
+  {
+    path: '/water-wastewater/water-systems/water-pumping/vfd-control',
+    kind: 'reference',
+    title: 'VFD Control for Water Pumping',
+    summary:
+      'Variable speed pumping and where it earns its cost: the affinity laws and how static head limits the savings, the minimum speed a pump can run, pressure, flow, and level control with a drive, and how to estimate the savings before buying.',
+    answer:
+      'A variable frequency drive lets a pump run at the speed the system needs instead of the speed the motor happens to have, and on a system with mostly friction head that saves a great deal of energy, because power falls with the cube of speed while flow falls only in proportion. On a system with mostly static head, a well lifting water to a tank or a booster feeding a hill, the pump must run near full speed to make any flow at all, and the savings shrink to the point where a constant speed pump with an alternation scheme may cost less to own. The control is a loop on pressure, flow, or level that sets the speed, bounded by a minimum speed below which the pump makes no useful flow and a maximum at the motor rating, with several drives sharing the load at equal speed when one is not enough. The drive brings its own needs: an inverter-rated motor, cable length limits or filters, harmonic mitigation on a weak service, and heat in the panel, all of which are part of the decision.',
+    keyPoints: [
+      'Savings come from friction head; static head forces the pump toward full speed and eats the savings.',
+      'Minimum speed is set by the static head and the pump curve, not by the drive; below it the pump churns.',
+      'Control on pressure, flow, or level with one loop setting the speed and limits on both ends.',
+      'Run parallel pumps at the same speed; add a pump when the running ones reach maximum, remove one at minimum.',
+      'Count the motor, the cable, the harmonics, and the panel heat in the cost before deciding.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['Water', 'Pumps', 'VFD', 'Control', 'Power'],
+    blocks: [
+      { t: 'h2', text: 'The affinity laws and their limit' },
+      {
+        t: 'formula',
+        expr: 'Q₂ ÷ Q₁ = N₂ ÷ N₁;   H₂ ÷ H₁ = (N₂ ÷ N₁)²;   P₂ ÷ P₁ = (N₂ ÷ N₁)³',
+        where: [
+          'Q = flow, H = head, P = power, N = speed',
+          'These describe one pump at two speeds on the same system curve; the system decides where the pump actually runs',
+        ],
+      },
+      {
+        t: 'p',
+        text: 'The cube law is the promise: half speed, an eighth of the power. It holds when the system curve passes near the origin, which is a system of pipe friction with little elevation change. When the system has static head, the pump at reduced speed produces less head, and at some speed it produces exactly the static head and no flow. Between full speed and that point the pump runs on a steep part of its curve, its efficiency falls, and the power saving is a fraction of the cube law. The savings estimate must be made on the actual system curve with the actual duty profile, not on the affinity laws alone.',
+      },
+      {
+        t: 'formula',
+        expr: 'N_min ≈ N_rated × √(H_static ÷ H_shutoff)',
+        where: [
+          'N_min = the speed at which the pump just reaches the static head with no flow',
+          'H_static = static head of the system',
+          'H_shutoff = pump shutoff head at rated speed',
+          'Practical minimum speed is somewhat above this so the pump delivers useful flow with acceptable efficiency',
+        ],
+      },
+      {
+        t: 'table',
+        head: ['System', 'Static head share', 'Speed range with useful flow', 'Savings prospect'],
+        rows: [
+          ['Distribution booster on flat terrain', 'Low', 'Wide', 'Large; pressure control pays quickly'],
+          ['Booster to an elevated zone', 'High', 'Narrow, near full speed', 'Small; consider constant speed with a pressure-reducing or alternation scheme'],
+          ['Well pump to a ground tank', 'High', 'Narrow', 'Small; the drive mainly softens starts and trims flow'],
+          ['High service pump to a system with storage', 'Moderate', 'Moderate', 'Moderate; depends on the storage and the demand profile'],
+          ['Plant internal transfer', 'Low to moderate', 'Wide', 'Good; flow control replaces throttling'],
+        ],
+      },
+      { t: 'h2', text: 'Control loops' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Pressure control', def: 'A pressure transmitter at the discharge or at a remote point sets the speed to hold a setpoint; the standard booster loop. A remote pressure transmitter, or a setpoint that rises with flow, compensates for friction so that the far end of the system sees constant pressure.' },
+          { term: 'Flow control', def: 'A flowmeter sets the speed to hold a flow setpoint; used for transfer, filter feed, and flow-paced processes. Ramp limits prevent surges.' },
+          { term: 'Level control', def: 'A tank or wet well level sets the speed so that inflow matches outflow, or the speed holds a level band; softer on the system than on and off pumping.' },
+          { term: 'Limits', def: 'A minimum speed from the static head calculation, a maximum at the motor rating, a minimum flow or a no-flow detection that stops the pump at minimum speed, and a discharge pressure high limit.' },
+        ],
+      },
+      { t: 'h2', text: 'Several pumps' },
+      {
+        t: 'p',
+        text: 'When one pump at maximum speed cannot meet the demand, a second is started and both run at the same speed, because two pumps at different speeds on one header fight and the slower one delivers little. The loop then controls the common speed. When the pumps together fall to a speed where one could do the work, one is stopped, with hysteresis and minimum run and stop times so that the staging does not hunt. Each pump on its own drive is the flexible arrangement; one drive with constant speed pumps beside it is cheaper and works when the drive pump can span the gaps.',
+      },
+      { t: 'h2', text: 'What the drive brings with it' },
+      {
+        t: 'ul',
+        items: [
+          'An inverter-duty motor, or an existing motor checked for insulation and bearing suitability; a shaft grounding ring on larger motors.',
+          'Cable length limits from the drive to the motor, or an output filter for long runs to a well or a remote pump.',
+          'Harmonics on the supply; a line reactor or a low-harmonic drive where the service or the generator is weak.',
+          'Heat in the panel, a few percent of the drive rating, in the enclosure heat calculation.',
+          'A bypass contactor or a spare drive where the pump must run when the drive fails.',
+          'Drive faults and diagnostics on the network, and a drive noise plan for the instrument wiring.',
+        ],
+      },
+      { t: 'h2', text: 'Estimating before buying' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Get the duty profile', text: 'Flow against hours from the historian or a logger, for a year if possible.' },
+          { title: 'Draw the system curve', text: 'Static head plus friction, from the hydraulic model or a field test at two flows.' },
+          { title: 'Find the operating points', text: 'Pump speed and power at each flow in the profile on the actual curve.' },
+          { title: 'Compare', text: 'Energy per year against the existing arrangement, including a throttling valve if one exists.' },
+          { title: 'Add the costs', text: 'Drive, motor, filter, panel changes, harmonic mitigation, and maintenance; and the benefits beyond energy, soft starting, surge reduction, and process control.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'Soft starting is a benefit on its own',
+        text: 'Even where the energy case is weak, a drive that ramps a large pump up and down protects the force main and the check valves from surge and the electrical system from inrush. A soft starter does that at lower cost without the speed control; the choice depends on whether speed control is also wanted.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Why does the pump vibrate and heat up at low speed?',
+        a: 'Below the minimum speed the pump makes little or no flow and churns the water in its casing, heating it and running off its curve. Raise the minimum speed setting to where the pump delivers flow, and stop the pump instead of running it below that.',
+      },
+      {
+        q: 'Should every pump have a drive?',
+        a: 'Not necessarily. One drive pump for trimming with constant speed pumps for base load is a common and economical arrangement where the drive pump can cover the gaps between stages. Every pump on a drive gives the most flexibility and the most equipment.',
+      },
+      {
+        q: 'How much energy will a drive save on a well?',
+        a: 'Often little, because a well pump lifts against a large static head and must run near full speed. The drive earns its place on a well by soft starting, by trimming flow to a treatment rate, and by reducing water hammer, not by energy.',
+      },
+      {
+        q: 'Can I retrofit a drive on an existing motor?',
+        a: 'Often, with the motor checked for insulation class and bearing protection, the cable length considered, and a filter added if needed. Older motors and long cable runs are the cases that fail; the motor manufacturer guidance and a drive vendor review settle it.',
+      },
+    ],
+    related: [
+      '/controls/control-panels/pump-panels/vfd',
+      '/water-wastewater/water-systems/water-pumping/pressure-control',
+      '/water-wastewater/water-systems/water-pumping/flow-control',
+      '/water-wastewater/wastewater-systems/wastewater-pump-control/vfd-pump-control',
+      '/troubleshooting/vfd-troubleshooting/motor-will-not-reach-speed',
+      '/controls/plc-systems/analog-control/pid',
+    ],
+  },
+  {
+    path: '/water-wastewater/water-systems/water-pumping/flow-control',
+    kind: 'reference',
+    title: 'Flow Control in Water Pumping',
+    summary:
+      'Controlling the flow a pumping system delivers: speed against valves, flow-paced pumping to a treatment rate, the flow loop with its ramp limits and its meter placement, and the loop tuning that keeps a flow controller steady.',
+    answer:
+      'Flow control means making a pumping system deliver a rate that something else has chosen: a treatment plant that can accept so many gallons per minute, a filter train with a design loading, a chemical process that needs a steady flow to dose against, or a schedule that fills a tank overnight. The manipulated variable is pump speed where the pumps are on drives, or a control valve where they are not, and speed is preferred because throttling wastes the energy the pump put in. The loop is a flowmeter feeding a PID controller that sets the speed or the valve, with a ramp limit on the setpoint so that the system does not surge, with a meter located where the flow is fully developed and free of air, and with the staging of pumps handled by the same logic that handles it for pressure control. Above the loop sits the reason for the setpoint: a plant rate, a filter rate, a level, or a daily volume, and that is where most of the design attention belongs.',
+    keyPoints: [
+      'Control flow with speed where drives exist; throttle with a valve only where they do not.',
+      'The flow loop needs a good meter, a ramp-limited setpoint, and a controller tuned slower than the pressure dynamics.',
+      'The setpoint comes from the process: a treatment rate, a filter rate, a level, or a daily volume.',
+      'Stage pumps on flow with hysteresis and minimum times, and split flow between trains with equal-percentage logic.',
+      'Ramp rates protect the system from surge; check valves and pressure limits back them up.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['Water', 'Pumps', 'Flow', 'PID', 'Control'],
+    blocks: [
+      { t: 'h2', text: 'Speed or valve' },
+      {
+        t: 'table',
+        head: ['Method', 'How', 'Energy', 'When'],
+        rows: [
+          ['Pump speed on a drive', 'The controller sets the drive speed', 'Efficient; the pump makes only the head the flow needs', 'Whenever drives exist or the case for them is made'],
+          ['Control valve on the discharge', 'The controller throttles a valve; the pump runs at full speed', 'Wastes the throttled head as heat and noise', 'Constant speed pumps, small flows, or where a valve already exists'],
+          ['Pump staging alone', 'Flow steps with the number of pumps', 'Efficient but coarse', 'Systems with storage that can absorb the steps'],
+          ['Bypass or recirculation', 'Excess flow returned to the source', 'Wasteful', 'Minimum flow protection only'],
+        ],
+      },
+      { t: 'h2', text: 'The loop' },
+      {
+        t: 'p',
+        text: 'A flowmeter, a PID controller, and a drive or valve form a loop that is faster and more oscillatory than a level loop, because flow responds to speed in seconds. The controller is tuned with modest gain and a short integral time, with derivative off, and the setpoint is passed through a ramp so that a large change is applied over tens of seconds rather than at once. The output is limited between the minimum speed at which the pump makes useful flow and the maximum, and a change of the number of running pumps is accompanied by a bumpless adjustment of the speed so that the flow does not jump. Feedforward from a known disturbance, a filter going into backwash for example, keeps the loop from having to catch up.',
+      },
+      { t: 'h2', text: 'The meter' },
+      {
+        t: 'ul',
+        items: [
+          'Magnetic or ultrasonic on a full pipe with the straight runs the meter type needs; a meter in a fitting-crowded header reads noise.',
+          'Downstream of the check valves and any air release, upstream of the first branch.',
+          'Sized so the normal flow sits in the middle of its range; a meter oversized for a future flow reads poorly today.',
+          'The signal filtered lightly in the transmitter and not again in the controller; excess damping makes the loop sluggish.',
+          'A low-flow cutoff so that a stopped system reads zero rather than a drifting few gallons per minute.',
+        ],
+      },
+      { t: 'h2', text: 'Where the setpoint comes from' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Treatment rate', def: 'The plant operator sets a rate the treatment train can handle; raw water pumps deliver it and the rate changes with chemical feed and clarifier loading. The setpoint is entered on the screen with limits.' },
+          { term: 'Filter or membrane feed', def: 'Each train has a design loading; the feed flow is controlled per train, and the total is split between trains in service, equally or by capacity.' },
+          { term: 'Level cascade', def: 'A tank or clearwell level controller outputs a flow setpoint to the pump flow loop; the level loop is slow, the flow loop fast, and the cascade keeps the level without the flow swinging.' },
+          { term: 'Daily volume and schedule', def: 'A target volume by a set time, pumped at a rate computed from what remains and the hours left, often shifted into off-peak power periods; the flow loop makes the rate real.' },
+          { term: 'Ratio', def: 'A flow held in proportion to another flow, for blending sources or for a sidestream.' },
+        ],
+      },
+      {
+        t: 'formula',
+        expr: 'Q_setpoint = (V_target − V_delivered) ÷ t_remaining',
+        where: [
+          'V_target = the volume to deliver by the end of the window',
+          'V_delivered = the volume delivered so far in the window',
+          't_remaining = the time left in the window',
+          'Bounded by the pump minimum and maximum flows; recomputed on an interval',
+        ],
+      },
+      { t: 'h2', text: 'Surge and protection' },
+      {
+        t: 'ul',
+        items: [
+          'Ramp the speed on start and stop; a pump stopped at full speed slams the check valve and sends a wave down the main.',
+          'A discharge pressure high limit that overrides the flow loop.',
+          'A minimum flow detection that stops a pump rather than running it against a closed system.',
+          'Check valves that close before reverse flow, and surge relief where the main is long or steep.',
+          'A controlled stop on power loss where the drive and the process allow it, or a surge analysis where they do not.',
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Tune the flow loop with the pressure in view',
+        text: 'A flow loop that is tuned aggressively will make pressure swing on a long main. Watch the discharge pressure while tuning, and accept a slower flow response if the pressure otherwise oscillates; the process upstream rarely needs the flow corrected in seconds.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'The flow oscillates a few percent all the time.',
+        a: 'Too much controller gain for the loop, a noisy meter feeding it, or a drive speed reference with a coarse resolution. Reduce the gain, check the meter installation, and look at the drive reference scaling.',
+      },
+      {
+        q: 'Can I control flow with a valve and a drive together?',
+        a: 'Only with a defined split, such as the drive holding the flow and the valve fixed, or the valve holding a pressure while the drive holds flow. Two controllers on one flow fight.',
+      },
+      {
+        q: 'How do I split flow between three filter trains?',
+        a: 'A total flow setpoint divided by the trains in service, each train with its own flow loop on its own valve or feed, and the split adjusted by capacity or by run time. A train going into backwash drops out and the others pick up its share on the next calculation.',
+      },
+      {
+        q: 'What ramp rate should I use?',
+        a: 'Slow enough that the pressure at the far end of the main does not swing beyond a few psi on a setpoint change: tens of seconds from minimum to maximum on a short main, minutes on a long one. The surge analysis, if one exists, states it.',
+      },
+    ],
+    related: [
+      '/water-wastewater/water-systems/water-pumping/vfd-control',
+      '/water-wastewater/water-systems/water-pumping/pressure-control',
+      '/water-wastewater/water-systems/water-treatment/raw-water',
+      '/controls/instrumentation/flow/magnetic-flowmeters',
+      '/controls/plc-systems/analog-control/pid',
+      '/how-to/plc-how-to/create-a-pid-loop',
+    ],
+  },
+  {
+    path: '/water-wastewater/water-systems/storage/ground-storage-tanks',
+    kind: 'reference',
+    title: 'Ground Storage Tanks',
+    summary:
+      'Controls for ground storage tanks: level measurement and its datum, filling from wells and treatment by pump control or altitude valve, and the telemetry that ties the tank to the system.',
+    answer:
+      'A ground storage tank sits between supply and demand: wells or a treatment plant fill it, high service pumps draw from it, and its level is the variable that runs both. The controls are a level measurement referenced to a documented datum, a fill control that starts sources at a low band and stops them at a high band or throttles an altitude valve, a low level cutoff that protects the high service pumps from running dry, high level and overflow alarms that arrive before the overflow, and a telemetry link that gives the operators and the SCADA system the level and the alarms. Behind those basics are the concerns of a stored water: turnover so that the water does not age and lose its residual, a level cycle that exercises the full volume, mixing where stratification is a problem, and freeze protection in cold climates. The tank is also where a system finds out whether its sources and its pumps are matched, because a tank that trends down in summer says the sources cannot keep up.',
+    keyPoints: [
+      'Level to a documented datum, with a second independent high level switch for the overflow alarm.',
+      'Fill by pump control on level bands or by an altitude valve; either way the bands come from the tank volume and the source capacity.',
+      'Low level cutoff protects the high service pumps; an inhibit above it prevents restarts in a dying tank.',
+      'Cycle the level through enough of the volume to turn the water over; a full tank is an old tank.',
+      'Trend the level against time: a tank that loses ground reveals a source or a demand problem before anything else does.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['Water', 'Level', 'Control', 'Pumps', 'SCADA'],
+    blocks: [
+      { t: 'h2', text: 'Measurement' },
+      {
+        t: 'p',
+        text: 'A submersible hydrostatic transmitter at the tank floor, a radar unit at the roof, or a pressure transmitter on the tank outlet reads the level, referenced to a datum that is written on the drawing, usually the tank floor. The transmitter range covers the full tank with margin above the overflow; the scaling in the controller matches the range; and a float switch or a second transmitter provides an independent high level alarm that does not depend on the primary. The level tag carries its unit and its datum in its description, because a level in feet above the floor and a level in feet above sea level are both feet.',
+      },
+      { t: 'h2', text: 'Filling' },
+      {
+        t: 'table',
+        head: ['Method', 'How it works', 'Notes'],
+        rows: [
+          ['Pump control on level bands', 'Sources start at the lead-on level and stop at the off level; more sources at lower bands', 'The usual arrangement for wells and treated water pumps; bands sized for starts per hour and source capacity'],
+          ['Altitude valve', 'A hydraulic valve on the inlet throttles or closes as the tank approaches full', 'Fills from a pressurized system without pump control; needs its own maintenance; a level signal still needed for telemetry'],
+          ['Treatment plant flow', 'The plant produces at a rate set from the tank level trend', 'The tank level or its rate of change sets the plant production setpoint'],
+          ['Timed or scheduled fill', 'Sources run in off-peak hours to reach a target level by morning', 'Combined with level bands as limits'],
+        ],
+      },
+      {
+        t: 'p',
+        text: 'The bands are set from the tank geometry and the source capacity: the volume between off and lead-on decides how often the sources cycle and must keep starts per hour within the motor ratings, and the volume between lead-on and the low alarm decides how much time the operators have when a source fails. With several sources, they are staged at successive bands and alternated, and a source that fails is skipped. The bands are on the screen with limits and in the control narrative.',
+      },
+      { t: 'h2', text: 'Drawing from the tank' },
+      {
+        t: 'p',
+        text: 'High service pumps take suction from the tank and stop when it is too low, at a level that keeps the suction submerged and the pumps within their net positive suction head. Above the cutoff is an inhibit level below which a pump that has stopped may not restart, so that the pumps do not cycle in a tank that is barely refilling. The low level alarm sits above the inhibit, with enough volume to act. Where the tank is the only storage, the low level condition also drives the demand side: a pressure setpoint reduction, a notice to large users, or a purchase from a neighbor, according to the plan.',
+      },
+      { t: 'h2', text: 'Alarms' },
+      {
+        t: 'ul',
+        items: [
+          'High level from the primary transmitter, and an independent high-high from a switch, both before the overflow.',
+          'Low and low-low from the primary, with the cutoff below.',
+          'Rate of change: filling faster than any source can fill is a transmitter fault; falling faster than demand can explain is a leak or a main break.',
+          'Stale level: a level that has not moved in hours with pumps running is a failed transmitter or a frozen line.',
+          'Communication loss from the tank site, with the fill sources holding a safe state.',
+        ],
+      },
+      { t: 'h2', text: 'Turnover and age' },
+      {
+        t: 'p',
+        text: 'Water in a tank loses its disinfectant residual with time and warms in summer, and a tank that is kept near full turns over only a small fraction of its volume each day. The control cycles the level through a deliberate range, deeper in summer, so that a meaningful fraction of the volume is replaced daily, and the operators track the calculated water age and the residual at the outlet. A mixing system, a jet or a mechanical mixer, is added where stratification or dead zones persist, with its own run logic and alarm. In cold climates the level cycle also breaks ice and the inlet and outlet arrangements keep the water moving; a tank left full and still in a hard freeze is a tank with an ice problem.',
+      },
+      {
+        t: 'formula',
+        expr: 'Turnover (days) ≈ V_tank ÷ V_cycled_per_day',
+        where: [
+          'V_tank = the operating volume of the tank',
+          'V_cycled_per_day = the volume drawn and refilled each day, from the level cycle and the tank geometry',
+          'Many utilities target a turnover of a few days; the residual trend says whether it is enough',
+        ],
+      },
+      { t: 'h2', text: 'Telemetry' },
+      {
+        t: 'p',
+        text: 'The tank level is often the most important single signal in a small system, and it travels by radio or cellular from a site with no staff. The design gives the tank site a reliable link with a watchdog, a battery-backed transmitter and radio, a local high level alarm that does not depend on the link, and a fill control that behaves safely when the link is lost: sources at a remote site run on their own local level signal where possible, or hold their last command for a limited time and then go to a safe state.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Where should the fill sources get the level from?',
+        a: 'From the tank transmitter over telemetry for normal control, with a local backup at the source if the link can fail: a pressure transmitter on the source discharge that infers the tank level, or a timed fill with limits. The narrative states the behavior on communication loss.',
+      },
+      {
+        q: 'How deep should the level cycle be?',
+        a: 'Deep enough to turn the water over in a few days while keeping enough storage for fire flow and outages: the two constraints set the band, and the residual at the outlet says whether the cycle is deep enough.',
+      },
+      {
+        q: 'The tank overflowed with no high level alarm.',
+        a: 'The primary transmitter failed high or was stuck, and there was no independent high level switch, or the switch was there and not alarmed. Add the independent switch, alarm it, and add a rate-of-change and stale-value check on the primary.',
+      },
+      {
+        q: 'Can the same level control the wells and the high service pumps?',
+        a: 'Yes: the wells fill on the upper bands and the high service pumps are protected by the lower ones, and both read the same transmitter with the independent switch as the safety. The bands are separated so that the two functions never fight.',
+      },
+    ],
+    related: [
+      '/water-wastewater/water-systems/storage/tank-level-control',
+      '/water-wastewater/water-systems/storage/elevated-tanks',
+      '/water-wastewater/water-systems/storage/pump-sequencing',
+      '/water-wastewater/water-systems/water-pumping/well-pumps',
+      '/controls/instrumentation/level/hydrostatic-level',
+      '/controls/instrumentation/level/radar-level',
+    ],
+  },
+  {
+    path: '/water-wastewater/water-systems/storage/pump-sequencing',
+    kind: 'reference',
+    title: 'Pump Sequencing for Storage',
+    summary:
+      'Sequencing the pumps that fill and draw from storage: staging on level bands, rotating wells and sources for even use and water quality, time-of-day and demand-based scheduling, and the records that show the sequence is doing its job.',
+    answer:
+      'Sequencing decides which pumps run, in what order, and when, to keep a tank within its band using the sources a system has. The basic form is staging on level: the first source starts at the lead-on level, the second at a lower band, and so on, with all stopping at the off level; the refinements are rotation so that each well or pump shares the duty and each is exercised, scheduling so that pumping happens in cheap power hours and the tank is full before the morning demand, minimum run and rest times so that no source short-cycles, staggered starts so the electrical system sees one motor at a time, and a failure logic that promotes the next source when one is unavailable. Where the sources differ, in capacity, in water quality, or in cost, the sequence also decides which to prefer, and the operators need to see the reasoning on the screen. The proof that it works is in the trends: level within band, hours balanced, starts within rating, and energy in the off-peak hours.',
+    keyPoints: [
+      'Stage on level bands sized from the tank volume, the source capacities, and the starts-per-hour limits.',
+      'Rotate sources for even wear and exercise; prefer sources by cost or quality when the design says so.',
+      'Schedule pumping into off-peak hours with the level bands as the limits and a full tank before peak demand.',
+      'Minimum run, minimum rest, and staggered starts keep motors and the electrical system within limits.',
+      'A failed or unavailable source is skipped automatically and alarmed; the sequence never waits for an operator.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['Water', 'Pumps', 'Level', 'Control', 'Design'],
+    blocks: [
+      { t: 'h2', text: 'Staging on level' },
+      {
+        t: 'table',
+        head: ['Level band', 'Action', 'Sizing'],
+        rows: [
+          ['Off', 'All fill sources stop', 'Below the overflow with margin; above the level that keeps water moving'],
+          ['Lead on', 'First source starts', 'Volume between off and lead-on sets the cycle frequency for one source'],
+          ['Lag on', 'Second source starts', 'Below lead-on by a volume that gives the first source time to show it is winning or losing'],
+          ['Third and more', 'Further sources start', 'Successively lower; each band gives the previous stage time'],
+          ['Low alarm', 'Operator alerted', 'Enough volume above the pump cutoff for a response'],
+          ['Low cutoff', 'Draw pumps stopped', 'Pump protection'],
+        ],
+      },
+      {
+        t: 'p',
+        text: 'The bands can be fixed levels or a level PID output that stages pumps at output thresholds; the fixed bands are easier to understand at a lift station or a tank site and are what most systems use. Hysteresis between the on and off levels for each stage, and a minimum run time, stop a source from cycling on a level that hovers at its band.',
+      },
+      { t: 'h2', text: 'Rotation and preference' },
+      {
+        t: 'ul',
+        items: [
+          'Rotate the lead source each cycle or by run hours so that wells share the drawdown and pumps share the wear.',
+          'Exercise a source that has not run for a set period, so that a standby well does not sit idle for a season.',
+          'Prefer the cheaper or better-quality source by making it lead more often, with the reasoning on the screen.',
+          'Hold a source out for water quality, a sanding well or one with a rising nitrate, by a selection that the sequence respects and alarms on after a set time.',
+          'Blend sources by running them in proportion where the quality requires it, with the blend ratio as a setpoint.',
+        ],
+      },
+      { t: 'h2', text: 'Scheduling' },
+      {
+        t: 'p',
+        text: 'Power costs differ by hour, and demand differs by hour, and the tank is the buffer between them. A schedule lets the sequence pump the tank full during off-peak hours and hold the fill sources off during peak hours as long as the level stays above a reserve band; the level bands remain as the limits so that a hot day overrides the schedule. The schedule is a setpoint table on the screen, the reserve level is a limit the operators cannot set below the fire reserve, and the energy report shows how much pumping happened in each period.',
+      },
+      {
+        t: 'formula',
+        expr: 'Required fill rate = (L_target − L_now) × A_tank ÷ t_window',
+        where: [
+          'L_target = the level wanted at the end of the window',
+          'L_now = the current level',
+          'A_tank = the tank area, so that level times area is volume',
+          't_window = the hours left in the off-peak window',
+          'Compared with source capacities to decide how many to run',
+        ],
+      },
+      { t: 'h2', text: 'Protecting the equipment' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Minimum run time', def: 'Once started, a source runs for a set minimum unless a fault or the high level stops it; well pumps in particular need minutes, not seconds.' },
+          { term: 'Minimum rest time', def: 'Once stopped, a source waits before restarting; the motor rating for starts per hour sets it.' },
+          { term: 'Staggered start', def: 'Sources called at the same time start seconds apart, and on generator power the stagger is longer.' },
+          { term: 'Ramped start', def: 'Drives and soft starters ramp; across-the-line starts are staggered and the check valves and surge protection sized for them.' },
+          { term: 'Drawdown limits', def: 'A well is not run below its safe drawdown; a level or a pressure in the well casing stops it and the sequence promotes the next source.' },
+        ],
+      },
+      { t: 'h2', text: 'Failure handling' },
+      {
+        t: 'p',
+        text: 'A source that fails to start, trips, is in off, or is locked out is skipped: the sequence promotes the next source at once, alarms, and holds the failed source out until it is reset. A level transmitter that fails is detected by its diagnostics and by rate-of-change checks, and the sequence falls back to a local level signal, a timed fill, or a safe state, according to the narrative. A communication loss between the tank and the sources is handled the same way. Every one of these is tested at commissioning by simulating the failure, and the response is in the control narrative.',
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Show the reasoning',
+        text: 'A sequence that starts a well at two in the morning for reasons the operator cannot see is a sequence the operator will put in hand. The screen shows the level, the bands, the schedule state, the rotation order, which source is next and why, and which sources are held out. The trend of runs and hours per source is the report.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'How many sources should run at once?',
+        a: 'As many as the level band calls for, limited by what the electrical system and the treatment can take; the design states the maximum and the sequence enforces it. Running one source longer beats running three sources in short cycles.',
+      },
+      {
+        q: 'Should wells alternate or should the best well lead?',
+        a: 'Both can be true: rotate for exercise and drawdown recovery, and weight the rotation toward the well with the best quality or lowest cost. A well never run is a well with a surprise in it.',
+      },
+      {
+        q: 'The tank never reaches the off level in summer.',
+        a: 'The sources cannot keep up with demand at the pumping hours allowed. Extend the schedule window, add a source to the stage, check that every source is actually producing its rated flow, and look at the demand for leaks or unusual users.',
+      },
+      {
+        q: 'Where does the sequence live, in the tank site controller or the source controllers?',
+        a: 'Usually in one controller with the level, the tank site or the plant, which sends run commands to the sources; each source keeps local protection and a fallback. A sequence split across several controllers with no master is hard to reason about.',
+      },
+    ],
+    related: [
+      '/water-wastewater/water-systems/storage/ground-storage-tanks',
+      '/water-wastewater/water-systems/storage/tank-level-control',
+      '/water-wastewater/water-systems/water-pumping/well-pumps',
+      '/water-wastewater/water-systems/water-treatment/wells',
+      '/controls/control-panels/pump-panels/alternation',
+      '/how-to/plc-how-to/program-lead-lag-pumps',
+    ],
+  },
+  {
+    path: '/water-wastewater/water-systems/membrane-treatment/reverse-osmosis',
+    kind: 'reference',
+    title: 'Reverse Osmosis',
+    summary:
+      'Reverse osmosis from the controls side: what the skid contains, the instruments that matter, the numbers an operator watches, recovery, rejection, normalized permeate flow, and the trends that say when the membranes need cleaning or replacement.',
+    answer:
+      'Reverse osmosis pushes water through a membrane under pressure so that the water passes and the dissolved salts mostly do not, and a municipal skid is a set of pressure vessels holding spiral-wound elements, a high-pressure feed pump on a drive, a concentrate valve, cartridge prefilters, and the chemical feeds that keep the membranes from scaling, fouling, or being oxidized. The controls read feed, interstage, concentrate, and permeate pressures, permeate and concentrate flows, feed and permeate conductivity, pH, temperature, and an oxidant check ahead of the membranes, and from them compute the recovery, the salt rejection, the normalized permeate flow, and the differential pressure that tell the operators how the membranes are doing. The skid runs a start sequence with a low-pressure flush and a pressure ramp, a steady state with permeate flow held by the pump speed and recovery held by the concentrate valve, and a shutdown with a flush; and it trips on high pressure, low feed pressure, high permeate conductivity, and oxidant breakthrough. The trends of the normalized values, not the raw ones, decide when to clean.',
+    keyPoints: [
+      'The skid: prefilters, high-pressure pump on a drive, pressure vessels in stages, concentrate valve, permeate, flush, and chemical feeds.',
+      'Instruments: pressures at feed, interstage, concentrate, and permeate; permeate and concentrate flows; conductivities; pH; temperature; an oxidant check.',
+      'Watch the normalized permeate flow, salt rejection, differential pressure, and recovery, corrected for temperature and pressure.',
+      'Control permeate flow with pump speed and recovery with the concentrate valve; ramp pressure slowly on start.',
+      'Trip on high pressure, low feed pressure, high permeate conductivity, and oxidant in the feed; flush on every stop.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['Water', 'Instrumentation', 'Control', 'Pumps', 'Design'],
+    blocks: [
+      { t: 'h2', text: 'The skid' },
+      {
+        t: 'table',
+        head: ['Element', 'Purpose', 'Control interest'],
+        rows: [
+          ['Cartridge prefilters', 'Remove particles that would foul the elements', 'Differential pressure; change at a limit'],
+          ['Chemical feeds', 'Antiscalant against scale; acid for pH; bisulfite or activated carbon to remove chlorine', 'Flow-paced dosing; interlocked with feed flow; oxidant check downstream'],
+          ['High-pressure feed pump', 'Provides the driving pressure', 'Drive speed sets permeate flow; ramp limits; low suction and high discharge protection'],
+          ['Pressure vessels in stages', 'Hold the elements; the concentrate of one stage feeds the next', 'Pressures at each stage; differential pressure per stage'],
+          ['Concentrate valve', 'Sets the concentrate flow and therefore the recovery', 'Position control from a recovery or concentrate flow loop'],
+          ['Permeate line', 'Product water to stabilization and storage', 'Flow, conductivity, pressure; a divert valve for off-specification permeate'],
+          ['Flush system', 'Displaces concentrate from the vessels at shutdown with permeate or low-pressure feed', 'Sequence step; flush volume and duration'],
+          ['Interstage boost', 'On some skids, a pump between stages to balance flux', 'Speed control for the second stage'],
+        ],
+      },
+      { t: 'h2', text: 'The numbers' },
+      {
+        t: 'formula',
+        expr: 'Recovery (%) = Q_permeate ÷ Q_feed × 100 = Q_permeate ÷ (Q_permeate + Q_concentrate) × 100',
+        where: [
+          'Q_permeate = permeate flow',
+          'Q_feed = feed flow',
+          'Q_concentrate = concentrate flow',
+          'Municipal brackish skids run roughly 75 to 85 percent; set by the scaling limit of the water',
+        ],
+      },
+      {
+        t: 'formula',
+        expr: 'Rejection (%) = (1 − C_permeate ÷ C_feed) × 100',
+        where: [
+          'C = conductivity or a specific ion concentration',
+          'Feed concentration is sometimes taken as the average of feed and concentrate to represent the membrane surface',
+        ],
+      },
+      {
+        t: 'p',
+        text: 'Permeate flow depends on the net driving pressure and the temperature, so a raw permeate flow that falls in winter says nothing about the membranes. Normalization corrects the measured flow to a reference temperature and pressure using the manufacturer method, and the normalized permeate flow, the normalized salt passage, and the normalized differential pressure are the trends that reveal fouling, scaling, and damage. The calculation is done in the controller or the SCADA from the measured values and shown beside them.',
+      },
+      {
+        t: 'table',
+        head: ['Normalized trend', 'Change', 'Likely cause', 'Action'],
+        rows: [
+          ['Permeate flow', 'Down 10 to 15 percent from the clean baseline', 'Fouling or scaling', 'Clean in place'],
+          ['Differential pressure', 'Up 10 to 15 percent', 'Fouling of the feed channel; biofouling; particulates', 'Clean in place; check pretreatment'],
+          ['Salt passage', 'Up 5 to 10 percent', 'Scaling, oxidation damage, or a seal or element failure', 'Clean; probe the vessels; check the oxidant history'],
+          ['Permeate flow up with salt passage up', 'Together', 'Membrane damage, usually oxidation or a failed seal', 'Probe and replace'],
+        ],
+      },
+      { t: 'h2', text: 'Control loops' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Permeate flow', def: 'The feed pump speed holds a permeate flow setpoint, ramped slowly. The pressure follows from the membranes; a rising pressure at constant flow is the fouling trend.' },
+          { term: 'Recovery', def: 'The concentrate valve holds a concentrate flow setpoint computed from the permeate flow and the recovery target, so that the recovery stays at the design value as the permeate flow changes.' },
+          { term: 'Chemical dosing', def: 'Antiscalant and acid are flow-paced to the feed flow with a residual or pH trim; bisulfite is paced to the feed with the oxidant analyzer as the check.' },
+          { term: 'Interstage boost', def: 'Where fitted, holds the second stage flux by a pressure or flow target.' },
+          { term: 'Permeate quality', def: 'Permeate conductivity above a limit diverts the permeate to waste and alarms; sustained, it stops the skid.' },
+        ],
+      },
+      { t: 'h2', text: 'Sequence' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Pre-start', text: 'Permissives: feed available, prefilter differential within limit, chemical feeds ready, oxidant analyzer healthy and reading zero, valves in position.' },
+          { title: 'Low-pressure flush', text: 'Feed water at low pressure through the vessels to waste, displacing the flush water and purging air.' },
+          { title: 'Ramp', text: 'The feed pump ramps at the manufacturer rate, often around ten psi per second or slower, to the operating point while the concentrate valve moves toward its running position; permeate to waste until conductivity is within limit.' },
+          { title: 'Run', text: 'Flow and recovery loops in control; trends updated; alarms armed.' },
+          { title: 'Shutdown', text: 'Ramp down, then flush with permeate or low-pressure feed to remove concentrate from the vessels so that scale does not form while idle.' },
+          { title: 'Idle', text: 'A periodic flush during long standby; a preservation procedure for extended shutdowns.' },
+        ],
+      },
+      { t: 'h2', text: 'Trips and alarms' },
+      {
+        t: 'ul',
+        items: [
+          'High feed or concentrate pressure: the element and vessel ratings.',
+          'Low feed or suction pressure: pump protection and a sign of prefilter blinding.',
+          'High permeate conductivity: divert, then stop.',
+          'Oxidant detected in the feed: stop immediately; polyamide membranes are destroyed by chlorine.',
+          'High or low pH at the feed: scaling or membrane damage.',
+          'Low chemical feed or low antiscalant tank: stop before scaling begins.',
+          'High differential pressure across a stage: fouling or a collapsed element.',
+          'Excessive pressure ramp rate: a drive or valve fault.',
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Chlorine and polyamide',
+        text: 'The membranes used in nearly every municipal skid are destroyed by free chlorine. The bisulfite feed or the carbon ahead of the membranes and the oxidant analyzer after it are the protection, and a skid that runs with the analyzer failed or bypassed is one upset from a set of ruined elements.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Why normalize instead of alarming on the raw pressure?',
+        a: 'Because the raw pressure rises in winter as the water gets colder and the membranes tighten, with no fouling at all. Normalized values remove the temperature and pressure effects and leave the membrane condition. Alarming on raw values produces cleaning in January and missed fouling in July.',
+      },
+      {
+        q: 'What sets the recovery?',
+        a: 'The scaling potential of the concentrate: as recovery rises, the concentrate becomes more saturated in sparingly soluble salts, and the antiscalant and pH control have limits. The membrane supplier projection sets the design recovery, and the controls hold it.',
+      },
+      {
+        q: 'How often should a skid be cleaned?',
+        a: 'When the normalized trends cross their limits, which on a well-pretreated brackish water may be a few times a year and on a difficult water monthly. Cleaning on a calendar cleans too early or too late.',
+      },
+      {
+        q: 'Can the skid run at reduced flow?',
+        a: 'Within the element limits: a minimum concentrate flow per vessel to avoid scaling and a minimum flux to keep the elements clean. The turndown is stated in the design; below it the skid stops rather than idling.',
+      },
+    ],
+    related: [
+      '/water-wastewater/water-systems/membrane-treatment/membrane-control',
+      '/water-wastewater/water-systems/membrane-treatment/cip',
+      '/water-wastewater/water-systems/membrane-treatment/feed-pumps',
+      '/water-wastewater/water-systems/membrane-treatment/concentrate-systems',
+      '/controls/instrumentation/analytical/conductivity',
+      '/controls/instrumentation/analytical/orp',
+    ],
+  },
+  {
+    path: '/water-wastewater/water-systems/membrane-treatment/nanofiltration',
+    kind: 'reference',
+    title: 'Nanofiltration',
+    summary:
+      'Nanofiltration from the controls side: how it differs from reverse osmosis in pressure, recovery, and what it removes, the softening and color removal applications where it dominates, and trends that are shared with reverse osmosis and the ones that differ.',
+    answer:
+      'Nanofiltration is a membrane process a step looser than reverse osmosis: it passes most monovalent ions and removes divalent ions, organics, color, and pathogens, at operating pressures a fraction of what reverse osmosis needs. Its municipal home is groundwater softening and the removal of color and disinfection byproduct precursors from organic-rich sources, often at recoveries higher than reverse osmosis achieves, and the limiting factor is almost always scaling by calcium carbonate and sulfate salts in the concentrate. The skid, the instruments, the loops, and the sequences are those of reverse osmosis at lower pressure: a feed pump on a drive, stages of vessels, a concentrate valve, antiscalant and acid feed, and the normalized trends. What differs is the emphasis: pH and antiscalant control decide the recovery, the permeate needs stabilization by degasification and pH adjustment before it is pipeable, and the permeate quality is judged on hardness and color rather than on conductivity alone.',
+    keyPoints: [
+      'Looser than reverse osmosis: removes hardness, organics, and color; passes most monovalent ions; runs at lower pressure.',
+      'Recovery is set by scaling; antiscalant and pH control are the loops that protect it.',
+      'Permeate stabilization, degasification, pH adjustment, and corrosion control follows the membranes and has its own controls.',
+      'Instruments, sequences, normalization, and trips are shared with reverse osmosis.',
+      'Quality is judged on hardness, color, and total organic carbon as well as conductivity.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['Water', 'Instrumentation', 'Control', 'Design', 'Standards'],
+    blocks: [
+      { t: 'h2', text: 'Compared with reverse osmosis' },
+      {
+        t: 'table',
+        head: ['Aspect', 'Nanofiltration', 'Reverse osmosis'],
+        rows: [
+          ['Removes', 'Divalent ions, organics, color, pathogens; partial monovalent removal', 'Nearly all dissolved solids'],
+          ['Operating pressure', 'Low; often well under 150 psi on groundwater', 'Higher; brackish water often 150 to 400 psi, seawater far more'],
+          ['Typical recovery', 'High, often 80 to 90 percent on suitable water', 'Moderate, often 75 to 85 percent'],
+          ['Limiting factor', 'Scaling by calcium carbonate and sulfates', 'Scaling and osmotic pressure'],
+          ['Main uses', 'Softening, color and organics removal, disinfection byproduct precursor control', 'Desalination, total dissolved solids reduction, specific contaminants'],
+          ['Permeate', 'Soft, low alkalinity, aggressive; needs stabilization', 'Very low dissolved solids; needs stabilization'],
+        ],
+      },
+      { t: 'h2', text: 'Scaling control' },
+      {
+        t: 'p',
+        text: 'As the feed is concentrated, calcium carbonate and the sulfates of calcium, barium, and strontium approach and exceed their solubility in the concentrate, and they precipitate on the last elements of the last stage. Antiscalant dosing keeps them in solution for the residence time of the water in the skid, acid dosing lowers the pH so that carbonate stays as bicarbonate, and the recovery is chosen so that the concentrate stays within what the chemicals can hold. The controls flow-pace the antiscalant to the feed flow and alarm on low dosing; control the feed pH to a setpoint with the acid feed and trip on high pH; and hold the recovery with the concentrate valve. The trend that catches scaling is a rising normalized differential pressure on the last stage with a rising salt passage, and the answer is a low pH clean and a review of the dosing.',
+      },
+      { t: 'h2', text: 'Permeate stabilization' },
+      {
+        t: 'p',
+        text: 'Nanofiltration permeate has lost its hardness and much of its alkalinity, carries dissolved carbon dioxide from the acid feed, and may carry hydrogen sulfide from the groundwater; it will corrode pipe and stain fixtures until it is stabilized. Degasification strips the carbon dioxide and sulfide in a tower with a blower and a scrubber; caustic or lime raises the pH; a corrosion inhibitor is added; and in many plants a bypass of raw or partially treated water is blended back to restore some alkalinity and hardness. The controls for this section are a pH loop on the caustic feed, a blend ratio loop on the bypass, blower and scrubber sequences and interlocks, and the alarms on pH, sulfide odor control, and inhibitor feed. The finished water quality targets, pH, alkalinity, and a corrosion index, are the setpoints.',
+      },
+      { t: 'h2', text: 'What is shared with reverse osmosis' },
+      {
+        t: 'ul',
+        items: [
+          'The instruments: pressures per stage, permeate and concentrate flows, conductivities, pH, temperature, oxidant check.',
+          'The loops: permeate flow by pump speed, recovery by concentrate valve, flow-paced dosing.',
+          'The sequences: flush, ramp, run, flush; the cleaning sequences.',
+          'Normalization of permeate flow, salt passage, and differential pressure, and the cleaning triggers.',
+          'The trips: pressure, conductivity, oxidant, pH, chemical feed.',
+        ],
+      },
+      { t: 'h2', text: 'Quality measurements' },
+      {
+        t: 'ul',
+        items: [
+          'Permeate conductivity for a continuous trend; less sensitive than on reverse osmosis because monovalent ions pass.',
+          'Online or laboratory hardness on the permeate and the blended water; the softening target.',
+          'Color and ultraviolet absorbance where color or organics removal is the purpose; total organic carbon by laboratory.',
+          'pH, alkalinity, and a corrosion index on the finished water.',
+          'Sulfide and odor at the degasifier where the groundwater carries it.',
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'Bypass blending',
+        text: 'Blending raw water around the membranes restores hardness and alkalinity and reduces the membrane capacity needed, and it also passes whatever the membranes would have removed. The blend ratio is a water quality decision made with the regulator in view, and the controls hold it with a flow ratio loop and alarm on deviation.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Why nanofiltration instead of lime softening?',
+        a: 'It removes organics and color as well as hardness, produces no lime sludge, and is easier to automate; it costs energy, membranes, chemicals, and a concentrate to dispose of. The choice is a treatment study; the controls are simpler for the membrane plant.',
+      },
+      {
+        q: 'The last stage differential pressure keeps rising.',
+        a: 'Scaling on the last elements, where the concentrate is most saturated. Check the antiscalant dose and the feed pH against the design, verify the recovery is not above design, and clean at low pH.',
+      },
+      {
+        q: 'How aggressive is the permeate?',
+        a: 'Aggressive enough to corrode iron and copper and to leach lead from old fittings; the stabilization section is not optional. The corrosion index of the finished water is a control target with limits.',
+      },
+      {
+        q: 'Can a reverse osmosis skid be converted to nanofiltration?',
+        a: 'The vessels and much of the piping are the same; the elements, the pump sizing, the recovery, and the chemical program change. The membrane supplier projection for the new elements decides the operating point.',
+      },
+    ],
+    related: [
+      '/water-wastewater/water-systems/membrane-treatment/reverse-osmosis',
+      '/water-wastewater/water-systems/membrane-treatment/membrane-control',
+      '/water-wastewater/water-systems/membrane-treatment/cip',
+      '/water-wastewater/water-systems/water-treatment/chemical-feed',
+      '/controls/instrumentation/analytical/ph',
+      '/controls/instrumentation/analytical/conductivity',
+    ],
+  },
+  {
+    path: '/water-wastewater/water-systems/membrane-treatment/membrane-control',
+    kind: 'reference',
+    title: 'Membrane Control',
+    summary:
+      'The control system of a membrane skid: the loops for permeate flow, recovery, and dosing, the permissives and trips, the start, run, flush, and shutdown sequences, and the data the operators and the membrane supplier need from the historian.',
+    answer:
+      'A membrane skid is controlled by a handful of loops, a sequence, a set of trips, and a set of calculations, and the quality of the plant depends on getting each of them right. The permeate flow loop sets the feed pump speed; the recovery loop sets the concentrate valve from the permeate flow and the recovery target; the dosing loops pace the antiscalant, acid, and dechlorination chemicals to the feed flow with analyzer trims; the sequence takes the skid through flush, ramp, run, and flush with permissives at each step; the trips stop the skid on pressure, conductivity, oxidant, pH, and chemical feed failures; and the normalization calculations turn the raw readings into the trends that say when to clean. Several trains share feed, chemicals, and permeate collection, so a plant controller coordinates which trains run, staggers their starts, and balances their production to the plant demand. The historian keeps the normalized trends and the operating conditions for the years the membranes live.',
+    keyPoints: [
+      'Four loops: permeate flow by pump speed, recovery by concentrate valve, dosing by feed flow with trims, and permeate quality by divert.',
+      'A sequence with permissives at every step; a pressure ramp at the manufacturer rate; a flush on every shutdown.',
+      'Trips on pressure, conductivity, oxidant, pH, and chemical feed, each latched and reset by a person.',
+      'Normalization in the controller from measured values, shown beside the raw values, trended for the life of the membranes.',
+      'Multi-train coordination: which trains run, staggered starts, production balanced to demand, shared systems interlocked.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['Water', 'Control', 'PID', 'Instrumentation', 'Programming'],
+    blocks: [
+      { t: 'h2', text: 'Loops' },
+      {
+        t: 'table',
+        head: ['Loop', 'Measured', 'Manipulated', 'Notes'],
+        rows: [
+          ['Permeate flow', 'Permeate flowmeter', 'Feed pump drive speed', 'Setpoint from the plant demand; ramp limited; output limited by pressure'],
+          ['Recovery', 'Concentrate flowmeter', 'Concentrate control valve', 'Setpoint computed from permeate flow and recovery target; slow tuning'],
+          ['Feed pH', 'pH after acid injection', 'Acid metering pump', 'Flow-paced with pH trim; high pH trip'],
+          ['Antiscalant', 'Feed flow', 'Antiscalant metering pump', 'Pure flow pacing; low flow and low tank alarms; no analyzer'],
+          ['Dechlorination', 'Feed flow and oxidant analyzer', 'Bisulfite metering pump', 'Flow-paced with a residual target; oxidant trip'],
+          ['Permeate quality', 'Permeate conductivity', 'Divert valve', 'Divert above a limit; stop after a time'],
+          ['Interstage boost', 'Second stage permeate flow or pressure', 'Boost pump speed', 'Where fitted'],
+        ],
+      },
+      { t: 'h2', text: 'Sequence' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Ready', text: 'Permissives: feed pressure, prefilter differential, chemical tanks and pumps, oxidant analyzer healthy, valves in position, no unreset trips, train selected for automatic.' },
+          { title: 'Flush to waste', text: 'Feed at low pressure through the vessels to waste for a set volume or time; the concentrate valve open; permeate to waste.' },
+          { title: 'Ramp', text: 'Feed pump ramps at the set rate while the concentrate valve moves to its run position; pressure and flow rise together; permeate stays diverted until conductivity is within limit.' },
+          { title: 'Run', text: 'Loops in automatic; trends live; the divert valve returns permeate to service.' },
+          { title: 'Stop', text: 'Ramp down; concentrate valve opens; pump stops.' },
+          { title: 'Flush', text: 'Permeate or low-pressure feed displaces concentrate from the vessels for a set volume; then the train is idle.' },
+          { title: 'Idle', text: 'A periodic flush on a timer; a preservation procedure for long shutdowns; the train remains available.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'The ramp rate',
+        text: 'A pressure applied to the elements faster than the manufacturer allows telescopes them and damages the seals. The ramp is enforced by the controller, not by an operator, and a drive or valve fault that would exceed it stops the train.',
+      },
+      { t: 'h2', text: 'Trips and alarms' },
+      {
+        t: 'p',
+        text: 'Trips stop the train and latch: high feed or concentrate pressure, low suction pressure, oxidant detected, high feed pH, low antiscalant flow, and sustained high permeate conductivity. Each is reset by a person after the cause is known. Alarms warn without stopping: prefilter differential approaching its limit, a normalized value approaching its cleaning trigger, a chemical tank low, a divert in progress. The design separates an instrument fault from a membrane problem where it can: a conductivity analyzer with a stale or out-of-range signal raises an instrument alarm and holds the last good divert state; an oxidant analyzer fault stops the train, because the risk is asymmetric.',
+      },
+      { t: 'h2', text: 'Normalization in the controller' },
+      {
+        t: 'p',
+        text: 'The controller computes the normalized permeate flow, salt passage, and differential pressure every scan from the measured pressures, flows, conductivities, and temperature, using the membrane manufacturer method and a baseline recorded at commissioning after the first stabilization. The values are displayed beside the raw values, trended in the historian, and alarmed against the cleaning triggers. Doing the calculation in the controller rather than in a spreadsheet makes the trend continuous and the cleaning trigger an alarm rather than a monthly discovery. The baseline is re-established after a membrane replacement and recorded.',
+      },
+      { t: 'h2', text: 'Several trains' },
+      {
+        t: 'ul',
+        items: [
+          'A plant demand setpoint is divided among the trains in service, equally or by capacity; each train runs its permeate flow loop on its share.',
+          'Trains start staggered so that the feed system, the chemicals, and the electrical system see one ramp at a time.',
+          'Shared systems, the feed pumps, chemical feeds, and the permeate and concentrate headers, are interlocked to the trains that need them.',
+          'Cleaning takes one train out of service while the others carry the demand; the cleaning skid is interlocked so that a train cannot be in service and in cleaning at once.',
+          'Train selection rotates so that hours balance, with a train held out for cleaning or maintenance by selection.',
+        ],
+      },
+      { t: 'h2', text: 'Data' },
+      {
+        t: 'ul',
+        items: [
+          'Every pressure, flow, conductivity, pH, and temperature at a resolution that captures the ramp and the run.',
+          'The normalized values with their baseline.',
+          'The sequence step and its duration; the trips and alarms with time stamps.',
+          'Chemical usage and tank levels.',
+          'Cleaning events with their conditions, for the membrane supplier and the warranty.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Why compute normalization in the controller?',
+        a: 'So that the trend is continuous, the cleaning trigger is an alarm, and the calculation is done the same way every time by something that does not go on vacation. The spreadsheet remains a check.',
+      },
+      {
+        q: 'How should the recovery loop be tuned?',
+        a: 'Slowly. The concentrate valve loop interacts with the permeate flow loop, and a fast recovery loop makes both oscillate. Tune the flow loop first with the valve fixed, then the recovery loop slowly enough that the flow loop settles between its moves.',
+      },
+      {
+        q: 'What happens when the oxidant analyzer fails?',
+        a: 'The train stops. The membranes are the most expensive part of the plant and chlorine destroys them in hours; an analyzer fault is treated as chlorine present until proven otherwise. A redundant analyzer is the way to avoid nuisance stops.',
+      },
+      {
+        q: 'Can operators change the recovery?',
+        a: 'Within limits set from the membrane projection, with the change logged and the antiscalant and pH programs checked. A recovery above the projection scales the last stage within weeks.',
+      },
+    ],
+    related: [
+      '/water-wastewater/water-systems/membrane-treatment/reverse-osmosis',
+      '/water-wastewater/water-systems/membrane-treatment/nanofiltration',
+      '/water-wastewater/water-systems/membrane-treatment/cip',
+      '/controls/plc-systems/programming/sequential-function-chart',
+      '/controls/plc-systems/analog-control/pid',
+      '/controls/scada-hmi/historian-data/data-collection',
+    ],
+  },
+  {
+    path: '/water-wastewater/water-systems/membrane-treatment/cip',
+    kind: 'reference',
+    title: 'Clean-in-Place',
+    summary:
+      'Cleaning membranes in place: the triggers from the normalized trends, the low pH clean for scale and the high pH clean for organics and biofouling, the sequence of flush, heat, recirculate, soak, and rinse, and how automation makes cleaning repeatable.',
+    answer:
+      'Clean-in-place restores membranes that have fouled or scaled by circulating cleaning solutions through the vessels without removing the elements. A low pH solution, citric acid or a mineral acid, dissolves carbonate and metal scale; a high pH solution, caustic often with a surfactant or a chelant, removes organic foulants and biofilm; and the sequence for each is a flush, a fill and heat of the cleaning tank, a low-flow recirculation through the vessels, a soak, a further recirculation, and a rinse with permeate until the pH and conductivity return to normal. The cleaning skid is a tank with a heater, a pump on a drive, a cartridge filter, and instruments for temperature, pH, flow, and pressure; and the controls enforce the limits the elements can tolerate, temperature at or below the membrane maximum, pH within the range for each solution, flow at the cleaning rate per vessel, and pressure low. Automating the sequence makes every cleaning the same, records what was done, and keeps the operator away from hot chemicals.',
+    keyPoints: [
+      'Clean when the normalized permeate flow, differential pressure, or salt passage crosses its trigger, not on a calendar.',
+      'Low pH for scale and metals; high pH for organics and biofilm; the order depends on what the trends say.',
+      'Enforce temperature, pH, flow, and pressure limits in the controller; the elements have hard limits.',
+      'Sequence: flush, fill and heat, recirculate, soak, recirculate, rinse to neutral; record all of it.',
+      'Neutralize and dispose of the spent solution under the permit; interlock the cleaning skid against a train in service.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['Water', 'Control', 'Programming', 'Instrumentation', 'Standards'],
+    blocks: [
+      { t: 'h2', text: 'When to clean' },
+      {
+        t: 'table',
+        head: ['Trigger', 'Typical threshold', 'Cleaning'],
+        rows: [
+          ['Normalized permeate flow down', '10 to 15 percent below baseline', 'Depends on the foulant; often high pH first for organics, low pH for scale'],
+          ['Normalized differential pressure up', '10 to 15 percent above baseline', 'High pH for biofouling and particulates; check pretreatment'],
+          ['Normalized salt passage up', '5 to 10 percent above baseline', 'Low pH for scale; investigate damage if cleaning does not recover it'],
+          ['Scheduled', 'Before a long shutdown or per the supplier', 'A preservation clean and a biocide where allowed'],
+        ],
+      },
+      {
+        t: 'p',
+        text: 'Cleaning early, when the loss is small, recovers more and stresses the membranes less than cleaning late; cleaning too often wastes chemicals and membrane life. The triggers are alarms on the normalized trends, and the decision of which solution to use first comes from what the trends and the water say: scale on a groundwater plant, organics and biofilm on a surface water plant, both on many.',
+      },
+      { t: 'h2', text: 'The skid' },
+      {
+        t: 'table',
+        head: ['Element', 'Purpose', 'Control'],
+        rows: [
+          ['Cleaning tank', 'Holds the solution; sized for the vessel and piping volume plus margin', 'Level; low level stops the pump'],
+          ['Heater', 'Warms the solution to the cleaning temperature', 'Temperature loop with a high limit trip at the membrane maximum'],
+          ['Cleaning pump on a drive', 'Circulates at the cleaning flow rate', 'Flow loop per stage; pressure limit'],
+          ['Cartridge filter', 'Catches foulant removed from the membranes', 'Differential pressure alarm'],
+          ['Instruments', 'Temperature, pH, conductivity, flow, pressure at the skid and at the vessel outlets', 'Limits and records'],
+          ['Chemical addition', 'Acid, caustic, surfactant, chelant, biocide where used', 'Manual or dosed to a pH target; operator confirmation'],
+          ['Valves', 'Isolate the train from service; route cleaning through each stage; return to the tank or to waste', 'Sequence with position feedback; interlocks'],
+        ],
+      },
+      { t: 'h2', text: 'The sequence' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Isolate', text: 'The train is stopped and flushed, its feed and permeate isolated with valve position confirmed, and the cleaning connections opened. The train cannot be started while the cleaning valves are open.' },
+          { title: 'Flush', text: 'Permeate through the vessels to waste to remove concentrate.' },
+          { title: 'Prepare', text: 'Fill the tank with permeate, heat to the cleaning temperature, add the chemical to the pH target, and confirm the pH within the range for the solution.' },
+          { title: 'Recirculate', text: 'Circulate through one stage at a time at the cleaning flow, low pressure, returning to the tank; the first minutes often go to waste as the darkest solution comes out.' },
+          { title: 'Soak', text: 'Stop and let the solution stand for the soak time, with the heater holding temperature; longer for heavy fouling.' },
+          { title: 'Recirculate again', text: 'A further circulation, watching the pH; a pH that drifts toward neutral means the solution is being consumed and is topped up.' },
+          { title: 'Rinse', text: 'Drain the tank, then flush with permeate through each stage to waste until the outlet pH and conductivity return to the permeate values.' },
+          { title: 'Second solution', text: 'Repeat with the other solution if the plan calls for it, with a full rinse between.' },
+          { title: 'Return to service', text: 'Restore the valves, start the train with permeate to waste until conductivity is within limit, re-establish the normalized baseline, and record the results.' },
+        ],
+      },
+      { t: 'h2', text: 'Limits the controller enforces' },
+      {
+        t: 'ul',
+        items: [
+          'Temperature at or below the element maximum, commonly around 45 degrees Celsius for polyamide, with a trip on the heater.',
+          'pH within the range the element allows for each solution and temperature, with the range narrowing as temperature rises.',
+          'Flow per vessel at the cleaning rate the supplier specifies, and the feed pressure kept low so that the cleaning removes foulant rather than pushing it through.',
+          'Time limits on each step so that a stalled step alarms.',
+          'Interlocks: no cleaning with the train in service, no heater with the tank low, no chemical addition without confirmation.',
+        ],
+      },
+      { t: 'h2', text: 'Spent solution' },
+      {
+        t: 'p',
+        text: 'The spent acid and caustic solutions and the rinse water go to a neutralization tank where they are mixed, adjusted to the discharge pH range with the opposite chemical, and released to the sewer or the disposal system under the permit, with the pH and volume recorded. The neutralization is its own small control loop and its own set of alarms, and it is the step most often skipped when cleaning is done by hand at the end of a long day.',
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Record the cleaning',
+        text: 'Which solution, what pH and temperature, how long, what the normalized values were before and after, and what came out of the filter. The record is the membrane history the supplier asks for, the basis for adjusting the pretreatment, and the proof for the warranty.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Low pH or high pH first?',
+        a: 'What the foulant is decides: scale needs acid, organics need caustic, and where both are present the supplier usually recommends the high pH clean first so that the acid is not consumed by organics, then low pH. A wrong order wastes a cleaning; the trends and a sample of the foulant guide it.',
+      },
+      {
+        q: 'The normalized flow did not recover after cleaning.',
+        a: 'The wrong solution, too short a soak, too low a temperature, or a foulant that cleaning does not remove, such as silica or an oxidized membrane. Try the other solution with a longer soak, and if the flow still does not recover, probe the vessels and consider element replacement.',
+      },
+      {
+        q: 'Can cleaning damage the membranes?',
+        a: 'Yes: too high a temperature, pH outside the range, too high a pressure, or an incompatible chemical. The limits are in the element data sheet, and the controller enforces them so that a mistake at the chemical drum does not become a set of ruined elements.',
+      },
+      {
+        q: 'How long does a cleaning take?',
+        a: 'Several hours to most of a day for a train, longer for both solutions and heavy fouling. The plant design keeps enough trains that one can be out for a day without losing production.',
+      },
+    ],
+    related: [
+      '/water-wastewater/water-systems/membrane-treatment/membrane-control',
+      '/water-wastewater/water-systems/membrane-treatment/reverse-osmosis',
+      '/water-wastewater/water-systems/membrane-treatment/nanofiltration',
+      '/controls/plc-systems/programming/sequential-function-chart',
+      '/controls/instrumentation/analytical/ph',
+      '/engineering-library/control-documentation/sequences-of-operation',
+    ],
+  },
+  {
+    path: '/water-wastewater/water-systems/membrane-treatment/feed-pumps',
+    kind: 'reference',
+    title: 'Membrane Feed Pumps',
+    summary:
+      'The high-pressure feed pumps of a membrane plant: multistage centrifugal pumps on drives, the pressure ramp that protects the elements, suction protection and the cartridge filters ahead of them, and the maintenance that the trends point to.',
+    answer:
+      'The feed pump gives a membrane train its driving pressure, and it is almost always a multistage centrifugal pump on a variable frequency drive so that the pressure can be ramped gently and the permeate flow controlled by speed. The drive ramp is the first protection for the elements, limited to the rate the membrane supplier states; the suction is protected by a low-pressure switch or transmitter and by the cartridge filters ahead of the pump, whose differential pressure is watched; and the discharge is protected by a high-pressure trip at the vessel rating and by a minimum flow rule that stops the pump rather than letting it run against a closed concentrate valve. The pump serves the permeate flow loop, and its speed, its power, and its discharge pressure over time are the trends that show a fouling train and a wearing pump. Interstage boost pumps balance flux between stages on some designs; transfer and flush pumps move water at low pressure for the sequences. At the pressures involved, the mechanical seal, the coupling, the motor bearings, and the drive settings deserve more attention than on an ordinary water pump.',
+    keyPoints: [
+      'Multistage centrifugal on a drive; the drive ramp is the element protection and is enforced by the controller.',
+      'Suction protection: cartridge filter differential, low suction pressure trip, and a suction pressure that keeps the pump within its net positive suction head.',
+      'Discharge protection: high-pressure trip at the vessel rating; minimum flow rule; dead-head stop.',
+      'Speed, power, and discharge pressure trends show fouling and pump wear.',
+      'Seals, couplings, bearings, and drive settings are the maintenance items at high pressure.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['Water', 'Pumps', 'VFD', 'Control', 'Design'],
+    blocks: [
+      { t: 'h2', text: 'The pump and its drive' },
+      {
+        t: 'p',
+        text: 'A multistage centrifugal pump, vertical or horizontal, develops the pressure a membrane needs at flows a municipal plant uses, and its curve is steep enough that speed control gives fine control of pressure and flow. The drive provides the ramp on start and stop, the speed for the permeate flow loop, torque and current limits, and the diagnostics. The drive is set with an acceleration time that keeps the pressure rise within the membrane limit across the whole speed range, a deceleration time that avoids surge in the piping, and a minimum speed below which the pump is stopped rather than run. The motor is inverter-duty, the cable length is within the drive limit or filtered, and the drive heat is in the enclosure calculation.',
+      },
+      {
+        t: 'table',
+        head: ['Protection', 'Device', 'Action'],
+        rows: [
+          ['Pressure ramp rate', 'Drive acceleration time; controller ramp on the flow setpoint', 'Enforced; a rate above the limit stops the train'],
+          ['Low suction pressure', 'Transmitter or switch on the suction', 'Trip; prevents cavitation and a starved pump'],
+          ['Cartridge filter blinding', 'Differential pressure across the filters', 'Alarm at the change point; trip at the limit'],
+          ['High discharge pressure', 'Transmitter on the discharge', 'Trip at the vessel and element rating'],
+          ['Minimum flow', 'Permeate plus concentrate flow', 'Stop below minimum; never run against a closed concentrate valve'],
+          ['Overcurrent and overload', 'Drive', 'Drive trip with a code'],
+          ['Seal leak or bearing temperature', 'Sensors on larger pumps', 'Alarm and stop'],
+          ['Dry run', 'Suction pressure and flow', 'Stop'],
+        ],
+      },
+      { t: 'h2', text: 'Serving the flow loop' },
+      {
+        t: 'p',
+        text: 'The permeate flow loop sets the pump speed; the pressure follows from the membrane condition and the recovery. On a clean train the pump runs at a moderate speed; as the membranes foul the loop raises the speed to hold the flow, and the discharge pressure and the power rise. When the speed reaches maximum, the flow can no longer be held, and the train is due for cleaning regardless of the normalized trends. The trend of speed at constant flow, corrected for temperature, is a second view of the normalized permeate flow, and the drive power is a third.',
+      },
+      {
+        t: 'formula',
+        expr: 'P_hydraulic = Q × ΔP ÷ 1714',
+        where: [
+          'P_hydraulic = hydraulic power in horsepower',
+          'Q = flow in gallons per minute',
+          'ΔP = pressure rise across the pump in psi',
+          'Motor power is higher by the pump and motor efficiencies; the drive reports the electrical power for the trend',
+        ],
+      },
+      { t: 'h2', text: 'Other pumps on the skid' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Interstage boost', def: 'On designs that balance flux between stages, a smaller pump between stages raises the pressure to the second stage; controlled on a second-stage flow or pressure target and interlocked to the main pump.' },
+          { term: 'Transfer and flush', def: 'Low-pressure pumps that move feed to the train for the flush and permeate for the shutdown flush; sequence-controlled with flow confirmation.' },
+          { term: 'Cleaning pump', def: 'On the cleaning skid; a chemically resistant pump on a drive with its own flow loop and limits.' },
+          { term: 'Permeate transfer', def: 'Moves permeate to stabilization and storage; controlled on level or flow.' },
+        ],
+      },
+      { t: 'h2', text: 'Maintenance from the trends' },
+      {
+        t: 'ul',
+        items: [
+          'Power at constant flow and pressure rising over months: wear in the pump or the motor; check efficiency.',
+          'Vibration rising: bearings, coupling, or cavitation; check the suction pressure.',
+          'Seal leakage at high pressure: the mechanical seal, the shaft, and the flush plan.',
+          'Drive faults on start: acceleration too fast for the pressure limit, or a suction problem at the start.',
+          'Cartridge filter change interval shortening: the pretreatment, not the pump.',
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Never dead-head a feed pump',
+        text: 'A multistage pump run against a closed concentrate valve with no permeate heats the water in the casing within minutes and damages the pump and the membranes. The minimum flow rule stops the pump; the valve position feedback is an interlock on the start.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Why a drive instead of a throttling valve on the feed?',
+        a: 'A throttling valve on a high-pressure pump wastes most of the power and cannot ramp the pressure gently. The drive gives the ramp, the flow control, the soft start, and the energy saving; on a membrane plant it is not a luxury.',
+      },
+      {
+        q: 'What suction pressure do I need?',
+        a: 'Enough to keep the pump above its net positive suction head requirement at the maximum flow and temperature, after the cartridge filters at their dirty differential. The transfer pump or the feed system provides it, and the low suction trip is set with margin above the requirement.',
+      },
+      {
+        q: 'The drive trips on overcurrent during the ramp.',
+        a: 'The ramp is too fast for the current limit, the concentrate valve is too closed at start so the pump sees high pressure early, or the pump is starting into a water-hammer condition. Slow the ramp, sequence the valve, and check the suction.',
+      },
+      {
+        q: 'Should the feed pump be on the standby generator?',
+        a: 'Only if the plant must produce during an outage and the generator can carry the pump and its inrush; the ramp helps. Otherwise the train shuts down safely on power loss and flushes when power returns, and the storage carries the demand.',
+      },
+    ],
+    related: [
+      '/water-wastewater/water-systems/membrane-treatment/reverse-osmosis',
+      '/water-wastewater/water-systems/membrane-treatment/membrane-control',
+      '/water-wastewater/water-systems/water-pumping/vfd-control',
+      '/controls/control-panels/pump-panels/vfd',
+      '/troubleshooting/vfd-troubleshooting/drive-faults-on-overcurrent',
+      '/troubleshooting/pump-troubleshooting/pump-runs-but-no-flow',
+    ],
+  },
+  {
+    path: '/water-wastewater/water-systems/membrane-treatment/concentrate-systems',
+    kind: 'reference',
+    title: 'Concentrate Systems',
+    summary:
+      'Handling the concentrate a membrane plant produces: the concentrate valve and the recovery it sets, flow and quality monitoring for the permit, the disposal routes, surface discharge, sewer, and the alarms and records a concentrate permit expects.',
+    answer:
+      'Every gallon of permeate leaves a fraction of a gallon of concentrate, carrying the salts and whatever else the membranes removed at several times the feed concentration, and the concentrate has to go somewhere the permit allows. The concentrate valve on the skid sets the concentrate flow and therefore the recovery, and it is the first control; after it, the concentrate is metered, monitored for conductivity and sometimes pH and other parameters, and routed to its disposal: a surface water outfall under a discharge permit, often with degasification or aeration and pH adjustment first; a sewer under an industrial discharge agreement; a deep injection well with its own pressure, flow, and annulus monitoring; evaporation ponds or, rarely, a zero liquid discharge process. Each route has flow limits, quality limits, and reporting requirements that become setpoints, alarms, and historian records, and the concentrate system is often where a membrane plant fails its permit rather than at the permeate.',
+    keyPoints: [
+      'The concentrate valve sets recovery; its position loop is slow and interacts with the permeate flow loop.',
+      'Meter and monitor the concentrate: flow, conductivity, pH, and whatever the permit names, with the records kept.',
+      'Disposal routes each have controls: outfall diffuser and pretreatment, sewer discharge agreement limits, injection well pressure and annulus, ponds and their levels.',
+      'Degasification for sulfide and carbon dioxide, and pH adjustment, where the permit requires them before discharge.',
+      'Alarm on flow and quality limits before they become permit exceedances; the historian is the compliance record.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['Water', 'Control', 'Standards', 'Instrumentation', 'Design'],
+    blocks: [
+      { t: 'h2', text: 'At the skid' },
+      {
+        t: 'p',
+        text: 'The concentrate leaves the last stage through a control valve that holds the concentrate flow at the value that gives the design recovery. The valve sees the highest pressure in the plant on one side and near atmospheric on the other, so it is a severe-service valve with cavitation control, and its position loop is tuned slowly so that it does not fight the permeate flow loop. A pressure sustaining valve or an orifice downstream may hold backpressure on the last stage. The concentrate flowmeter is the second half of the recovery calculation and is checked against the permeate meter and the feed meter, because a recovery calculated from a bad meter scales the last elements.',
+      },
+      { t: 'h2', text: 'Monitoring' },
+      {
+        t: 'table',
+        head: ['Parameter', 'Why', 'Typical requirement'],
+        rows: [
+          ['Flow', 'Permit limit; mass balance; recovery', 'Continuous, totalized, reported'],
+          ['Conductivity or total dissolved solids', 'Discharge limit; mass loading', 'Continuous with alarm; laboratory confirmation'],
+          ['pH', 'Discharge range; corrosion in the disposal piping', 'Continuous where required; adjustment loop'],
+          ['Dissolved oxygen, sulfide, or specific ions', 'Outfall permits on sensitive waters', 'Analyzers or laboratory per permit'],
+          ['Temperature', 'Some permits', 'Continuous'],
+          ['Radionuclides, metals, or other constituents', 'Where the source water carries them', 'Laboratory sampling on the permit schedule'],
+        ],
+      },
+      { t: 'h2', text: 'Disposal routes' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Surface water outfall', def: 'Discharge to a river, estuary, or ocean through a diffuser under a permit that limits flow, salinity, pH, dissolved oxygen, and toxicity. Pretreatment often includes degasification to strip hydrogen sulfide and carbon dioxide, aeration to raise dissolved oxygen, and pH adjustment. The controls run the degasifier, the aeration, and the pH loop, and hold the discharge within its limits with alarms and a divert.' },
+          { term: 'Sewer', def: 'Discharge to a wastewater collection system under an agreement that limits flow, total dissolved solids, and pH so that the treatment plant is not upset. The controls meter the flow, hold pH, and alarm on the agreement limits; a storage tank may buffer the discharge to off-peak hours for the treatment plant.' },
+          { term: 'Deep well injection', def: 'Injection below the drinking water aquifers into a confined zone under a permit. The controls hold the injection pressure below the permit maximum, meter the flow, monitor the annulus pressure that proves the well casing is intact, and alarm on any deviation; a loss of annulus pressure or a rise in injection pressure stops injection and the plant.' },
+          { term: 'Evaporation ponds', def: 'In dry climates; the controls are pond level, freeboard, and the transfer between ponds, with leak detection monitoring under the liner.' },
+          { term: 'Zero liquid discharge', def: 'Evaporators and crystallizers that turn the concentrate into solids; an industrial process with its own control system, rare in municipal plants because of cost.' },
+        ],
+      },
+      { t: 'h2', text: 'Injection wells' },
+      {
+        t: 'p',
+        text: 'An injection well is a regulated structure with a tubing string inside a casing and a sealed annulus between them, and the annulus pressure is the proof that neither has leaked. The controls monitor the injection pressure at the wellhead against the permit maximum, the flow and its total, the annulus pressure against its allowed range, and the annulus fluid level or volume; a deviation alarms and, beyond limits, stops the injection pumps and the membrane trains that feed them. Mechanical integrity tests on the well schedule are recorded, and the historian keeps every reading for the permit reports. A concentrate storage tank between the plant and the well lets the trains run through a short well outage and lets injection be steady rather than following train starts.',
+      },
+      { t: 'h2', text: 'Alarms and records' },
+      {
+        t: 'ul',
+        items: [
+          'Flow above the permit limit or the disposal capacity: alarm, then reduce plant production.',
+          'Quality outside the permit range: alarm, divert to storage where possible, then stop.',
+          'Injection pressure or annulus deviation: alarm, then stop injection.',
+          'Degasifier or aeration failure: alarm; discharge stops if the permit depends on it.',
+          'Every parameter the permit names, historized at the resolution the permit implies, with the totalizers and the daily values reported from the historian.',
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'The permit writes the control narrative',
+        text: 'The concentrate permit or discharge agreement lists parameters, limits, monitoring frequencies, and reporting. Each becomes a tag, a setpoint, an alarm, and a report. Reading the permit before designing the concentrate controls saves the redesign.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Why is the concentrate valve so hard on itself?',
+        a: 'It drops the full membrane pressure to near atmospheric in one step, which cavitates and erodes an ordinary valve. Severe-service trim, staged pressure drop, or a valve plus an orifice are the answers, and the valve is on the maintenance schedule regardless.',
+      },
+      {
+        q: 'Can I discharge the concentrate to the plant drain?',
+        a: 'Only where the permit or the sewer agreement allows the flow and the salinity, which is rare for a plant of any size. The concentrate is a regulated discharge whatever pipe it enters.',
+      },
+      {
+        q: 'The annulus pressure on the injection well is slowly falling.',
+        a: 'A leak in the tubing or the packer, a temperature effect, or a slow loss through the annulus system. It is reported to the regulator per the permit and investigated with a mechanical integrity test; injection may have to stop. Never top up the annulus to hide the trend.',
+      },
+      {
+        q: 'How much concentrate storage do I need?',
+        a: 'Enough to ride through the longest expected disposal outage at full production, or to allow steady injection through train starts and stops, whichever is larger. The tank has level control, overflow alarms, and its own permit conditions.',
+      },
+    ],
+    related: [
+      '/water-wastewater/water-systems/membrane-treatment/reverse-osmosis',
+      '/water-wastewater/water-systems/membrane-treatment/membrane-control',
+      '/water-wastewater/water-systems/membrane-treatment/nanofiltration',
+      '/controls/instrumentation/analytical/conductivity',
+      '/engineering-library/standards/epa',
+      '/controls/scada-hmi/historian-data/reporting',
+    ],
+  },
 ];

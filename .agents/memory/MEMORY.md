@@ -1,0 +1,1 @@
+- [Hosting.com shared deployment](hosting-deployment.md) — CurryControls is a static build in the addon-domain document root, with `.htaccess` routing.

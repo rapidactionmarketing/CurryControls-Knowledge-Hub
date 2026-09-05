@@ -137,6 +137,10 @@ if (Number(pages) < 2) {
 console.log(`[deploy] uploading to ${STAGING}`);
 const form = new FormData();
 form.set('dir', STAGING);
+// The archive is a private staging artifact in the account home directory.
+// Explicitly replace it on repeat deployments instead of relying on cPanel's
+// default behavior, which rejects an existing upload.
+form.set('overwrite', '1');
 form.set('file-1', new Blob([readFileSync(archivePath)]), 'site.zip');
 
 const uploadRes = await call(

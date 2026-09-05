@@ -4315,4 +4315,685 @@ ORDER BY d.day_local;`,
       '/controls/scada-hmi/scada-troubleshooting/time-synchronization',
     ],
   },
+  {
+    path: '/controls/scada-hmi/scada-platforms/vtscada',
+    kind: 'reference',
+    title: 'VTScada',
+    summary:
+      'Field notes on VTScada, the Trihedral platform widely used by municipal water utilities: the all-in-one design with historian, alarm notification, and thin clients built in, server redundancy, application versioning, telemetry drivers, and licensing by tags.',
+    answer:
+      'VTScada is a SCADA platform built as one product rather than a set of modules: the historian, the alarm system with voice and text notification, the reporting, the thin clients, and the server redundancy are part of the base software, which is a large part of why small and medium water utilities choose it. Applications are built from tags and pages in a development environment that records every change as a version that can be compared and reverted, and a server list gives a site any number of redundant servers that synchronize their history and fail over on their own. Its drivers cover the controllers and protocols common in water telemetry, including polling by exception over radio and cellular, and it is licensed by tag count and server role rather than by client. On a site visit, the version history, the server list status, and the tag browser tell most of the story.',
+    keyPoints: [
+      'Historian, alarms and notification, reporting, thin clients, and redundancy are built in, not separate products.',
+      'Every application change is recorded as a version; changes can be compared and reverted.',
+      'Redundancy is a list of servers that fail over automatically and synchronize history.',
+      'Drivers suit water telemetry: Modbus, DNP3, controller-native drivers, OPC, MQTT, and slow radio and cellular paths.',
+      'Licensed by tag count and server role; clients are not the cost driver.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['SCADA', 'HMI', 'Telemetry', 'Water', 'Design'],
+    blocks: [
+      { t: 'h2', text: 'Architecture' },
+      {
+        t: 'table',
+        head: ['Element', 'Notes'],
+        rows: [
+          ['Application', 'Tags, pages, and configuration in one application directory; versioned automatically'],
+          ['Server', 'A computer running the application with server roles: I/O, historian, alarm notification, and others'],
+          ['Server list', 'Ordered lists of servers per role; the first available serves, the others stand by and stay synchronized'],
+          ['Clients', 'Full clients on the network, thin clients in a browser, and mobile clients; licensed as part of the application'],
+          ['Historian', 'Built in, stores tag history on each server; can also write to an external database'],
+          ['Alarm notification', 'Built in; voice calls, text messages, and email by roster and schedule'],
+          ['Drivers', 'Configured as tags; polling, exception reporting, and time stamping depend on the driver'],
+        ],
+      },
+      { t: 'h2', text: 'Why utilities pick it' },
+      {
+        t: 'p',
+        text: 'A utility with a treatment plant, thirty lift stations on radio, and two operators on call needs redundancy, notification, history, and remote viewing, and needs them without a systems integrator on retainer. Having those functions in one product with one configuration reduces the parts that can be misconfigured and the licenses that can lapse. The version history answers the question every utility eventually asks, which is what changed and when, and the redundancy model means a second server is a computer and a license rather than a project.',
+      },
+      { t: 'h2', text: 'Versioning and change control' },
+      {
+        t: 'p',
+        text: 'Every change saved in the development environment becomes a version with a comment, and the application can be compared between versions or reverted. That does not remove the need for a change procedure; it makes one enforceable. The habit is a comment on every version that names the work order, a review of the version list at handover, and a periodic export of the application to the engineering library as an archive that lives outside the servers.',
+      },
+      { t: 'h2', text: 'Telemetry' },
+      {
+        t: 'ul',
+        items: [
+          'Polling schedules per driver or per site, with slow paths polled slowly and critical sites polled first.',
+          'Exception reporting and time-stamped events with drivers that support it, which matters on radio and cellular where bandwidth is scarce.',
+          'Communication statistics per site, which show a failing radio path before the site goes silent.',
+          'Alarm notification that follows a roster and escalates, driven from the same alarm tags the screens use.',
+        ],
+      },
+      { t: 'h2', text: 'On a site visit' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Server list', text: 'Which server is primary for each role and whether the standbys are synchronized; a standby that has been out of sync for a month is not redundancy.' },
+          { title: 'Version history', text: 'The latest versions, their comments, and whether anything changed recently that nobody mentioned.' },
+          { title: 'Communication statistics', text: 'Per-site success rates and response times.' },
+          { title: 'Alarm configuration', text: 'The roster, the schedules, and a test call; notification that has not been tested since the phone numbers changed has not worked since then.' },
+          { title: 'Backup', text: 'An application export to the engineering library and a copy offline, with the license details recorded.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'Identification only',
+        text: 'Vendor and product names on this page are used for identification only. This is independent field guidance, not vendor documentation; product names, editions, and features change, and the current manufacturer documentation governs.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Does it need a separate database server?',
+        a: 'No. The historian is built in and stores on the application servers. An external database can be used for reporting or integration, but the platform runs without one.',
+      },
+      {
+        q: 'How does redundancy work across two buildings?',
+        a: 'Servers at both locations are in the server lists, with the network between them; the primary serves and the standby synchronizes. A site with a slow link between buildings sets the roles so that the I/O server is near the field connections and the history synchronizes at the rate the link allows.',
+      },
+      {
+        q: 'Can operators view it on a phone?',
+        a: 'Yes, through the thin and mobile clients, subject to the licensing and, more importantly, the remote access design: a virtual private network and multi-factor authentication in front of the client, not a client exposed to the internet.',
+      },
+      {
+        q: 'Is the free version usable for a small site?',
+        a: 'A limited free edition exists with a tag limit that suits a very small system or a training setup. A production utility system is licensed by its tag count and server roles.',
+      },
+    ],
+    related: [
+      '/controls/scada-hmi/scada-fundamentals/redundancy',
+      '/controls/scada-hmi/alarm-management/notification',
+      '/controls/scada-hmi/scada-fundamentals/scada-communications',
+      '/cybersecurity/backups/scada-backups',
+      '/cybersecurity/remote-access/vpn-design',
+      '/controls/scada-hmi/scada-platforms/other-platforms',
+    ],
+  },
+  {
+    path: '/controls/scada-hmi/scada-platforms/ignition',
+    kind: 'reference',
+    title: 'Ignition',
+    summary:
+      'Field notes on Ignition from Inductive Automation: gateway and modules, unlimited licensing per server, Perspective and Vision clients, the SQL-based historian, Python scripting, redundancy, Edge for small sites, and what to decide before building on it.',
+    answer:
+      'Ignition is a server-based platform: a gateway runs on a server, modules add functions to it, a designer application builds the project, and clients launch from the gateway without per-seat licenses, because the server license is unlimited in tags, clients, and device connections. Its historian writes to a standard SQL database, its scripting is Python, its clients are either the older Java-based Vision or the browser-based Perspective that also runs on phones, and its drivers and built-in OPC UA server reach the common controllers directly. The freedom it offers is also its risk: an Ignition project can be built well or badly in the same way that any software can, and a utility that adopts it needs standards for tags, templates, scripting, and the database from the first day. Redundancy is a pair of gateways; Edge editions put a small gateway at a remote site with local screens and store-and-forward.',
+    keyPoints: [
+      'One server license, unlimited tags, clients, and connections; modules add historian, alarming, reporting, and more.',
+      'Perspective clients run in a browser and on mobile; Vision clients are the older desktop clients.',
+      'The historian is a SQL database of your choosing, which you also have to administer.',
+      'Scripting is Python, which is powerful and needs standards and review.',
+      'Edge editions serve remote sites with local visualization and store-and-forward to the central gateway.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['SCADA', 'HMI', 'Design', 'Programming', 'Networking'],
+    blocks: [
+      { t: 'h2', text: 'Architecture' },
+      {
+        t: 'table',
+        head: ['Element', 'Notes'],
+        rows: [
+          ['Gateway', 'The server process; hosts projects, tags, device connections, and modules; managed through a web page'],
+          ['Modules', 'Vision, Perspective, Tag Historian, Alarm Notification, Reporting, SQL Bridge, OPC UA, MQTT, and others; licensed per gateway'],
+          ['Designer', 'The engineering application, launched from the gateway; builds tags, windows or views, scripts, and reports'],
+          ['Tag providers', 'Tag databases, with user-defined types for pumps, valves, and sites'],
+          ['Devices', 'Driver connections to controllers; the built-in OPC UA server exposes them and external OPC servers can be connected'],
+          ['Database', 'A SQL server for history, alarms journal, and audit; installed and maintained separately'],
+          ['Redundancy', 'A master and a backup gateway that synchronize; clients fail over'],
+          ['Gateway network', 'Links between gateways for remote tags, history, and central administration'],
+        ],
+      },
+      { t: 'h2', text: 'Perspective and Vision' },
+      {
+        t: 'p',
+        text: 'Vision is the original client: a Java application launched from the gateway, fast on a control room workstation, with a large installed base. Perspective is the browser-based client built for phones and tablets as well as workstations, with a different component model and responsive layouts. New systems are generally built in Perspective, existing Vision systems continue, and a plant that has both should decide which is the operator standard so that the graphics and the training are consistent. Neither is an exposure to the internet by itself; the remote access design decides that.',
+      },
+      { t: 'h2', text: 'The database is yours' },
+      {
+        t: 'p',
+        text: 'The tag historian, the alarm journal, and the audit log write to a SQL database that the utility installs, sizes, backs up, and maintains. That is a strength for reporting, because the data is in a standard database anyone can query, and a responsibility, because a database that fills its disk or loses its backups takes the history with it. The database server is on the backup schedule, the disk is monitored, history partitions and pruning are configured, and someone knows how to restore it.',
+      },
+      { t: 'h2', text: 'Standards before building' },
+      {
+        t: 'ul',
+        items: [
+          'A tag naming convention and user-defined types for every equipment class, matched to the controller structures.',
+          'Templates and views for each equipment class, so a pump looks and behaves the same on every screen.',
+          'Scripting rules: where scripts are allowed, naming, logging, and review; a script library rather than logic scattered in components.',
+          'Alarm configuration standards that follow the alarm philosophy.',
+          'Project structure: inheritance from a base project, and separation between the plant, the collection system, and administrative screens.',
+          'Version control through project exports or the built-in tools, with a change procedure.',
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Unlimited is not free',
+        text: 'The license removes the incentive to keep tags and screens small, and projects grow into thousands of tags and hundreds of views with no plan. The standards above are what keep an Ignition system maintainable at year ten.',
+      },
+      { t: 'h2', text: 'Edge and remote sites' },
+      {
+        t: 'p',
+        text: 'Edge editions run a small gateway at a remote site: local screens for the operator at the site, local tag history that forwards to the central gateway when the link is up, and, in some editions, a full local project. A treatment plant with a central gateway and Edge gateways at lift stations and wells keeps the sites visible and the history complete through radio and cellular outages, at the cost of one more computer at each site to patch and back up.',
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'Identification only',
+        text: 'Vendor and product names on this page are used for identification only. This is independent field guidance, not vendor documentation; product names, editions, and features change, and the current manufacturer documentation governs.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Which SQL database should we use?',
+        a: 'One the utility can administer and back up. Common choices are the open-source servers and the Microsoft server; the platform supports several. The decision is about the staff and the backup tools, not the platform.',
+      },
+      {
+        q: 'Do we need a programmer to maintain it?',
+        a: 'For a system built without scripting beyond the standard library, no; the designer is a configuration tool. For a system full of custom scripts, yes, and the scripts had better be documented. The standards decide which system you have.',
+      },
+      {
+        q: 'Can Ignition talk to our old controllers?',
+        a: 'Through its drivers for the common controller families, through an OPC server for others, and through Modbus for nearly everything. Legacy networks need a gateway or an OPC server that speaks them.',
+      },
+      {
+        q: 'How does licensing handle a second server for redundancy?',
+        a: 'The backup gateway needs its own license, typically at a reduced cost as a redundant license. Edge gateways are licensed separately. Confirm the current terms with the vendor.',
+      },
+    ],
+    related: [
+      '/controls/scada-hmi/historian-data/sql-integration',
+      '/controls/scada-hmi/scada-fundamentals/redundancy',
+      '/controls/plc-systems/communications/opc-ua',
+      '/controls/scada-hmi/hmi-design/high-performance-hmi',
+      '/cybersecurity/backups/scada-backups',
+      '/controls/scada-hmi/scada-platforms/other-platforms',
+    ],
+  },
+  {
+    path: '/controls/scada-hmi/scada-platforms/ge-ifix',
+    kind: 'reference',
+    title: 'GE iFIX',
+    summary:
+      'Field notes on iFIX, the long-established SCADA from the Intellution and GE lineage now sold by GE Vernova: SCADA nodes and the process database, I/O drivers, view and web clients, the Proficy Historian, enhanced failover, scripting, and licensing by points.',
+    answer:
+      'iFIX is one of the oldest SCADA products still in wide use, descended from FIX32 in the Intellution era and now sold under the GE Vernova Proficy name, and it runs a large installed base of water and wastewater systems built from the late 1990s onward. Its model is a SCADA node that holds a process database of blocks, analog and digital inputs and outputs, alarms, calculations, and more, fed by I/O drivers, with pictures displayed on the SCADA node or on view clients, history in the companion Proficy Historian, and scripting in Visual Basic for Applications. Redundancy is a pair of SCADA nodes with enhanced failover, and it is licensed by the number of database points and the number of clients. A system that has been running for twenty years works, and the questions on site are the software version against the operating system, the driver in use, the failover state, and whether anyone has the picture and database backups.',
+    keyPoints: [
+      'A SCADA node with a process database of blocks; I/O drivers feed the database; pictures display it.',
+      'View clients on the network and web clients through the companion products; licensed by points and clients.',
+      'History in the Proficy Historian; alarms and events to a database through the standard logging.',
+      'Redundancy through enhanced failover between two SCADA nodes with synchronized databases.',
+      'Scripting in Visual Basic for Applications inside pictures; a maintenance risk when overused.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['SCADA', 'HMI', 'Design', 'Documentation', 'Water'],
+    blocks: [
+      { t: 'h2', text: 'Architecture' },
+      {
+        t: 'table',
+        head: ['Element', 'Notes'],
+        rows: [
+          ['SCADA node', 'Runs the process database and the drivers; the server of the system'],
+          ['Process database', 'Blocks of many types chained together: an analog input block, an alarm block, a calculation block; each block is a point'],
+          ['I/O drivers', 'Driver products per controller family and protocol; the current industrial gateway server driver covers most; older systems run legacy drivers'],
+          ['Pictures', 'Graphics files with animations bound to database tags; edited in the workspace'],
+          ['View clients', 'Network nodes that display pictures from a SCADA node without their own database'],
+          ['Web clients', 'Browser access through the companion web products; editions vary by version'],
+          ['Historian', 'Proficy Historian, a separate product that collects from the SCADA node'],
+          ['Failover', 'Two SCADA nodes with database synchronization; clients switch to the active node'],
+        ],
+      },
+      { t: 'h2', text: 'The process database' },
+      {
+        t: 'p',
+        text: 'Everything in iFIX flows through the database: a driver writes a value into an input block, the block scales and alarms it, a chain of blocks can calculate or delay or output, and pictures and history read the blocks. The database manager is where the tags live, the block types define what a tag can do, and the scan time on each block sets how often it is processed. A system that behaves strangely often has a block off scan, a chain broken by a deleted block, or a database that differs between the failover pair. The database export, a text file of every block, is the backup and the comparison tool.',
+      },
+      { t: 'h2', text: 'Versions and the operating system' },
+      {
+        t: 'p',
+        text: 'An iFIX system is tied to its version, and the version is tied to the operating systems it supports. Installed systems run every version from the last two decades, some on operating systems long out of support, because upgrading iFIX means upgrading the server, the drivers, the historian, and often the pictures. The plan for such a system is a supported version on supported servers, converted pictures and database, and a test period on a parallel system; the risk of not planning it is a server that cannot be replaced when its hardware fails.',
+      },
+      { t: 'h2', text: 'Scripting' },
+      {
+        t: 'p',
+        text: 'Pictures can carry Visual Basic for Applications code, and many installed systems carry a great deal of it: navigation, popups, calculations, and report triggers that live in scripts rather than in the database or the platform features. It works until the picture is converted, the operating system changes, or the author leaves. New work puts logic in the controller and the database where it can; scripts that must exist are documented and kept in the engineering library as exports.',
+      },
+      { t: 'h2', text: 'On a site visit' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Version and operating system', text: 'The iFIX version, the driver version, and the operating system; against the support lists.' },
+          { title: 'Failover state', text: 'Which node is active, whether the databases are synchronized, and the last switchover.' },
+          { title: 'Database', text: 'An export of the database, compared with the last one in the engineering library.' },
+          { title: 'Drivers', text: 'Driver status and error counters per device; a device with errors is failing.' },
+          { title: 'Backups', text: 'Pictures, database export, driver configuration, historian configuration, and the license keys, in the library and offline.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'Identification only',
+        text: 'Vendor and product names on this page are used for identification only. This is independent field guidance, not vendor documentation; product names, editions, and features change, and the current manufacturer documentation governs.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Is iFIX still developed?',
+        a: 'It continues under the GE Vernova Proficy name with periodic releases and support for current operating systems. Check the lifecycle status of the installed version and of the drivers before planning around it.',
+      },
+      {
+        q: 'The pictures run slowly on the new workstation.',
+        a: 'Legacy picture formats, heavy scripting, and driver polling settings all affect picture performance; a picture with hundreds of animations on a fast scan is slow on any workstation. Profile the picture and the database scan times before blaming the hardware.',
+      },
+      {
+        q: 'How do I move history to a new historian?',
+        a: 'The Proficy Historian has migration tools between its own versions; moving to a different historian product is an export and import project that keeps the raw data and loses the vendor-specific configuration. Plan it with the retention requirements in view.',
+      },
+      {
+        q: 'Can I replace one node of the failover pair at a time?',
+        a: 'Yes, and it is the normal way to upgrade hardware: fail over to one node, rebuild the other, synchronize, and repeat. The database and pictures must match on both, and the drivers must be configured identically.',
+      },
+    ],
+    related: [
+      '/controls/scada-hmi/scada-fundamentals/servers',
+      '/controls/scada-hmi/scada-fundamentals/clients',
+      '/controls/scada-hmi/historian-data/historian-architecture',
+      '/controls/scada-hmi/scada-troubleshooting/server-failure',
+      '/cybersecurity/scada-security/patch-management',
+      '/controls/scada-hmi/scada-platforms/other-platforms',
+    ],
+  },
+  {
+    path: '/controls/scada-hmi/scada-platforms/aveva',
+    kind: 'reference',
+    title: 'AVEVA',
+    summary:
+      'Field notes on the AVEVA operations software family, formerly Wonderware: InTouch HMI, System Platform and its object model, the Historian, Plant SCADA from the Citect lineage, and AVEVA Edge. Which product does what, and what to check on site.',
+    answer:
+      'AVEVA sells the software many water plants know as Wonderware: InTouch, the HMI that has run plant screens since the early 1990s; System Platform, the server-based platform with an object model in which every pump and valve is an object with attributes, scripts, and history; the Historian, a database built on the Microsoft SQL server; Plant SCADA, from the Citect lineage; and AVEVA Edge, the small HMI product from InduSoft. AVEVA is owned by Schneider Electric, and the product names have changed several times, which is why an installed system may carry any of them. A water plant built on this family is typically either an InTouch system with tags and windows on each workstation, or a System Platform system with a galaxy of objects deployed to engines on servers and InTouch or the newer operations interface as the client. Licensing has moved toward subscriptions, which affects what a utility budgets for.',
+    keyPoints: [
+      'InTouch is the HMI; System Platform is the object-based server platform; the Historian is the database; Plant SCADA and Edge are separate products from acquisitions.',
+      'Names have changed repeatedly; identify the product and version on the installed system before planning anything.',
+      'System Platform builds a galaxy of objects with inheritance, deployed to engines on servers; changes propagate from templates.',
+      'The Historian stores in a Microsoft SQL server database and needs database administration.',
+      'Licensing has moved toward subscription; know the terms before an upgrade.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['SCADA', 'HMI', 'Design', 'Documentation', 'Water'],
+    blocks: [
+      { t: 'h2', text: 'The products' },
+      {
+        t: 'table',
+        head: ['Product', 'Lineage', 'Role'],
+        rows: [
+          ['InTouch HMI', 'Wonderware InTouch', 'Windows-based HMI with tags, windows, animations, and scripts; standalone or as the client for System Platform'],
+          ['System Platform', 'Wonderware Application Server, ArchestrA', 'Object-based server platform: templates, instances, engines, platforms, and a galaxy repository'],
+          ['Operations Management Interface', 'System Platform client', 'The newer client for System Platform, with layouts and apps rather than InTouch windows'],
+          ['Historian', 'Wonderware Historian, IndustrialSQL Server', 'Process history in a Microsoft SQL server database with retrieval extensions'],
+          ['Plant SCADA', 'Citect SCADA', 'A separate SCADA product with its own tags, clusters, and redundancy model'],
+          ['AVEVA Edge', 'InduSoft Web Studio', 'Small HMI and embedded product for panels and skids'],
+          ['Communication drivers', 'DAServers, OI servers', 'Driver products per controller family; OPC to the rest'],
+        ],
+      },
+      { t: 'h2', text: 'InTouch systems' },
+      {
+        t: 'p',
+        text: 'An InTouch application is a set of windows with animations bound to tags in a tag dictionary, with scripts at the window, condition, and application levels, running on a workstation that also runs the communication driver. Many plants have one InTouch node per workstation with a shared application, history in the Historian or in the older local history files, and alarms distributed between nodes. Such systems are simple to understand and get out of hand through scripting and through tag counts that grow past the license.',
+      },
+      { t: 'h2', text: 'System Platform' },
+      {
+        t: 'p',
+        text: 'System Platform models the plant as objects: a pump template with its attributes, alarms, history settings, and scripts, instanced for every pump, assigned to an area, hosted by an engine on a platform, with I/O bound through device integration objects. A change to the template propagates to every instance on deployment, which is how a plant with hundreds of pumps stays consistent, and the galaxy repository holds the whole model. The client is InTouch for System Platform or the operations management interface. The system is more to learn and more to administer than InTouch alone, and it rewards a plant that invests in the object library.',
+      },
+      { t: 'h2', text: 'The Historian' },
+      {
+        t: 'p',
+        text: 'History lives in a Microsoft SQL server database managed by the Historian, with its own storage format for high-rate data and SQL access for reports. It needs the same care as any database server: disk, backups, retention, and a person who can restore it. Reports and dashboards from the companion products read it, and so can any SQL client with the retrieval extensions.',
+      },
+      { t: 'h2', text: 'On a site visit' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Identify the products', text: 'Which of the family is installed, at which versions, on which operating systems; the names on the shortcuts may be from three renamings ago.' },
+          { title: 'Licensing', text: 'The license server and its status, the counts, and the expiry where subscriptions are used.' },
+          { title: 'Backups', text: 'The InTouch application directory or the galaxy backup, the Historian database backup, and the driver configurations, in the library and offline.' },
+          { title: 'Redundancy', text: 'Engine and platform redundancy in System Platform, or the alarm and I/O arrangements between InTouch nodes; the state and the last failover.' },
+          { title: 'Drivers', text: 'Driver status and device diagnostics; a device with errors is failing.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'Identification only',
+        text: 'Vendor and product names on this page are used for identification only. This is independent field guidance, not vendor documentation; product names, editions, and features change, and the current manufacturer documentation governs.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Should a plant on InTouch move to System Platform?',
+        a: 'When the tag count, the number of workstations, or the need for consistency across many identical assets makes per-workstation applications unmanageable. A small plant with two workstations may never need to; a large plant with dozens of pumps and several operator stations usually benefits.',
+      },
+      {
+        q: 'What happened to the product names?',
+        a: 'Wonderware became Schneider Electric software, then AVEVA after the 2018 combination, and AVEVA itself was fully acquired by Schneider Electric in 2023. Product names were changed along the way. The installed version and its documentation identify what is actually on the server.',
+      },
+      {
+        q: 'Can the Historian be replaced by a different one?',
+        a: 'Yes, with a data migration project; the raw history exports through SQL. The retrieval extensions and the reports built on them are what has to be rebuilt.',
+      },
+      {
+        q: 'Does Plant SCADA integrate with System Platform?',
+        a: 'They are separate products with separate models, and they interoperate through the standard interfaces rather than sharing a database. A utility usually runs one or the other.',
+      },
+    ],
+    related: [
+      '/controls/scada-hmi/scada-fundamentals/scada-architecture',
+      '/controls/scada-hmi/historian-data/historian-architecture',
+      '/controls/scada-hmi/historian-data/sql-integration',
+      '/controls/scada-hmi/scada-platforms/schneider-scada',
+      '/cybersecurity/backups/scada-backups',
+      '/controls/scada-hmi/scada-platforms/other-platforms',
+    ],
+  },
+  {
+    path: '/controls/scada-hmi/scada-platforms/rockwell-factorytalk',
+    kind: 'reference',
+    title: 'Rockwell FactoryTalk',
+    summary:
+      'Field notes on the Rockwell Automation FactoryTalk family: View Site Edition and Machine Edition, the directory, Linx with direct controller tag access, device-based Alarms and Events, the PI-based Historian, ViewPoint and Optix, redundancy, and site checks.',
+    answer:
+      'FactoryTalk is the Rockwell Automation software family that pairs with Logix controllers: View Site Edition is the distributed SCADA with HMI servers, data servers, alarm servers, and clients; View Machine Edition runs on panel terminals; the FactoryTalk Directory holds the system model and security; Linx is the communication layer that reads controller tags directly by name; Alarms and Events can take alarm state from instructions in the controller so that the alarm is defined once; and the Historian is built on the PI system. Its strength is integration with the controllers, with tag browsing, direct references, and device-based alarms; its cost is the number of moving parts, each with its own version, its own redundancy setting, and its own place in the directory, all of which must agree. The newer Optix product is a separate, web-based design that coexists with View rather than replacing it yet.',
+    keyPoints: [
+      'View Site Edition for distributed SCADA; Machine Edition for panel terminals; Optix is the newer web-based product.',
+      'The directory is the system model; every server and client is registered in it and secured through it.',
+      'Linx reads controller tags by name; no separate tag database is needed for Logix controllers.',
+      'Alarms and Events can be device-based, defined by alarm instructions in the controller.',
+      'Versions across View, Linx, the directory, and the controllers must be compatible; check the matrix before any upgrade.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['SCADA', 'HMI', 'Design', 'Alarms', 'PLC'],
+    blocks: [
+      { t: 'h2', text: 'Architecture' },
+      {
+        t: 'table',
+        head: ['Element', 'Notes'],
+        rows: [
+          ['FactoryTalk Directory', 'Network directory holding the application model, users, and security; one per system'],
+          ['HMI server', 'Holds displays, tags, and macros for View Site Edition; redundant pairs supported'],
+          ['Data server', 'Linx data servers connect to controllers; redundant pairs supported'],
+          ['Alarm server', 'Alarms and Events, tag-based or device-based from controller instructions'],
+          ['Clients', 'Site Edition clients on workstations; ViewPoint web clients for browsers and mobile'],
+          ['Historian', 'Site Edition historian built on the PI system; separate installation and administration'],
+          ['Machine Edition', 'Runtime on panel terminals with its own project files; not part of the distributed system'],
+          ['Optix', 'A separate web-based HMI and SCADA product with its own studio'],
+        ],
+      },
+      { t: 'h2', text: 'Direct tag access' },
+      {
+        t: 'p',
+        text: 'The data server talks to Logix controllers through Linx and exposes their tags by name, so a display references a controller tag directly and the tag browser shows the controller structure. That removes a tag database and the mistakes that come with it, and it means that a change in the controller is visible in the SCADA immediately. It also ties the SCADA to the controller structure: a renamed tag breaks the displays that used it, and a user-defined type change propagates to every display. Discipline in controller tag naming is discipline in SCADA design.',
+      },
+      { t: 'h2', text: 'Device-based alarms' },
+      {
+        t: 'p',
+        text: 'Alarm instructions in the controller carry the alarm condition, its setpoints, its severity, and its message, and the alarm server subscribes to them. The alarm is defined once, in the controller, where it also drives interlocks, and the SCADA shows it with the same identity on every client. Tag-based alarms, evaluated in the alarm server, remain available for values that do not come from Logix controllers. A plant that mixes the two should decide which is the standard and document it in the alarm philosophy.',
+      },
+      { t: 'h2', text: 'Versions' },
+      {
+        t: 'p',
+        text: 'View, Linx, the directory, the alarm server, the historian, the controller firmware, and the operating system each have versions, and the compatibility matrix says which combinations are supported. An upgrade is planned across all of them, usually on a parallel system, with the displays converted and tested. The versions in use, with their patches, are in the asset inventory, and the patch schedule follows the vendor releases through the patch management process.',
+      },
+      { t: 'h2', text: 'On a site visit' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Directory', text: 'The directory server status and whether every client and server can reach it; a client that cannot see the directory cannot log in.' },
+          { title: 'Server status', text: 'HMI, data, and alarm server status and redundancy state from the administration console.' },
+          { title: 'Communications', text: 'Linx device status per controller, connection counts, and errors.' },
+          { title: 'Versions', text: 'Every component against the matrix, recorded.' },
+          { title: 'Backups', text: 'The application backup from the administration tools, the historian backup, and the license activation details, in the library and offline.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'Identification only',
+        text: 'Vendor and product names on this page are used for identification only. This is independent field guidance, not vendor documentation; product names, editions, and features change, and the current manufacturer documentation governs.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Should new systems use View or Optix?',
+        a: 'View Site Edition is the established distributed product with the deepest Logix integration and the largest installed base; Optix is newer and web-based. As of this writing, a utility with an existing View system extends it, and a new system weighs both against its integrator and staff experience. Confirm the current roadmap with the vendor.',
+      },
+      {
+        q: 'Why can a client not log in after a server change?',
+        a: 'The client cannot reach the directory, the directory does not know the new server, or the security settings changed. The administration console and the client diagnostic logs name the failure.',
+      },
+      {
+        q: 'Do we need the historian, or can we log elsewhere?',
+        a: 'History can be collected by any historian that can read the controllers or the data server; the FactoryTalk historian integrates with the displays and trends most directly. A utility already running a plant historian can use it.',
+      },
+      {
+        q: 'How much does controller tag renaming affect the SCADA?',
+        a: 'Every display, alarm, and trend that referenced the old name breaks. Rename in the controller only with a search across the SCADA project, or use aliasing to keep display references stable.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/platforms/rockwell-automation/studio-5000',
+      '/controls/plc-systems/programming/alarms',
+      '/controls/scada-hmi/scada-fundamentals/alarm-servers',
+      '/controls/scada-hmi/scada-fundamentals/redundancy',
+      '/cybersecurity/scada-security/patch-management',
+      '/controls/scada-hmi/scada-platforms/other-platforms',
+    ],
+  },
+  {
+    path: '/controls/scada-hmi/scada-platforms/schneider-scada',
+    kind: 'reference',
+    title: 'Schneider SCADA',
+    summary:
+      'Field notes on Schneider Electric SCADA for water: EcoStruxure Geo SCADA Expert, formerly ClearSCADA, the telemetry platform built around DNP3 events, an object database, and hot standby servers, with SCADAPack RTUs, and how it relates to the AVEVA products.',
+    answer:
+      'The Schneider Electric SCADA product built for water telemetry is EcoStruxure Geo SCADA Expert, formerly ClearSCADA, which descends from the Control Microsystems telemetry line along with the SCADAPack remote terminal units. It is a wide-area telemetry platform first and a plant HMI second: its database is an object model in which sites, channels, and points carry configuration and history together; its native protocol is DNP3 with event-driven reporting and time stamps from the field; its historian is built in; its servers run as hot standby pairs or triples; and its clients are a thick client for engineering and operations and a web client for everything else. Utilities with dozens or hundreds of remote sites on radio and cellular are where it fits best. Since Schneider Electric also owns AVEVA, the plant HMI products from that family sit alongside it, and a utility may run Geo SCADA for the collection system and an AVEVA product for the plant.',
+    keyPoints: [
+      'Geo SCADA Expert, formerly ClearSCADA: telemetry-oriented, event-driven, DNP3-native, with a built-in historian.',
+      'An object database: sites, channels, points, alarms, and history configured together and inherited from templates.',
+      'Hot standby servers as pairs or triples with automatic failover and synchronized databases.',
+      'SCADAPack remote terminal units pair with it, programmed in IEC 61131-3 languages with DNP3 event configuration.',
+      'AVEVA products under the same ownership cover the plant HMI side; the two coexist rather than merge.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['SCADA', 'Telemetry', 'Design', 'Water', 'Communications'],
+    blocks: [
+      { t: 'h2', text: 'Architecture' },
+      {
+        t: 'table',
+        head: ['Element', 'Notes'],
+        rows: [
+          ['Server', 'Runs the object database, the drivers, the historian, and the alarm system; main and standby servers synchronize'],
+          ['Object database', 'Groups, sites, channels, scanners, points, alarms, trends, and displays as objects with inheritance through templates'],
+          ['Drivers', 'DNP3 natively, with Modbus, IEC 60870, and controller-specific drivers; polling and unsolicited reporting'],
+          ['Historian', 'Built in; stores values and events with source time stamps; exports through standard interfaces'],
+          ['Thick client', 'Engineering and operations client on workstations'],
+          ['Web client', 'Browser and mobile access with displays and alarm handling'],
+          ['Redundancy', 'Hot standby server pairs or triples, including geographically separated servers'],
+        ],
+      },
+      { t: 'h2', text: 'Event-driven telemetry' },
+      {
+        t: 'p',
+        text: 'A DNP3 outstation at a lift station records changes as events with time stamps and reports them when polled or, when unsolicited reporting is enabled, as they happen. The SCADA receives a sequence of changes rather than a snapshot at each poll, so a pump that started and stopped between polls is recorded with the times it actually ran, and a radio path that carries only changes carries very little. Geo SCADA is built around that model: the historian stores the events with their source time, the alarms are stamped with the time the field saw them, and a site that was out of contact backfills when it returns. Configuring the outstation event classes and deadbands is as much a part of the system as the SCADA configuration.',
+      },
+      { t: 'h2', text: 'SCADAPack' },
+      {
+        t: 'p',
+        text: 'The SCADAPack remote terminal units are the field side of the same lineage: controllers with I/O, serial and Ethernet ports, and DNP3 and Modbus built in, programmed in the IEC 61131-3 languages through the vendor tool, with DNP3 event configuration per point. They are common at lift stations, wells, and tanks on utilities that adopted the platform, and they work with other SCADA systems over DNP3 and Modbus as well. The configuration of a SCADAPack, the program and the DNP3 point map, is backed up alongside the SCADA database.',
+      },
+      { t: 'h2', text: 'Fit' },
+      {
+        t: 'ul',
+        items: [
+          'A collection system or distribution system with many remote sites on radio and cellular, where bandwidth is scarce and time stamps matter.',
+          'Utilities that need geographically separated redundant servers.',
+          'Regulatory records that depend on when a pump ran or an alarm occurred, with source time stamps.',
+          'Less natural for a single plant with a fast Ethernet network and no telemetry, where a plant HMI product is simpler.',
+        ],
+      },
+      { t: 'h2', text: 'On a site visit' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Server status', text: 'Main and standby roles, synchronization state, and the last failover.' },
+          { title: 'Communications', text: 'Per-site channel and scanner status, success rates, and the time since the last good poll.' },
+          { title: 'Outstation configuration', text: 'DNP3 event classes, deadbands, and unsolicited settings per site; a site that reports too much or too little is configured wrong at the field end.' },
+          { title: 'Database export', text: 'A configuration export to the engineering library, compared with the previous one.' },
+          { title: 'Backups', text: 'The database backup, the SCADAPack programs and point maps, and the license details, in the library and offline.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'Identification only',
+        text: 'Vendor and product names on this page are used for identification only. This is independent field guidance, not vendor documentation; product names, editions, and features change, and the current manufacturer documentation governs.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Is ClearSCADA the same product?',
+        a: 'Yes: ClearSCADA was renamed Geo SCADA Expert under the EcoStruxure brand. Installed systems and their documentation use both names.',
+      },
+      {
+        q: 'Can it talk to non-Schneider controllers?',
+        a: 'Over DNP3 and Modbus to any controller that supports them, and through controller-specific drivers for common families. A Logix or Modicon controller at a plant is polled over its protocol; the event-driven features need a DNP3 outstation at the field end.',
+      },
+      {
+        q: 'Why run two SCADA products at one utility?',
+        a: 'Because the plant and the collection system have different needs: fast Ethernet, rich graphics, and process history at the plant; scarce bandwidth, time-stamped events, and many small sites in the field. Many utilities run a plant HMI and a telemetry SCADA, with data exchanged between them, and the ownership of both by one company does not change that.',
+      },
+      {
+        q: 'What is the licensing basis?',
+        a: 'Point count and server and client roles, with the redundancy servers licensed as such. Confirm the current terms with the vendor before adding sites.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/communications/dnp3',
+      '/controls/scada-hmi/scada-fundamentals/scada-communications',
+      '/controls/scada-hmi/scada-platforms/aveva',
+      '/controls/scada-hmi/scada-fundamentals/redundancy',
+      '/troubleshooting/radio-troubleshooting/high-retry-count',
+      '/controls/scada-hmi/scada-platforms/other-platforms',
+    ],
+  },
+  {
+    path: '/controls/scada-hmi/scada-platforms/other-platforms',
+    kind: 'reference',
+    title: 'Other Platforms',
+    summary:
+      'The SCADA and HMI products a water utility may meet beyond the common ones: Siemens WinCC, distributed control systems, independent SCADA products, hosted lift station monitoring, and open-source tools, and the questions that decide whether one belongs.',
+    answer:
+      'Beyond the platforms with their own pages, a utility meets others: Siemens WinCC inside European packaged equipment and at plants standardized on that ecosystem; distributed control systems from the process industries at large regional plants; independent SCADA products with regional strongholds; hosted monitoring services that put a cellular unit at a lift station and a portal on the web; and open-source tools that appear in pilots and small systems. None of them is wrong in itself. The questions are the same for every platform: whether it will be supported and staffed for the life of the plant, how it is licensed, whether its history and configuration can be exported, how it handles redundancy and remote access securely, and whether the local integrators and the utility staff can maintain it at two in the morning without the vendor.',
+    keyPoints: [
+      'Siemens WinCC, distributed control systems, independent SCADA products, hosted services, and open-source tools all appear in water systems.',
+      'Judge a platform on support life, staffing, licensing, data portability, redundancy, and secure remote access.',
+      'A hosted monitoring service is a contract and a dependency, not just a product; know what happens when it ends.',
+      'Open-source tools need the same backups, security, and ownership as commercial ones, and a person who owns them.',
+      'Standardize: one plant HMI and, where needed, one telemetry SCADA, with a written exit plan for each.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['SCADA', 'HMI', 'Design', 'Engineering', 'Cybersecurity'],
+    blocks: [
+      { t: 'h2', text: 'Platforms you may meet' },
+      {
+        t: 'table',
+        head: ['Platform', 'Where', 'Notes'],
+        rows: [
+          ['Siemens WinCC', 'Packaged equipment from European manufacturers; plants standardized on Siemens', 'Several products under one name: panel HMI, plant SCADA, and a large distributed version; integrates most directly with Siemens controllers'],
+          ['Distributed control systems', 'Large regional treatment plants and plants with process industry heritage', 'Controllers, I/O, and operator interface as one engineered system from one vendor; different staffing and lifecycle model from SCADA'],
+          ['Independent SCADA products', 'Regional strongholds and specific integrator bases', 'Some are excellent; the questions below decide whether one belongs in your utility'],
+          ['Hosted monitoring services', 'Lift stations, wells, and tanks at small utilities', 'A cellular unit at the site and a vendor portal; alarms by text and phone; monitoring more than control'],
+          ['Open-source SCADA and dashboards', 'Pilots, small systems, and utilities with software staff', 'No license cost; all the responsibility'],
+          ['Cloud SCADA offerings', 'Emerging at small and medium utilities', 'The platform in a vendor cloud with local gateways; the security and dependency questions are the whole decision'],
+        ],
+      },
+      { t: 'h2', text: 'Hosted monitoring services' },
+      {
+        t: 'p',
+        text: 'A service that installs a cellular unit at a lift station, brings the floats, the run status, and the level to a web portal, and calls the operator when the wet well is high is attractive to a utility with no SCADA and no staff to run one. It is monitoring rather than control, the data lives with the vendor, the unit is theirs, and the contract decides what the utility gets if it ends: the data export, the equipment, the alarm history. It suits a small utility as a first step and remains useful as a backup path for critical sites; it is not a substitute for a utility-owned SCADA at a plant or on a system that needs control.',
+      },
+      { t: 'h2', text: 'Open-source tools' },
+      {
+        t: 'p',
+        text: 'Open-source SCADA products, dashboard tools, and protocol libraries can build a working system at no license cost, and some utilities with software staff do. The system then has no vendor to call, no support lifecycle but the community, and every question of security, redundancy, backups, and updates answered by the utility itself. A pilot on a test network is a fine use; a production system on open-source tools needs a named owner, a documented build, the same change control as any other SCADA, and a plan for the day the owner leaves.',
+      },
+      { t: 'h2', text: 'The questions' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Support life', def: 'Will the product and its drivers be supported and patched for the life of the plant, and who provides that support locally.' },
+          { term: 'Staffing', def: 'Can the utility staff and the local integrators maintain it, and is training available.' },
+          { term: 'Licensing', def: 'Perpetual or subscription; by tag, by client, by server; what stops working when a subscription lapses.' },
+          { term: 'Data portability', def: 'Can the history, the alarm log, and the configuration be exported in a standard form, and has anyone tried.' },
+          { term: 'Redundancy', def: 'What server and communication redundancy it offers and how it is tested.' },
+          { term: 'Remote access', def: 'How operators reach it from outside, and whether that can be done behind a virtual private network with multi-factor authentication.' },
+          { term: 'Security', def: 'Accounts and roles, audit trail, patch cadence, and secure protocols to the field.' },
+          { term: 'Exit plan', def: 'What the migration to another platform would take, written down while nobody needs it.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'One of each',
+        text: 'A utility that runs three HMI products and two telemetry systems because each project chose its own has five sets of backups, licenses, versions, and training. One plant HMI, one telemetry SCADA if the collection system needs it, and a standard for packaged equipment interfaces, is the target; the exceptions are documented.',
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'Identification only',
+        text: 'Vendor and product names on this page are used for identification only. This is independent field guidance, not vendor documentation; product names, editions, and features change, and the current manufacturer documentation governs.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'A vendor wants to put our plant on their cloud SCADA. Should we?',
+        a: 'Only after the questions above are answered in writing: where the data lives, what runs locally when the internet is down, how the field connection is secured, how the contract ends, and what the utility owns. Local control must not depend on the cloud, and the security review is the decision.',
+      },
+      {
+        q: 'The packaged system came with its own HMI. Do we integrate it or replace it?',
+        a: 'Integrate it: the skid keeps its own controller and touchscreen, and the plant SCADA reads the interface the manufacturer documented. Replacing the skid HMI voids the support for the equipment and takes on logic the plant does not own.',
+      },
+      {
+        q: 'Is a distributed control system overkill for a water plant?',
+        a: 'For most plants, yes; for a very large plant with complex chemical and biological processes and a staff used to the model, it can be right. It is a different procurement, lifecycle, and staffing model, and it should be chosen deliberately.',
+      },
+      {
+        q: 'How do we evaluate an independent product we have not heard of?',
+        a: 'References from utilities of similar size that have run it for ten years, a look at the integrator base within driving distance, the licensing and support terms in writing, and a test of exporting history and configuration.',
+      },
+    ],
+    related: [
+      '/controls/scada-hmi/scada-fundamentals/what-is-scada',
+      '/controls/scada-hmi/scada-fundamentals/scada-architecture',
+      '/cybersecurity/remote-access/vpn-design',
+      '/cybersecurity/backups/scada-backups',
+      '/engineering-library/checklists/design-checklist',
+      '/controls/scada-hmi/scada-platforms/vtscada',
+    ],
+  },
 ];

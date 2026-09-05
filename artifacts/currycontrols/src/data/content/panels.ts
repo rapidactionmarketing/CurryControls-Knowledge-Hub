@@ -1321,4 +1321,462 @@ Lag = the other available pump, or none.`,
       '/controls/control-panels/pump-panels/vfd',
     ],
   },
+  {
+    path: '/controls/control-panels/panel-components/panel-power-supplies',
+    kind: 'reference',
+    title: 'Panel Power Supplies',
+    summary:
+      'The 24 V DC supply behind everything in a modern panel: sizing with real inrush and duty, single versus redundant with diode modules, how a switch-mode supply behaves under a short, distribution and fusing per branch, monitoring, and the failure modes that take out a whole panel at once.',
+    answer:
+      'A panel power supply converts the control voltage, usually 120 V AC, to 24 V DC for the controller, the I/O, the instruments, the relays, and the network devices. It is sized for the continuous load with margin and for the inrush of the devices it starts, distributed through fused branches so one fault does not drop everything, monitored so a failure is an alarm rather than a mystery, and made redundant with a diode module where the panel cannot be allowed to go dark. Because a switch-mode supply limits current rather than delivering a fault current, the fuses downstream are chosen to clear on what it can deliver.',
+    keyPoints: [
+      'Size for the continuous load plus 25 to 30 percent, and check the inrush of the largest devices against the supply peak rating.',
+      'One supply feeds everything in most panels. That is a single point of failure; decide deliberately whether to accept it.',
+      'Distribute through fused branches: controller, I/O, instruments, network, relays. A shorted float does not take the PLC down.',
+      'A switch-mode supply current-limits on a short. Downstream protection must clear on that limited current.',
+      'Monitor the DC OK contact and the output voltage. A supply dies slowly before it dies completely.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['Panels', 'Power', 'PLC', 'Design'],
+    blocks: [
+      { t: 'h2', text: 'What the supply feeds' },
+      {
+        t: 'p',
+        text: 'Almost everything in a modern control panel runs on 24 V DC: the controller and its I/O modules, the transmitters on loop power, the relays that interface to the starters, the network switches and radios, the HMI panel, and the indicator lights. The supply that produces that 24 V is therefore the one component whose failure stops all of them at once. It is a small box on a DIN rail that gets less attention than it deserves, and the panels that fail worst are the ones where it was chosen by catalog number without a load calculation.',
+      },
+      { t: 'h2', text: 'Sizing' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Add up the continuous load', text: 'Every device on the supply, from its data sheet, at its worst case: the controller with all modules, every loop-powered transmitter at 22 mA, every relay coil energized, every network device, the HMI at full backlight. The size-a-power-supply page walks through the arithmetic.' },
+          { title: 'Add margin', text: '25 to 30 percent over the continuous load, for the devices that will be added and for the derating below.' },
+          { title: 'Check inrush and peak', text: 'Some devices draw several times their running current at power-up: drives with 24 V control boards, some HMIs, solenoids, and capacitive loads. The supply must either carry the peak briefly or the devices must be staged. Supplies publish a peak current and a duration; compare them.' },
+          { title: 'Derate for temperature', text: 'Supplies are rated at 40 or 50 °C and derate above. A panel that reaches 55 °C in summer needs a supply rated for more than the load at that temperature.' },
+          { title: 'Choose the input', text: 'Single-phase 120 or 230 V AC, or 480 V for the three-phase supplies used in drive panels; a wide-range input tolerates the sags and swells a remote site sees.' },
+          { title: 'Choose the protection and monitoring', text: 'A DC OK relay contact, an output voltage the controller can read, and a supply that is listed for the panel standard: UL 508 or UL 61010 as a power supply, with the SELV or class 2 output where the wiring method depends on it.' },
+        ],
+      },
+      { t: 'h2', text: 'One supply or two' },
+      {
+        t: 'table',
+        head: ['Arrangement', 'What it gives', 'What it costs', 'Where it fits'],
+        rows: [
+          ['Single supply', 'Simplicity; one device to fuse and monitor', 'A single point of failure for the panel', 'Lift stations and small panels with a float backup, where the process survives the panel going dark'],
+          ['Two supplies with a redundancy module', 'Either supply carries the load; the diode module isolates a failed one; the DC OK contacts alarm which one', 'Two supplies, a module, and each supply sized for the whole load', 'Plant control panels, SCADA and network panels, anything where a dark panel stops the process'],
+          ['Two supplies, split loads', 'The controller and the network on one, the instruments and relays on the other', 'Two supplies without a module; a failure still drops half the panel', 'A compromise; usually worse than true redundancy for the same money'],
+          ['Supply plus a DC UPS or a battery module', 'The 24 V bus rides through an AC outage for minutes to hours', 'A battery to maintain', 'Remote sites where the controller and the radio must report the outage; SCADA panels'],
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'Redundancy needs the module',
+        text: 'Two supplies wired in parallel without a redundancy module share the load unevenly, and a supply that fails shorted pulls the other down with it. The module puts a diode, or an active equivalent, in series with each, so the bus is fed by whichever is alive. Each supply is sized for the full load, and each has its own AC feed and fuse, or the redundancy is only in the box.',
+      },
+      { t: 'h2', text: 'Distribution and fusing' },
+      {
+        t: 'p',
+        text: 'A 24 V bus that feeds thirty devices from one terminal block, unfused, is a bus on which a shorted float cable in the wet well takes the controller, the radio, and every instrument down together. The supply output is distributed through branches, each fused or protected for its load and its wire, so that a fault is confined to the branch that has it and the rest of the panel keeps running.',
+      },
+      {
+        t: 'ul',
+        items: [
+          'A branch for the controller and its I/O, so that nothing in the field can drop the processor.',
+          'A branch for instrument loop power, often further split per loop or per group with indicated fuse blocks, so that a shorted transmitter drops one loop.',
+          'A branch for relays and solenoids, which are the loads most likely to fail shorted.',
+          'A branch for network devices and radios.',
+          'A branch for the HMI.',
+          'Protection sized for the branch wire and load, on the ungrounded conductor, with a blown-fuse indication or a status contact where the branch matters.',
+        ],
+      },
+      { t: 'h2', text: 'How a switch-mode supply fails and clears' },
+      {
+        t: 'p',
+        text: 'A transformer-rectifier supply delivers a large fault current into a short; a switch-mode supply does not. It limits its output current to a little above its rating, or it folds back, or it hiccups on and off, depending on the design. A 10 A supply feeding a short through a 10 A fuse may never blow the fuse: it delivers 11 A, the fuse holds, the bus voltage collapses, and every device on the bus resets. The branch protection has to clear on the current the supply can actually deliver. That means fuses well below the supply rating on each branch, so that the supply can deliver several times the branch fuse rating, or electronic circuit protectors that trip on a small overcurrent in milliseconds, or a supply with a defined peak current capability the fuses are chosen against. The supply data sheet gives the overload behavior; the branch fusing is designed from it.',
+      },
+      { t: 'h2', text: 'Monitoring' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'DC OK contact', def: 'A relay contact in the supply that opens when the output is below tolerance, wired to a controller input and alarmed. On a redundant pair, one per supply, so the failed one is named.' },
+          { term: 'Output voltage', def: 'The bus voltage on an analog input, trended. A supply that is aging reads low under load before it fails; a bus that sags when the relays pull in is undersized.' },
+          { term: 'AC input status', def: 'A relay or a voltage monitor on the control power, so that a lost AC feed is distinguished from a failed supply.' },
+          { term: 'Temperature', def: 'Panel temperature, because the supply is the component most affected by it.' },
+          { term: 'Load current', def: 'Where the supply provides it or a shunt is fitted; the trend shows the load growing as devices are added.' },
+        ],
+      },
+      { t: 'h2', text: 'Installation' },
+      {
+        t: 'ul',
+        items: [
+          'Mounted with the clearance the manufacturer requires for convection, vertically, away from the heat of drives and transformers, and not at the top of the enclosure where the hot air collects.',
+          'Input from a fused or breaker-protected control circuit, on the ungrounded conductor.',
+          'Output negative bonded to the panel ground at one point, where the design calls for a grounded DC system, and nowhere else.',
+          'Output wiring sized for the current and the voltage drop; a long run to a remote rack at 24 V loses volts.',
+          'A label with the output voltage and the branch schedule; a spare supply of the same model on the shelf.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Why does the whole panel reset when one solenoid shorts?',
+        a: 'The bus is unfused or the fuse cannot clear on the current a switch-mode supply delivers. Distribute the output through branches with protection sized to trip on the limited current, and put the solenoids on their own branch.',
+      },
+      {
+        q: 'Can I use one supply for the controller and the instruments?',
+        a: 'Yes, and most panels do, through separate fused branches. Where the instruments are in a hazardous area through barriers, or where the instrument loops are especially noisy, a separate supply for the instruments is reasonable. What matters is that a fault on an instrument branch does not reach the controller.',
+      },
+      {
+        q: 'How much margin is enough?',
+        a: '25 to 30 percent over the calculated continuous load, after derating for the panel temperature. More if the panel is likely to grow. A supply running at 95 percent of its rating on a hot day has a short life and no room for the next float.',
+      },
+      {
+        q: 'Should the 24 V negative be grounded?',
+        a: 'Common practice is to bond the negative to the panel ground at one point, which gives a referenced system that is easier to troubleshoot and that lets ground faults be detected as shorts. Some designs float it deliberately for noise or for ground-fault tolerance, and then a ground fault detector is added. Either way, it is one decision, documented, applied at one point.',
+      },
+    ],
+    related: [
+      '/how-to/panel-how-to/size-a-power-supply',
+      '/controls/plc-systems/plc-fundamentals/power-supplies',
+      '/controls/control-panels/panel-components/fuses',
+      '/controls/control-panels/panel-design/heat-calculations',
+      '/controls/control-panels/panel-design/component-layout',
+      '/controls/control-panels/panel-components/circuit-breakers',
+    ],
+  },
+  {
+    path: '/controls/control-panels/panel-components/control-relays',
+    kind: 'reference',
+    title: 'Control Relays',
+    summary:
+      'The interposing and logic relays in a control panel: why a controller output drives a relay instead of a starter coil, contact ratings and the difference between resistive and inductive loads, coil suppression, ice cube relays versus terminal relays versus solid-state, and the failure modes that make a relay the first suspect in a dead circuit.',
+    answer:
+      'Control relays in a panel interpose between the controller and the loads it commands, so that a small controller output drives a contact rated for the starter coil, the solenoid, or the 120 V circuit, and so that a fault on the load side stops at the relay instead of the output module. They are chosen by coil voltage, contact rating for the actual load type, and form factor, fitted with coil suppression to protect the output that drives them, and mounted on sockets that can be labeled and replaced. Their contacts wear and their coils fail, which is why they are on sockets and why the schematic gives each one a tag.',
+    keyPoints: [
+      'A controller output drives a relay coil; the relay contact drives the load. The output module is protected and the load can be any voltage.',
+      'Rate the contact for the load type. An inductive load at 120 V AC needs far more than the resistive rating suggests.',
+      'Suppress the coil: a diode on DC coils, an RC or varistor on AC coils. The output that drives it lives longer.',
+      'Sockets with retention clips, labels on the socket and the relay, and a spare of every type in the panel.',
+      'A relay is the first suspect when a circuit is dead. Test the coil and each contact before anything else.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['Panels', 'Control', 'Design'],
+    blocks: [
+      { t: 'h2', text: 'Why interpose' },
+      {
+        t: 'p',
+        text: 'A controller output module switches a small current at a fixed voltage: a few hundred milliamps at 24 V DC on a transistor output, or an amp or two on a relay output. A starter coil at 120 V AC draws an inrush of an amp or more and is inductive; a solenoid valve is worse; a pilot light circuit may be on a different voltage entirely. Driving those loads directly from the output module either exceeds its rating or exposes it to the transients the load produces. An interposing relay solves both: the module drives the relay coil, a small, clean, resistive-looking load with suppression; the relay contact drives whatever the load is, at whatever voltage, with a rating chosen for it. When the load side fails, shorts, or takes a surge, the relay is what is damaged, and a relay is a five-dollar plug-in part.',
+      },
+      {
+        t: 'p',
+        text: 'Relays also do logic that belongs outside the controller: the float backup path that must work when the controller is dead, the safety circuit that must not depend on software, the alternation in a station that has no controller. Those relays are on the schematic as logic, and the rules for them are the same.',
+      },
+      { t: 'h2', text: 'Types' },
+      {
+        t: 'table',
+        head: ['Type', 'Description', 'Where it fits', 'Note'],
+        rows: [
+          ['General purpose plug-in (ice cube)', 'A cube relay in a socket, with two to four changeover contacts rated around 10 A resistive, coils in every common voltage', 'Interposing to starters and solenoids; panel logic', 'The workhorse; inexpensive, visible, replaceable in seconds'],
+          ['Terminal block relay (slim)', 'A single-contact relay in a 6 mm terminal block footprint, often with an LED and a suppression diode built in', 'Interposing for many controller outputs in a dense panel', 'Saves space; contact ratings lower, typically 6 A resistive; the whole block is replaced'],
+          ['Solid-state relay', 'A semiconductor switch with no moving contacts, optically isolated', 'High cycle counts, fast switching, no contact wear', 'Leaks a small current when off, so a light load may not turn off fully; needs a heat sink at higher currents; fails shorted'],
+          ['Power relay or contactor', 'Larger contacts rated for motor and heater loads', 'Loads beyond the ice cube rating', 'Enters the power circuit and the SCCR calculation'],
+          ['Safety relay', 'A force-guided contact relay or a safety module with monitored contacts', 'Emergency stop and safety circuits', 'Chosen by the safety function; not a general purpose relay with a different label'],
+          ['Timing and specialty relays', 'On-delay, off-delay, alternating, latching, phase monitor', 'Functions kept outside the controller', 'Each has a configuration that is documented on the schematic'],
+        ],
+      },
+      { t: 'h2', text: 'Contact ratings' },
+      {
+        t: 'p',
+        text: 'A relay contact is rated for a current at a voltage for a load type, and the load type changes everything. A 10 A resistive rating on a general purpose relay may correspond to 3 or 4 A for an inductive AC load, less for a motor, and much less for a DC inductive load, which arcs on break because the current does not cross zero. The data sheet gives the ratings by category; the load is matched to the right one. A relay that is switching a starter coil with a 10 A resistive contact is fine; one switching a 2 A DC solenoid with the same contact is near its limit and will pit.',
+      },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Resistive', def: 'Heaters, incandescent lamps after their inrush; the rating printed largest on the relay.' },
+          { term: 'Inductive AC', def: 'Starter and contactor coils, AC solenoids; the current is lower and the break is manageable because the current crosses zero.' },
+          { term: 'Inductive DC', def: 'DC solenoids and coils; the arc on break is the hardest duty a contact sees; suppression at the load and a derated contact.' },
+          { term: 'Lamp and capacitive', def: 'LED drivers, power supplies, long cable runs; a high inrush at make that welds a light contact.' },
+          { term: 'Low level', def: 'Signals into a controller input, milliamps at 24 V; needs a contact that stays clean, often gold-flashed, because a power contact that never carries enough current to clean itself oxidizes and goes open.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Suppress every coil',
+        text: 'A relay coil stores energy in its magnetic field, and when the output that drives it opens, that energy appears as a voltage spike across the output. On a DC coil, a diode across the coil, cathode to positive, absorbs it; on an AC coil, an RC snubber or a varistor. Terminal block relays include it; ice cube sockets are available with it; where neither, it is added at the coil terminals. A transistor output driving unsuppressed coils fails early, and the failure looks like a bad output module.',
+      },
+      { t: 'h2', text: 'Installation' },
+      {
+        t: 'ul',
+        items: [
+          'Sockets on the DIN rail with retention clips, so vibration and a technician pulling a neighbor do not unseat the relay.',
+          'A tag on the socket and on the relay, matching the schematic, so a replaced relay goes back in the right socket.',
+          'Coils and contacts on the schematic with cross-references, and the coil voltage on the drawing.',
+          'Relays grouped by function and by voltage, with the 120 V side segregated from the 24 V side per the panel wiring practice.',
+          'LED indicators on the relays or the sockets, so the state is visible with the door open.',
+          'A spare of each relay type in a labeled bag in the panel pocket.',
+        ],
+      },
+      { t: 'h2', text: 'Failure and diagnosis' },
+      {
+        t: 'p',
+        text: 'Relays fail in a few ways: a contact welds closed from an inrush or a short, a contact burns open from arcing, a coil opens from age or overvoltage, a coil shorts from moisture, and a socket contact loosens. Each has a signature. A welded contact is a load that will not turn off when the coil is de-energized. A burned contact is a load that will not turn on with the coil pulled in: the LED is lit, the armature has moved, and the contact resistance is open. An open coil is a relay that never pulls in with voltage at the coil terminals. The diagnosis is a meter at the coil terminals with the output commanded, then across each contact pair with the relay in each state, and it takes a minute. A relay that has failed once in a socket that has failed several times is telling you about the load or the socket, not the relay.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Can I drive a starter coil directly from a relay output module?',
+        a: 'Some relay output modules are rated for it, at 120 V AC and a couple of amps, and panels are built that way. The cost is that a shorted coil or a surge on the coil circuit damages the module, which is far more expensive and slower to replace than an interposing relay. Most panel standards interpose everything that leaves the panel or exceeds a small load.',
+      },
+      {
+        q: 'Why did my controller output fail after a year?',
+        a: 'An unsuppressed relay coil is the usual reason: the inductive kick each time the output opens degrades the transistor until it fails. Add suppression at every coil, and replace the module. The second reason is a load beyond the output rating, which the same fix addresses by interposing.',
+      },
+      {
+        q: 'Solid-state or mechanical for a load that cycles constantly?',
+        a: 'Solid-state, because a mechanical relay has a contact life of hundreds of thousands to a few million operations and a load that cycles every few seconds reaches that in months. Check the leakage current against the load: a small pilot light or a controller input can stay on from the leakage of a solid-state relay, and a bleed resistor or a mechanical relay is needed there.',
+      },
+      {
+        q: 'Should relay logic still be used with a PLC in the panel?',
+        a: 'For the functions that must work when the PLC does not: the float backup, the safety circuit, the hardwired high-level call. Those stay in relays by design. Everything else belongs in the program, where it is visible, documented, and changeable without rewiring.',
+      },
+    ],
+    related: [
+      '/controls/control-panels/panel-design/component-layout',
+      '/water-wastewater/wastewater-systems/lift-stations/backup-control',
+      '/troubleshooting/plc-troubleshooting/outputs-not-energizing',
+      '/engineering-library/drawings/schematics',
+      '/controls/control-panels/pump-panels/hoa',
+      '/controls/plc-systems/plc-fundamentals/io-systems',
+    ],
+  },
+  {
+    path: '/controls/control-panels/panel-components/terminal-blocks',
+    kind: 'reference',
+    title: 'Terminal Blocks',
+    summary:
+      'The point where field wiring meets the panel: screw, spring, and push-in terminals, ratings and the UL 1059 groups, fused and disconnect terminals for instrument loops, grounding terminals, multi-level blocks, jumpers and marking, and the layout that makes a loop check or a field change a five-minute job.',
+    answer:
+      'Terminal blocks are the listed connection points where every field conductor lands in a panel, arranged in strips by function and numbered from the drawings so that a wire can be found, tested, and disconnected without disturbing its neighbors. The clamping technology decides how a wire is landed and how it holds up to vibration; the rating decides the wire size and current; the block type provides fusing, a disconnect knife, or a test point where the circuit needs one; and the marking and the jumpering are what make the strip readable at loop check and ten years later.',
+    keyPoints: [
+      'Every field wire lands on a terminal. No field wire goes directly to a device.',
+      'Strips by function and voltage, numbered per the panel standard, matching the schematic and the I/O list.',
+      'Spring and push-in terminals hold better under vibration than screw terminals and need no retorque.',
+      'Fused, disconnect, and test-point terminals on instrument loops make loop checks non-intrusive.',
+      'Twenty percent spare terminals per strip, wired to nothing, labeled spare.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['Panels', 'Design', 'UL 508A'],
+    blocks: [
+      { t: 'h2', text: 'The job' },
+      {
+        t: 'p',
+        text: 'A field cable arrives at a panel carrying signals that were designed at a desk and wired by a different crew. The terminal strip is where those two worlds meet: the field side lands on the outer terminal, the panel side is wired to the inner, and the number on the block ties both to the drawing. Everything about terminal block practice serves that meeting: the technician at the panel must be able to find a signal by its number, measure it without lifting anything, disconnect the field from the panel for a test, and reconnect it, in the same place, without a wire falling into the tray.',
+      },
+      { t: 'h2', text: 'Clamping technologies' },
+      {
+        t: 'table',
+        head: ['Type', 'How it holds', 'Strengths', 'Cautions'],
+        rows: [
+          ['Screw clamp', 'A screw drives a clamp onto the conductor or a ferrule', 'Familiar; accepts a range of sizes; visible connection', 'Needs the right torque; loosens under vibration and thermal cycling; retorque on a schedule'],
+          ['Spring clamp (cage)', 'A spring holds the conductor against the current bar; a tool opens it', 'Vibration-proof; no torque; consistent', 'Needs the tool; a ferrule helps on fine strand'],
+          ['Push-in', 'A solid or ferruled conductor pushes in and is held by a spring; a release button frees it', 'Fastest; vibration-proof', 'Fine-strand wire needs a ferrule; a release with a screwdriver on the wrong slot damages the block'],
+          ['Insulation displacement', 'The block cuts through the insulation to contact the conductor', 'No stripping; very fast', 'One use per contact; specific wire sizes; rare in utility panels'],
+          ['Stud and ring lug', 'A ring terminal under a nut', 'High current; power terminals', 'Torque and lock washers; the ground bar and the power distribution block'],
+        ],
+      },
+      {
+        t: 'p',
+        text: 'Utility panels have moved toward spring and push-in terminals for control and signal wiring, because a lift station panel vibrates every time a pump starts and a screw terminal that was torqued at the factory is loose in five years. Screw terminals remain on power circuits and where the site standard requires them, with a retorque in the maintenance plan.',
+      },
+      { t: 'h2', text: 'Ratings and listing' },
+      {
+        t: 'p',
+        text: 'A terminal block carries a voltage rating, a current rating, and a wire range, and it is listed to UL 1059 in a use group that says where it may be applied: Group B for industrial control and Group C for power circuits, among others. UL 508A requires listed blocks in the use group appropriate to the circuit, sized for the conductor, with the spacing the voltage requires between adjacent circuits of different voltage. A block rated 600 V and 30 A for 22 to 10 AWG covers most control wiring; power terminals are sized for the feeder. Blocks in the power circuit also carry an SCCR that enters the panel calculation.',
+      },
+      { t: 'h2', text: 'Block types for signals' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Feed-through', def: 'The basic two-terminal block; one conductor in, one out. Most of the strip.' },
+          { term: 'Fused', def: 'A fuse holder in the block, with a blown-fuse indicator option, for an instrument loop or a small load; one fuse per loop means one loop lost per fault.' },
+          { term: 'Disconnect (knife)', def: 'A lever that opens the circuit between the field side and the panel side, so a loop can be isolated for a test without lifting a wire. The standard block for analog inputs.' },
+          { term: 'Test point', def: 'A socket for a meter probe, or a plug-in test adapter, on the block, so the loop current is measured without opening it. Combined with the knife on the better instrument blocks.' },
+          { term: 'Ground', def: 'A block with a foot that bonds to the DIN rail, for shields and equipment grounds; identified by color. Shields land here at the panel end only.' },
+          { term: 'Multi-level', def: 'Two or three tiers on one block, for a loop plus its shield, or a plus, minus, and ground per device. Denser, harder to read; label every tier.' },
+          { term: 'Sensor and actuator blocks', def: 'Three or four levels with internal commons for a two-wire or three-wire device, so the device lands on one block with power and signal.' },
+          { term: 'Barrier and isolator blocks', def: 'Intrinsic safety barriers or signal isolators in a terminal footprint, for loops that go to a hazardous area or that need isolation.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Knife disconnect and test point on every analog input',
+        text: 'A loop check on a strip of plain feed-through terminals means lifting wires, which means a wire ends up in the wrong place. A knife disconnect with a test socket lets the technician isolate the transmitter, inject a signal from the panel side, and measure the loop current, without touching a screw. The extra cost per block is repaid at the first commissioning.',
+      },
+      { t: 'h2', text: 'Layout and marking' },
+      {
+        t: 'ul',
+        items: [
+          'Strips by function and by voltage: power, 120 V control, 24 V DC discrete inputs, discrete outputs, analog inputs, analog outputs, communications, shields and grounds. Never a 120 V circuit next to a 24 V signal on the same strip without a separator and the spacing the standard requires.',
+          'Numbering per the panel standard, the same on the schematic, the wiring diagram, and the I/O list. A convention that encodes the module and channel in the terminal number lets the technician read the channel from the label.',
+          'A marker on every terminal, machine-printed, and a strip label at the end with the strip name and its drawing reference.',
+          'End plates and end clamps on every strip; separators between voltage groups; partition plates where the standard needs them.',
+          'Jumpers for commons using the manufacturer bridging bars, not wire loops, so the common is visible and does not depend on a screw.',
+          'Field wiring on the outer side toward the wireway, panel wiring on the inner side, so a field electrician never has to reach past panel wiring.',
+          'Spare terminals, 20 percent per strip, labeled and empty.',
+          'Wire markers on every conductor at the terminal, matching the schematic wire numbers.',
+        ],
+      },
+      { t: 'h2', text: 'Ferrules' },
+      {
+        t: 'p',
+        text: 'A ferrule is a crimped sleeve on a stranded conductor that turns it into a solid pin. It keeps strands from escaping the clamp, gives a consistent connection in spring and push-in terminals, and is standard in most panel shops. Ferrules are sized to the wire, crimped with the right tool, and insulated with the color code the shop uses. A stranded wire pushed bare into a push-in terminal, or a ferrule of the wrong size crimped with pliers, is the connection that fails intermittently on the coldest night of the year.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Can I land two wires on one terminal?',
+        a: 'Only if the block is rated for it and the wires are within the range for two conductors, usually with a twin ferrule for stranded wire. Most panel standards land one conductor per terminal side and use bridging bars for commons. Two wires under one screw is the connection most likely to be loose.',
+      },
+      {
+        q: 'Do screw terminals really loosen?',
+        a: 'Yes, under vibration and under thermal cycling that expands and contracts the copper. Panel maintenance programs include a retorque on power terminals for that reason. Spring and push-in terminals hold a constant force and do not need it, which is why they have taken over control wiring.',
+      },
+      {
+        q: 'Where do shields land?',
+        a: 'On ground terminals bonded to the rail at the panel end, and nowhere at the field end, for the reasons on the ground loop page. A multi-level block with a shield tier bonded to the rail, or a separate shield ground strip beside the analog strip, keeps them organized and visible.',
+      },
+      {
+        q: 'What happens when a strip runs out of spares?',
+        a: 'A new strip is added, on the drawing first, in the same numbering convention. A spare that has been used is relabeled and the I/O list updated. A panel where the spares are gone and wires are doubled under terminals has reached the point where the next change needs a panel modification, and the drawing should say so.',
+      },
+    ],
+    related: [
+      '/controls/control-panels/panel-design/component-layout',
+      '/controls/control-panels/panel-design/ul-508a',
+      '/engineering-library/lists-schedules/io-lists',
+      '/how-to/instrumentation-how-to/test-a-4-20-ma-loop',
+      '/controls/instrumentation/signals/ground-loops',
+      '/engineering-library/drawings/schematics',
+    ],
+  },
+  {
+    path: '/controls/control-panels/panel-components/ups',
+    kind: 'reference',
+    title: 'UPS for Control Panels',
+    summary:
+      'Keeping the controller, the radio, and the SCADA server alive through an outage: AC and DC UPS types, what to put on the UPS and what not to, sizing for runtime and inrush, the battery as a maintenance item, the alarms a UPS must provide, and what happens when the UPS is the thing that fails.',
+    answer:
+      'A UPS in a control panel carries the loads that must survive a power interruption, typically the controller, the network and radio, the level transmitter, and the HMI, for long enough to ride through a generator transfer or to report the outage and shut down cleanly. Panel UPS units are either AC units feeding the control transformer side or DC units that back up the 24 V bus directly with a battery module, and the DC type suits most panels better. The UPS is sized for its load and its runtime, its battery is replaced on a schedule, and its status is alarmed, because a UPS with a dead battery is discovered by the outage it was bought for.',
+    keyPoints: [
+      'A UPS carries the loads that must report or ride through. Pumps, heaters, and drives are never on it.',
+      'A 24 V DC UPS module on the control bus is simpler and more reliable than an AC unit for most panels.',
+      'Size for runtime: long enough to cover the generator transfer, or to report the outage and shut down.',
+      'The battery is a consumable. Replace on a schedule and alarm its condition.',
+      'Alarm on-battery, low battery, battery fault, and UPS fault to the controller and SCADA.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['Panels', 'Power', 'Telemetry', 'Design'],
+    blocks: [
+      { t: 'h2', text: 'What the UPS is for' },
+      {
+        t: 'p',
+        text: 'When utility power fails at a site, two things need to keep working: the controller, so that it knows what happened and manages the restart, and the telemetry, so that SCADA learns of the outage and the operator is notified. At a site with a generator, the UPS carries those loads through the ten to twenty seconds between the utility failing and the transfer switch closing on the generator. At a site without one, the UPS carries them long enough to report the outage, the high level that follows, and the pump status, and then to shut down cleanly before the battery is exhausted. That is the whole job, and it is a small load for a short time, which is why panel UPS units are small.',
+      },
+      { t: 'h2', text: 'What goes on it' },
+      {
+        t: 'table',
+        head: ['On the UPS', 'Not on the UPS', 'Why'],
+        rows: [
+          ['The controller and its I/O', 'Pumps, starters, drives', 'The controller must see the event; the loads that consume power are what the generator is for'],
+          ['The network switch, the radio, the cellular modem', 'Panel heaters and fans', 'Reporting is the purpose; heating is not'],
+          ['The level transmitter and the critical instruments', 'Lighting and receptacles', 'A controller with no level cannot report a high level'],
+          ['The HMI, where an operator may be present', 'Chemical feed pumps', 'A feed pump on a UPS runs with no process flow'],
+          ['The alarm dialer', 'Anything with an inrush the UPS cannot start', 'The dialer is the second reporting path'],
+        ],
+      },
+      { t: 'h2', text: 'AC or DC' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'AC UPS', def: 'A conventional unit with a battery, an inverter, and an AC output, feeding the control transformer or the panel receptacle circuit. It backs up everything downstream including AC loads, needs space and ventilation, and its inverter is another device to fail. Common in SCADA server rooms and where AC loads must ride through.' },
+          { term: 'DC UPS module', def: 'A module on the 24 V DC bus between the power supply and the loads, with a battery module beside it. When the supply output disappears, the module switches the bus to the battery without interruption. It backs up only the 24 V loads, which in most panels are exactly the loads that matter, and it has no inverter. The common choice for a control panel.' },
+          { term: 'Battery-backed power supply', def: 'A power supply with an integral charger and battery connection, doing the same job as the DC module in one device.' },
+          { term: 'Solar and battery systems', def: 'At sites with no utility power, the battery is the primary source and the panel is designed as a DC system from the start; the sizing is for days, not minutes.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'A DC UPS cannot carry the drive control board',
+        text: 'A drive that takes 24 V for its control electronics may be on the same bus, and a drive control board on a UPS during an outage sits ready and faults when its DC bus collapses. Put the drive control power on the unbacked side, or accept the fault and clear it on restart. What the UPS must never do is start a load it was not sized for.',
+      },
+      { t: 'h2', text: 'Sizing' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'List the backed-up load', text: 'Every device that stays on the UPS side, at its continuous current: controller, I/O, switch, radio, transmitter, HMI, dialer. Typically a few amps at 24 V.' },
+          { title: 'Decide the runtime', text: 'With a generator: the transfer time plus margin, a few minutes. Without: long enough to report the outage and the high level, run the radio through the operator response, and shut down; commonly 30 minutes to a few hours. The control narrative says.' },
+          { title: 'Choose the battery', text: 'From the load, the runtime, and the manufacturer runtime curves, with derating for temperature and for the battery age at end of life, which is when it must still meet the runtime. A battery sized exactly for the runtime when new meets half of it at replacement time.' },
+          { title: 'Check the inrush', text: 'The UPS must carry the peak current of the loads at switchover; a radio transmitting or an HMI backlight starting draws more than its average.' },
+          { title: 'Plan the shutdown', text: 'The controller reads the UPS status and the battery level, records the state, sends the final alarms, and where the platform supports it, closes files or parks outputs before the battery dies. A controller that dies mid-write to nonvolatile memory can lose its program.' },
+        ],
+      },
+      { t: 'h2', text: 'The battery' },
+      {
+        t: 'p',
+        text: 'Sealed lead-acid batteries in a panel last three to five years in a temperate enclosure and far less in a hot one; every 10 °C above 25 °C roughly halves the life. Lithium battery modules last longer and tolerate temperature better at a higher price. Whatever the chemistry, the battery is replaced on a schedule before it fails, its date is written on it and in the maintenance system, and the UPS runs a periodic self-test that the controller alarms if it fails. A UPS that has been in a panel for eight years with its original battery is not a UPS.',
+      },
+      { t: 'h2', text: 'Monitoring' },
+      {
+        t: 'ul',
+        items: [
+          'On battery: the utility or the supply has failed and the UPS is carrying the load. Alarmed to SCADA as the outage indication.',
+          'Low battery: the runtime is nearly gone. The controller executes its shutdown sequence.',
+          'Battery fault or replace battery: the self-test failed or the battery is at end of life. A maintenance alarm.',
+          'UPS fault or bypass: the UPS is not protecting the load. A maintenance alarm with priority.',
+          'Battery voltage and temperature where the module provides them, trended.',
+        ],
+      },
+      {
+        t: 'p',
+        text: 'The signals reach the controller as relay contacts or over a network interface; the DC modules typically offer both. They are on the I/O list, on the alarm list, and tested at commissioning by pulling the supply input and watching the sequence through to shutdown.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Does a lift station need a UPS if it has a generator?',
+        a: 'For the controller and the radio through the transfer, yes, unless the program is written for a clean restart and the utility accepts losing visibility of the event. A small DC module with a few minutes of battery is inexpensive and lets the controller manage the staggered restart, as the generator operation page describes.',
+      },
+      {
+        q: 'How long a runtime is enough without a generator?',
+        a: 'Long enough to report and to keep reporting until someone can respond, plus a clean shutdown. Thirty minutes covers the alarms; two hours covers a crew arriving with a portable generator and lets SCADA see the level the whole time. Longer runtimes are batteries and money; the narrative decides.',
+      },
+      {
+        q: 'Why did the UPS fail during the outage it was installed for?',
+        a: 'The battery was dead, and nobody knew because the self-test was not alarmed or the alarm was ignored. Batteries in panels fail quietly. The fix is the replacement schedule and the alarm to SCADA, tested by pulling the supply.',
+      },
+      {
+        q: 'Can the SCADA server run on the same UPS as the panel?',
+        a: 'A server is an AC load with a different runtime need and its own shutdown software; it gets its own AC UPS in the server room, sized for its load and for the time it takes to shut down or to run until the generator carries it. Panel DC modules and server UPS units are different products for different jobs.',
+      },
+    ],
+    related: [
+      '/controls/control-panels/panel-components/panel-power-supplies',
+      '/water-wastewater/wastewater-systems/lift-stations/generator-operation',
+      '/controls/plc-systems/plc-fundamentals/power-supplies',
+      '/controls/scada-hmi/alarm-management/notification',
+      '/controls/plc-systems/plc-fundamentals/retentive-memory',
+      '/controls/control-panels/panel-design/heat-calculations',
+    ],
+  },
 ];

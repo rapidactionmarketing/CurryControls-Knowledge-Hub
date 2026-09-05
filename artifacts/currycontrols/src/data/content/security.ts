@@ -1426,7 +1426,7 @@ export const SECURITY_ENTRIES: Entry[] = [
     kind: 'reference',
     title: 'OT Risk Assessment',
     summary:
-      'Ranking what could go wrong in a control system and what it would cost: the consequence-first method for utilities, the assets and scenarios to list, likelihood without pretending to know it, the risk matrix, and turning the ranked list into a work plan with owners.',
+      'Ranking what could go wrong in a control system and what it would cost: the consequence-first method for utilities, the assets and scenarios to list, likelihood without pretending to know it, the risk matrix, and turning the ranked list into a work plan.',
     answer:
       'An operational technology risk assessment lists the consequences a utility cannot accept, identifies the control system assets and scenarios that could produce them, estimates how likely each scenario is given the current controls, and ranks the results so that the utility spends its effort on the risks that matter. It is consequence-first: the question is what happens to the process, the public, and the environment, not which vulnerability is newest. The output is a ranked list of risks with an owner and a treatment for each, reviewed on a schedule and after any change.',
     keyPoints: [
@@ -1553,7 +1553,7 @@ export const SECURITY_ENTRIES: Entry[] = [
     kind: 'reference',
     title: 'What to Back Up in a Control System',
     summary:
-      'The complete inventory of what a utility must be able to restore after a failure or an attack: controller programs and firmware, SCADA and historian, HMI panels, drive and instrument parameters, network device configurations, licenses and installers, and documentation, with how often each changes and where each copy lives.',
+      'What a utility must be able to restore after a failure or attack: controller programs and firmware, SCADA and historian, HMI panels, drive and instrument parameters, network configurations, licenses, installers, and documentation, and how often each changes.',
     answer:
       'A control system backup covers everything needed to rebuild the system from bare hardware: controller projects with firmware versions and retentive data, SCADA and historian servers as images and as exported projects, HMI panel projects, drive and analyzer parameters, switch, firewall, and radio configurations, software installers and license files, credentials in a managed store, and the drawings and narratives that explain it all. Each item has a change frequency that sets its backup interval, at least one copy offline, and a restore that has been tested.',
     keyPoints: [
@@ -1658,7 +1658,7 @@ export const SECURITY_ENTRIES: Entry[] = [
     kind: 'reference',
     title: 'OT Incident Response Plan',
     summary:
-      'The plan for the day the control system is not trusted: who decides, the triggers, the first hour, isolating without stopping treatment, running by hand, preserving evidence, who to notify and when, recovery from backups, and the exercise that makes the plan real.',
+      'The plan for the day the control system is not trusted: who decides, the triggers, the first hour, isolating without stopping treatment, running by hand, preserving evidence, who to notify and when, recovery from backups, and the exercise that makes it real.',
     answer:
       'An operational technology incident response plan says what a utility does when its control system may be compromised: who has the authority to disconnect and to declare an incident, what triggers the plan, how the plant keeps treating water while the SCADA is isolated, who is called and in what order, how evidence is preserved for the investigation, how systems are rebuilt from trusted backups, and how the utility returns to normal. It is short, it is on paper, and it has been exercised with the people named in it.',
     keyPoints: [
@@ -1766,6 +1766,459 @@ export const SECURITY_ENTRIES: Entry[] = [
       '/cybersecurity/remote-access/vendor-remote-access',
       '/cybersecurity/water-wastewater-cybersecurity/utility-threat-landscape',
       '/cybersecurity/plc-security/controller-hardening',
+    ],
+  },
+  {
+    path: '/cybersecurity/firewalls/industrial-firewalls',
+    kind: 'reference',
+    title: 'Industrial Firewalls',
+    summary:
+      'Firewalls built for control networks: how they differ from office firewalls, where they belong in a utility network, transparent versus routed modes, Modbus and DNP3 awareness, logging, and the ruggedized units that protect one controller or a remote site.',
+    answer:
+      'An industrial firewall is a packet-filtering device hardened for a control environment: DIN-rail or rack mounting, 24 V DC power, an extended temperature range, no fans, a long product life, and rule sets that understand industrial protocols so that a rule can permit Modbus reads and deny Modbus writes. They sit at the boundaries between zones, at the DMZ edges, in front of individual controllers that cannot protect themselves, and at remote sites on the telemetry link, in transparent mode where the network cannot be re-addressed and routed mode where it can. They are managed like any network device, with backed-up configurations, named accounts, and logs that someone reads.',
+    keyPoints: [
+      'Industrial firewalls are ruggedized, protocol-aware, and built to be installed in a panel and left for a decade.',
+      'They enforce zone boundaries: DMZ edges, between plant zones, in front of legacy controllers, and at remote sites.',
+      'Transparent mode filters without changing addresses; routed mode separates subnets. Both have their place.',
+      'Protocol awareness lets a rule allow reads and block writes or program downloads.',
+      'A firewall nobody manages is a switch. Configuration backup, accounts, updates, and log review are the job.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['Cybersecurity', 'Networking', 'Panels'],
+    blocks: [
+      { t: 'h2', text: 'What is different about an industrial firewall' },
+      {
+        t: 'table',
+        head: ['Property', 'Industrial firewall', 'Office or data center firewall'],
+        rows: [
+          ['Form', 'DIN-rail or small rack unit, 24 V DC, fanless, wide temperature range, vibration rated', 'Rack unit, AC power, fans, controlled environment'],
+          ['Lifecycle', 'Ten years or more of support; firmware maintained for the installed base', 'Three to five years; frequent model changes'],
+          ['Protocols', 'Deep packet inspection for Modbus, DNP3, EtherNet/IP, OPC UA, and others; rules by function code and register', 'Web, email, and enterprise application awareness'],
+          ['Modes', 'Transparent bridge or routed, often both; some act as a Layer 2 filter with no IP address of their own', 'Routed, with NAT and VPN as the norm'],
+          ['Throughput', 'Modest; control traffic is small', 'High; designed for internet-scale traffic'],
+          ['Management', 'Local web page, a central management tool, or a controller-vendor ecosystem', 'Enterprise management platforms'],
+          ['Failure mode', 'Configurable: fail closed, or fail open where the process cannot tolerate a stop', 'Fail closed'],
+        ],
+      },
+      {
+        t: 'p',
+        text: 'The office firewall at the enterprise edge stays where it is. Industrial firewalls are for the boundaries inside and around the control system, where a device in a panel at a lift station has to survive the panel and the traffic is a few Modbus polls a second.',
+      },
+      { t: 'h2', text: 'Where they go' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'The DMZ boundaries', def: 'The two boundaries of the industrial DMZ, enterprise to DMZ and DMZ to control, are firewalls. The enterprise side may be the enterprise firewall; the control side is usually an industrial unit or a control-network-owned enterprise-class unit. The DMZ design page covers the rules.' },
+          { term: 'Between plant zones', def: 'Where the zone drawing puts a boundary that must be enforced: between the SCADA server zone and the plant control zone, between the engineering zone and the controllers, around a vendor package.' },
+          { term: 'In front of a legacy controller', def: 'A single small firewall on the controller network port, allowing only the SCADA master and the engineering workstation on the protocol ports, with writes and downloads restricted. The compensating control for a controller with no security of its own.' },
+          { term: 'At a remote site', def: 'Between the telemetry radio or cellular modem and the site controller, allowing only the SCADA protocol from the master and blocking everything else, including site-to-site traffic. Often built into the cellular router.' },
+          { term: 'Around a cellular or vendor connection', def: 'Wherever a link the utility does not fully control enters the network.' },
+        ],
+      },
+      { t: 'h2', text: 'Transparent or routed' },
+      {
+        t: 'p',
+        text: 'A transparent firewall bridges two network segments at Layer 2 and filters the frames passing through it; the devices on both sides keep their addresses and do not know the firewall exists. It is installed by cutting a cable, which makes it the practical choice for protecting an existing controller or a segment that cannot be re-addressed. A routed firewall separates two subnets and forwards between them according to its rules; it is the choice at a zone boundary that the network design already treats as a separate subnet, and it can also do NAT and VPN. Many industrial units do either, and a utility network commonly has both: routed at the zone boundaries, transparent in front of individual devices.',
+      },
+      { t: 'h2', text: 'Protocol awareness' },
+      {
+        t: 'p',
+        text: 'A conventional firewall rule permits or denies by address and port. Modbus TCP is port 502; a rule that permits port 502 permits every Modbus function, including writes to holding registers and coils. An industrial firewall with deep packet inspection reads the Modbus function code and register range inside the packet, so the rule can say: permit function codes 3 and 4, reads, from the SCADA server to this controller for registers 0 to 999, and deny everything else. The same applies to DNP3 function codes, EtherNet/IP services, and controller programming protocols, so that a program download is permitted only from the engineering workstation and only when a session is enabled. This is the capability that turns a firewall from a fence into a policy.',
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Fail open is a deliberate choice',
+        text: 'Some industrial firewalls can be configured to pass all traffic if they fail, so that a firewall failure does not stop the process. That choice trades security for availability and it is made in the design, documented on the drawing, and alarmed when it occurs. The default is fail closed, and the process is designed to survive the loss of the connection the firewall protects, as it must survive any communication loss.',
+      },
+      { t: 'h2', text: 'Managing them' },
+      {
+        t: 'ul',
+        items: [
+          'Configuration backed up after every change and stored with the other network configurations.',
+          'Named administrator accounts, MFA where the device supports it, default credentials removed, and the management interface reachable only from the engineering zone.',
+          'Firmware updated on a schedule, tested on a spare, because a firewall vulnerability is a hole in the boundary.',
+          'Rules documented against the conduit table, each with its conduit and its reason, reviewed on a schedule.',
+          'Logs sent to a log server, with denied traffic reviewed and permitted traffic sampled.',
+          'A spare on the shelf with the configuration loaded, because a failed firewall at a remote site is a site without telemetry.',
+          'On the network drawing, with its addresses, its mode, and its rule set reference.',
+        ],
+      },
+      { t: 'h2', text: 'Selecting one' },
+      {
+        t: 'p',
+        text: 'The choice is driven by where it goes: a DIN-rail unit with two or four ports for a panel or a remote site, a rack unit with more ports and higher throughput for a zone boundary or the DMZ. The protocol support must cover what the conduit carries, the management must fit how the utility manages its other network devices, and the vendor must have a record of supporting the product for the life of the panel it goes in. Controller vendors offer firewalls integrated with their programming ecosystems, network vendors offer general industrial units, and both work; a utility standardizes on one or two so that its staff and its spares cover them.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Do we need a firewall in front of every PLC?',
+        a: 'In front of the ones that cannot protect themselves and that matter: controllers with no authentication on a network that other things can reach. A plant with all its controllers in one zone behind a zone firewall, with no other devices in that zone, may not need per-device firewalls. A controller sharing a network with workstations or vendor equipment does.',
+      },
+      {
+        q: 'Can the cellular router at a remote site be the firewall?',
+        a: 'Most industrial cellular routers include a stateful firewall and VPN, and at a small site that is the firewall. Configure it: allow the SCADA protocol from the master only, deny everything else inbound, VPN to the utility concentrator, no management from the cellular side, default credentials changed, and the configuration backed up.',
+      },
+      {
+        q: 'What throughput do we need?',
+        a: 'Very little. A lift station generates kilobits per second; a plant control zone generates a few megabits. Industrial firewalls are rated in the hundreds of megabits and the constraint is never throughput. Port count, mode, protocol support, and environment are the constraints.',
+      },
+      {
+        q: 'Should the firewall be the same brand as the controllers?',
+        a: 'Not necessarily. A controller vendor firewall integrates with that vendor tools and understands that vendor protocols well; a network vendor unit understands more protocols and fits a mixed plant. The zone firewalls and the DMZ firewalls are often better from a network vendor, and the per-controller units from either. Mixing vendors at the two DMZ boundaries is a deliberate practice.',
+      },
+    ],
+    related: [
+      '/cybersecurity/network-segmentation/zones-and-conduits',
+      '/cybersecurity/network-segmentation/dmz-design',
+      '/cybersecurity/firewalls/firewall-rule-design',
+      '/cybersecurity/plc-security/controller-hardening',
+      '/cybersecurity/remote-access/jump-hosts',
+      '/cybersecurity/backups/what-to-back-up',
+    ],
+  },
+  {
+    path: '/cybersecurity/firewalls/firewall-rule-design',
+    kind: 'reference',
+    title: 'Firewall Rule Design',
+    summary:
+      'Writing the rule set for a control network boundary: default deny, one rule per conduit with its reason, hosts not subnets, protocol and port and function, direction and initiator, logging on every rule, and the review that removes forgotten rules.',
+    answer:
+      'A firewall rule set for a control network boundary starts from default deny and adds one rule per documented conduit, each naming the source hosts, the destination hosts, the protocol and port, the direction, and the reason, with logging enabled and a reference to the conduit table. Rules are specific: a host, not a subnet; a port and where possible a function code, not any; one direction. The set is ordered so that the specific rules are readable, tested by confirming that what should pass passes and what should not does not, and reviewed on a schedule so that a temporary rule does not become permanent.',
+    keyPoints: [
+      'Default deny at the end. Everything not explicitly permitted is dropped and logged.',
+      'One rule per conduit, with the conduit reference and the reason in the rule description.',
+      'Specific: host to host, port, direction, and function where the firewall understands the protocol.',
+      'Log everything. A rule that does not log cannot be reviewed.',
+      'Review quarterly. Remove rules whose conduit is gone and rules that have never matched.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['Cybersecurity', 'Networking', 'Design', 'Documentation'],
+    blocks: [
+      { t: 'h2', text: 'Start from the conduit table' },
+      {
+        t: 'p',
+        text: 'The zones and conduits drawing lists every communication path that crosses a boundary: from where, to where, what protocol, who initiates. The firewall rule set at that boundary is the implementation of that list and nothing else. Every rule traces to a conduit row; every conduit row that crosses this firewall has a rule. That correspondence is what makes the rule set reviewable a year later, and it is lost the moment a rule is added because someone needed something to work and the conduit table was not updated.',
+      },
+      { t: 'h2', text: 'The anatomy of a rule' },
+      {
+        t: 'table',
+        head: ['Field', 'Content', 'Rule of thumb'],
+        rows: [
+          ['Name or description', 'The conduit reference and the purpose: C-12 SCADA to plant PLCs, EtherNet/IP polling', 'A rule without a reason is removed at the next review'],
+          ['Source', 'The specific hosts that initiate: the two SCADA servers by address', 'Never a whole subnet where the hosts are known; an object group for a set of hosts'],
+          ['Destination', 'The specific hosts that receive: the plant PLCs by address', 'The same'],
+          ['Service', 'Protocol and port: TCP 44818 and UDP 2222 for EtherNet/IP; TCP 502 for Modbus; TCP 20000 for DNP3', 'Only the ports the conduit uses; never any'],
+          ['Application or function', 'Where the firewall inspects the protocol: Modbus function codes 3 and 4 only; DNP3 read only; no program download', 'Use it wherever the firewall supports it; it is the difference between reads and writes'],
+          ['Direction', 'From source zone to destination zone; the reply is handled by state tracking', 'One direction per rule; a second rule for the reverse only if a conduit exists'],
+          ['Action', 'Permit or deny', 'Deny rules above the default deny only for exceptions worth logging separately'],
+          ['Logging', 'On', 'Every rule, permit and deny'],
+          ['Schedule', 'Always, or a time window for maintenance conduits', 'Vendor access rules enabled per session, not on a schedule'],
+        ],
+      },
+      { t: 'h2', text: 'The order' },
+      {
+        t: 'p',
+        text: 'Firewalls evaluate rules top to bottom and act on the first match, so the order is the logic. A readable set follows a convention.',
+      },
+      {
+        t: 'ol',
+        items: [
+          'Management rules first: who may reach the firewall itself, from the engineering zone only.',
+          'Explicit denies for things that must never pass, logged separately so they are seen: any traffic from the enterprise to a controller address, for instance.',
+          'The conduit rules, grouped by source zone, each with its conduit reference.',
+          'Infrastructure rules: time synchronization, logging, and the few services the zones share, each specific.',
+          'Default deny, logged, as the last rule. Even where the firewall denies by default, the explicit rule is there so the log shows what was dropped.',
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Any is the most dangerous word in a rule set',
+        text: 'A source of any, a destination of any, or a service of any turns a rule into a hole. A rule with any in two of the three fields is a rule that permits nearly everything through the boundary. The review looks for any first, and every instance either becomes specific or is justified in writing.',
+      },
+      { t: 'h2', text: 'The conduits that need care' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'SCADA to controllers', def: 'From the SCADA servers to each controller on the protocol ports, with function restrictions where the firewall can apply them. Controllers do not initiate to SCADA except for unsolicited DNP3 responses, which the state tracking handles, or for report-by-exception designs, which get their own rule.' },
+          { term: 'Engineering to controllers', def: 'From the engineering workstations only, on the programming protocol ports, logged, and where the firewall supports it, enabled for a session rather than always on.' },
+          { term: 'Historian replication', def: 'From the control zone historian outbound to the DMZ replica, on the replication port, never the reverse.' },
+          { term: 'Remote access', def: 'From the jump host to the specific target hosts, on the specific ports, per session.' },
+          { term: 'Patch and antivirus', def: 'From the control zone servers outbound to the DMZ staging server to pull updates; the staging server never pushes in.' },
+          { term: 'Time', def: 'From control zone hosts to the DMZ time server on UDP 123, outbound; or a time source inside the control zone.' },
+          { term: 'Telemetry from remote sites', def: 'From each site address to the SCADA master on the SCADA protocol, and the reverse for polling; never site to site.' },
+          { term: 'Vendor packages', def: 'From the plant controller or SCADA to the package controller on the agreed port, and nothing from the package outward.' },
+        ],
+      },
+      { t: 'h2', text: 'Testing a rule set' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Confirm the permitted conduits', text: 'From a host in each source zone, connect to the destination on the permitted port, and confirm the connection and the function. A SCADA driver polling successfully is the test for its rule.' },
+          { title: 'Confirm the denials', text: 'From the same host, attempt the connections that must fail: a write where only reads are permitted, a controller address from the enterprise, a program download from the SCADA server. Each must fail and each must appear in the log.' },
+          { title: 'Confirm the direction', text: 'Attempt a connection in the reverse direction of a one-way conduit: from a controller to the SCADA server on an unrelated port, from the DMZ into the control zone. It must fail.' },
+          { title: 'Confirm the logging', text: 'Every test attempt, permitted and denied, is in the log server with the rule name.' },
+          { title: 'Confirm the fail mode', text: 'Power the firewall off, or disconnect it, and confirm the behavior matches the design: fail closed, with the process continuing on its own, or the deliberate fail open, alarmed.' },
+          { title: 'Record the test', text: 'The rule set version, the tests, and the results, with the conduit table revision.' },
+        ],
+      },
+      { t: 'h2', text: 'Reviewing' },
+      {
+        t: 'p',
+        text: 'A rule set drifts: a rule added for a commissioning tool, a rule widened to make a vendor connection work, a rule whose conduit was removed when a device was retired. The quarterly review walks every rule against the conduit table and the hit counters. A rule with no conduit is removed. A rule that has not matched in a year is a candidate for removal, after confirming it is not a rarely used maintenance path. A rule with any in it is made specific or justified. The review is recorded, and the rule set version is bumped.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'How many rules should a control network boundary have?',
+        a: 'As many as there are conduits, which for a utility zone boundary is typically a dozen to a few dozen. A rule set with hundreds of rules at a control boundary has accumulated rules that nobody removed, and the review is overdue.',
+      },
+      {
+        q: 'Should the reply traffic have its own rule?',
+        a: 'No. A stateful firewall tracks the connection the permitted rule created and passes the reply automatically. A separate reverse rule opens a path in the other direction that the conduit does not need. The exception is UDP-based protocols where the firewall cannot track state, and even then the reverse rule is as narrow as the forward one.',
+      },
+      {
+        q: 'What about a rule for ping?',
+        a: 'A limited ICMP echo rule from the engineering zone to the control zone helps troubleshooting and is low risk. ICMP from the enterprise into the control zone is not permitted; a device that can be pinged can be found.',
+      },
+      {
+        q: 'Can the SCADA server reach the internet for licensing or updates?',
+        a: 'Not directly. Licensing traffic goes to a DMZ relay or is handled offline; updates come from the DMZ staging server. A control zone server with a rule to the internet is a control zone server on the internet.',
+      },
+    ],
+    related: [
+      '/cybersecurity/network-segmentation/zones-and-conduits',
+      '/cybersecurity/firewalls/industrial-firewalls',
+      '/cybersecurity/network-segmentation/dmz-design',
+      '/cybersecurity/remote-access/jump-hosts',
+      '/cybersecurity/remote-access/vendor-remote-access',
+      '/how-to/plc-how-to/configure-modbus',
+    ],
+  },
+  {
+    path: '/cybersecurity/plc-security/mode-switch-and-keyswitch',
+    kind: 'reference',
+    title: 'Controller Mode Switch and Keyswitch',
+    summary:
+      'The physical switch on the front of a controller: what RUN, REMOTE, and PROGRAM mean, why most controllers are left in REMOTE and why that matters, a policy for a utility, how mode is monitored and alarmed, and what to do on platforms with no keyswitch.',
+    answer:
+      'The keyswitch on a controller selects who may change its mode: RUN executes the program and refuses remote mode changes and downloads; PROGRAM stops execution and permits programming; REMOTE lets the programming software choose, from anywhere on the network. A controller left in REMOTE can be stopped or reprogrammed by anyone who reaches it with the software, which is the reason a utility policy keeps controllers in RUN except during a change made on site or through an approved session, monitors the mode as a SCADA tag, and alarms on any change. Controllers without a keyswitch get the equivalent protection from their software security features and from the network.',
+    keyPoints: [
+      'RUN means the network cannot change the mode or the program. REMOTE means it can.',
+      'The keyswitch is the one control an attacker on the network cannot defeat.',
+      'Policy: RUN except during an approved change, with the key removed and kept.',
+      'Monitor the mode in SCADA and alarm on every change. A mode change is an event with a name attached.',
+      'No keyswitch: use the platform security to lock the mode and the network to limit who can reach it.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['Cybersecurity', 'PLC', 'Programming'],
+    blocks: [
+      { t: 'h2', text: 'What the switch does' },
+      {
+        t: 'table',
+        head: ['Position', 'Program execution', 'Remote mode change', 'Program download', 'Online edits'],
+        rows: [
+          ['RUN', 'Running', 'Refused', 'Refused on most platforms', 'Refused or restricted'],
+          ['REMOTE', 'As last set by software: run or program', 'Permitted from the programming software', 'Permitted', 'Permitted'],
+          ['PROGRAM', 'Stopped; outputs to their program-mode state', 'Refused', 'Permitted', 'Not applicable'],
+        ],
+      },
+      {
+        t: 'p',
+        text: 'The details vary by platform: some allow online edits in RUN with the switch in RUN, some refuse any change, some have a fourth position or a software-configurable equivalent. The controller manual is the reference. The principle is the same everywhere: RUN takes the mode and the program away from the network, and REMOTE gives them to it.',
+      },
+      { t: 'h2', text: 'Why controllers are left in REMOTE' },
+      {
+        t: 'p',
+        text: 'REMOTE is convenient. A programmer at a desk, or a vendor at home, can put a controller into program mode, download, and return it to run without driving to the site. Integrators commission systems in REMOTE and leave them there; utilities find the convenience useful and never change it. The result is a control system in which every controller can be stopped or reprogrammed by anyone who reaches the network with the software, which includes an attacker who has reached the network with the software. Publicly reported incidents at industrial sites have included controllers put into program mode remotely. The keyswitch in RUN would have prevented each one, at the cost of a drive to the site.',
+      },
+      { t: 'h2', text: 'The policy' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Default RUN', text: 'Every controller with a keyswitch is in RUN during normal operation. The key is removed and kept in a controlled place, not left in the switch.' },
+          { title: 'Change on site or through an approved session', text: 'A program change requires a person at the controller to turn the switch to REMOTE or PROGRAM for the duration of the change, under the change management procedure, and to return it to RUN after. Where remote programming is genuinely needed, the switch is turned by a person on site for a session that is approved, logged, and time-limited, with the remote access through the jump host.' },
+          { title: 'Monitor the mode', text: 'The controller mode is a status the program can read on most platforms, or that SCADA can read through the driver. It is a SCADA tag, trended, and alarmed on any change from RUN, at a priority that gets attention.' },
+          { title: 'Alarm the unexpected', text: 'A mode change that does not correspond to an approved change record is treated as an incident: the controller is compared with its backup and the program integrity is checked.' },
+          { title: 'Audit', text: 'A periodic walk of the panels to confirm every switch is in RUN and every key is accounted for, and a periodic check of the mode tags.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'REMOTE at a remote site is the worst case',
+        text: 'A lift station controller in REMOTE, reachable over a radio or cellular network, is a controller anyone who reaches that network can stop. Remote sites are the hardest to visit and the most tempting to leave in REMOTE. They are also the sites where a stopped controller becomes an overflow. The policy applies there first.',
+      },
+      { t: 'h2', text: 'Platforms without a keyswitch' },
+      {
+        t: 'p',
+        text: 'Many compact controllers, and some larger ones, have no physical switch; the mode is set by software, and the protection has to come from elsewhere.',
+      },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Platform security features', def: 'Controller passwords, user accounts with roles, a software mode lock, and on newer platforms a security mode that requires authentication for any mode change or download. Enable them; they are off by default.' },
+          { term: 'Network restriction', def: 'A firewall or an access list in front of the controller that permits the programming protocol only from the engineering workstation, and only when a session is enabled. Where the firewall understands the protocol, deny the mode change and download functions except from that source.' },
+          { term: 'Program integrity monitoring', def: 'Detect a change after the fact: the program checksum and the last edit time read into SCADA and alarmed, and a scheduled compare against the backup.' },
+          { term: 'Physical', def: 'A locked panel and a locked building, so that a local connection requires a key.' },
+          { term: 'Replacement', def: 'A controller that runs a critical process, has no keyswitch, no software security, and cannot be isolated is a controller to replace on a schedule.' },
+        ],
+      },
+      { t: 'h2', text: 'What to monitor' },
+      {
+        t: 'ul',
+        items: [
+          'Controller mode, per controller, as a tag, alarmed on change from RUN.',
+          'Program checksum or change counter, alarmed on change.',
+          'Last edit timestamp, compared with the change log.',
+          'Controller restart and hard fault events, counted and alarmed.',
+          'Programming protocol connections at the firewall, logged, with the source address.',
+          'The keyswitch position where the platform exposes it separately from the mode.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Our integrator says they need REMOTE to support us. What do we do?',
+        a: 'Provide remote support through the vendor access design: a session enabled by the utility, through the jump host, with the keyswitch turned to REMOTE by a person on site for that session and returned to RUN after. It costs a phone call and a short drive per change, and it is what stops the same path being used by someone who is not the integrator.',
+      },
+      {
+        q: 'Does RUN prevent online edits?',
+        a: 'On most platforms RUN refuses remote mode changes and downloads; some still permit online edits from the software. The manual says. Where online edits are permitted in RUN, the platform security features and the network restriction cover them, and the program change detection catches them.',
+      },
+      {
+        q: 'What happens to the outputs when someone turns the switch to PROGRAM?',
+        a: 'The controller stops executing and the outputs go to their program-mode state, off on most platforms, hold on some configurations. On a lift station that is a stopped pump; on a chemical feed it is a stopped feeder. The float backup and the manual operation procedures are what carry the process through, and the mode alarm is what gets someone to the site.',
+      },
+      {
+        q: 'Should the key be removed from the switch?',
+        a: 'Yes. A key in the switch is a switch anyone can turn. The keys are kept by the utility, tracked, and issued for a change. Keys for a controller family are often identical, so a key from one panel opens all of them, which is one more reason the network and the monitoring matter too.',
+      },
+    ],
+    related: [
+      '/cybersecurity/plc-security/controller-hardening',
+      '/cybersecurity/plc-security/program-integrity',
+      '/cybersecurity/remote-access/vendor-remote-access',
+      '/controls/plc-systems/plc-troubleshooting/plc-will-not-run',
+      '/water-wastewater/wastewater-systems/lift-stations/backup-control',
+      '/cybersecurity/backups/plc-program-backups',
+    ],
+  },
+  {
+    path: '/cybersecurity/plc-security/program-integrity',
+    kind: 'reference',
+    title: 'Controller Program Integrity',
+    summary:
+      'Knowing that the program in the controller is the one that was approved: checksums and change counters, the scheduled compare against the trusted backup, signed and protected projects, what an unexplained difference means, and making the check routine.',
+    answer:
+      'Program integrity is the assurance that the logic running in a controller is the logic the utility approved and nothing else. It is maintained by keeping a trusted master copy of every program under version control, reading the controller program checksum or change counter into SCADA and alarming on change, comparing the running program against the master on a schedule with the platform compare tool, and treating any difference that has no change record as an incident until it is explained. Platform features such as project signing, source protection, and audit logs support it; the discipline of the compare is what makes it real.',
+    keyPoints: [
+      'A trusted master under version control is the reference. Without it there is nothing to compare against.',
+      'Read the checksum and the last-edit time into SCADA and alarm on change. That is continuous detection.',
+      'Compare the running program with the master on a schedule. That is periodic verification.',
+      'Every difference has a change record or it is an incident.',
+      'Platform security features help, but the compare is the control.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['Cybersecurity', 'PLC', 'Documentation', 'Programming'],
+    blocks: [
+      { t: 'h2', text: 'Why integrity is its own concern' },
+      {
+        t: 'p',
+        text: 'A controller runs whatever program it holds. A change to that program, whether by a well-meaning technician at midnight, a vendor on a support call, an integrator who forgot to record it, or an attacker, changes how the process behaves, and none of those changes leave a mark that an operator sees. The setpoints look the same, the screens look the same, and the pump starts a foot later or the chemical feed has a new maximum. Program integrity is the practice of knowing, at any time, whether the program in the controller is the one that was approved, and of finding out quickly when it is not.',
+      },
+      { t: 'h2', text: 'The master' },
+      {
+        t: 'p',
+        text: 'Integrity starts with a trusted copy: the project file as last approved, with its comments and documentation, in a version-controlled store that records who changed it and when, backed up offline. The PLC program backups page covers building that store. A utility that has only the program in the controller has nothing to compare against, and its first step is to upload, review, and establish the master.',
+      },
+      { t: 'h2', text: 'Continuous detection' },
+      {
+        t: 'p',
+        text: 'Most controllers expose values that change when the program changes: a program checksum, a change counter, a last-edit timestamp, and on some platforms a user identity for the last edit. Read them into SCADA as tags. Trend them. Alarm when they change. A checksum that changes at 2 a.m. on a Sunday with no change record is an alarm that names the controller and the time, and it is the fastest detection a utility can have. The controller mode and its restart count are read alongside, because a program change usually involves a mode change, and a program corruption often involves a restart.',
+      },
+      {
+        t: 'table',
+        head: ['Signal', 'What it shows', 'Alarm on'],
+        rows: [
+          ['Program checksum or signature', 'Any change to the program', 'Any change'],
+          ['Change counter', 'The number of edits since the program was loaded', 'Any increment'],
+          ['Last edit timestamp', 'When the last change was made', 'A change; compare with the change log'],
+          ['Last edit user, where available', 'Who the platform believes made it', 'A user not on the approved list'],
+          ['Controller mode', 'RUN, REMOTE, or PROGRAM', 'Any change from RUN'],
+          ['Restart and fault counters', 'Power cycles, hard faults, watchdog events', 'Any increment'],
+          ['Force count', 'Active forces on I/O', 'Any nonzero value outside a maintenance window'],
+        ],
+      },
+      { t: 'h2', text: 'Periodic verification' },
+      {
+        t: 'p',
+        text: 'The checksum says the program changed; the compare says what changed. On a schedule, monthly at most utilities and more often for critical controllers, the running program is uploaded and compared with the master using the platform compare tool or a version control product built for controllers. The result is either identical, which is recorded, or a list of differences, each of which is matched to a change record. A difference with a record is a master that needs updating. A difference without a record is an incident: the change is reviewed rung by rung, the process is checked for its effect, and the program is restored from the master if the change was not approved.',
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'Comments do not survive the upload',
+        text: 'On many platforms the upload from the controller recovers the logic but not the comments and the documentation, so a compare between an upload and the master shows every comment as a difference. The compare tools filter that; the reviewer compares logic. Where the platform stores the full project in the controller, the compare is exact and the comments are checked too.',
+      },
+      { t: 'h2', text: 'Platform features that support integrity' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Project signing', def: 'A digital signature on the project file, verified on download, so that a modified file is rejected. Available on newer platforms.' },
+          { term: 'Source protection', def: 'Encryption or locking of routines so that the logic cannot be read or edited without the key. Protects the intellectual property and prevents casual edits; does not prevent a download of a different project.' },
+          { term: 'Controller audit log', def: 'A log in the controller of mode changes, downloads, edits, and forces, with time and identity where the platform has users. Read it into SCADA or review it on a schedule.' },
+          { term: 'Change detection in the programming software', def: 'A compare on every connection, with a warning if the controller differs from the open project. Useful for the programmer; not a substitute for the scheduled compare.' },
+          { term: 'Controller security mode', def: 'A mode on newer platforms that requires authentication for downloads and mode changes and that logs them. Enable it where the platform offers it.' },
+        ],
+      },
+      { t: 'h2', text: 'Building it into the routine' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Establish the master', text: 'Upload, review, document, and commit every controller program to the version-controlled store. Record the checksum.' },
+          { title: 'Add the tags', text: 'Checksum, change counter, last edit time, mode, restarts, and forces for every controller, into SCADA, trended, alarmed.' },
+          { title: 'Write the change procedure', text: 'Every program change updates the master, records the new checksum, and is logged with who, when, and why. The alarm on the checksum change is acknowledged against the record.' },
+          { title: 'Schedule the compare', text: 'Monthly for every controller, weekly for the critical ones, with the result recorded.' },
+          { title: 'Define the incident response', text: 'What happens on an unexplained difference: who is called, the process check, the restore decision, and the investigation of how the change was made.' },
+          { title: 'Review', text: 'Quarterly: every alarm, every compare, every unexplained difference and its resolution.' },
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'The checksum changes every time someone goes online. Why?',
+        a: 'On some platforms an online session that changes nothing still updates a timestamp or a counter; on others the checksum is stable unless the logic changes. Learn which values on your platform change only with the logic, and alarm on those. The audit log, where available, distinguishes an online session from an edit.',
+      },
+      {
+        q: 'What if the program in the controller is better than the master?',
+        a: 'That is common on a system where the integrator made a fix on site and the master was never updated. The compare finds it; the review confirms the change is wanted; the master is updated and the change is recorded after the fact. The integrity process is how the master catches up, not a reason to distrust the fix.',
+      },
+      {
+        q: 'Can an attacker change the program and restore the checksum?',
+        a: 'A checksum is not a cryptographic signature and a capable attacker with controller access could in principle craft a program with the same value on some platforms. The scheduled compare against the master catches what the checksum misses, the network controls and the keyswitch make the access itself hard, and platforms with signed projects close the gap. Layers, as always.',
+      },
+      {
+        q: 'How long does the monthly compare take?',
+        a: 'A few minutes per controller with the platform tool, longer with a manual review of differences. A version control product for controllers automates the upload and compare on a schedule and reports only the differences, which makes weekly compares of a hundred controllers practical.',
+      },
+    ],
+    related: [
+      '/cybersecurity/backups/plc-program-backups',
+      '/cybersecurity/plc-security/mode-switch-and-keyswitch',
+      '/cybersecurity/plc-security/controller-hardening',
+      '/cybersecurity/incident-response/ot-incident-response-plan',
+      '/controls/plc-systems/plc-fundamentals/memory',
+      '/cybersecurity/remote-access/vendor-remote-access',
     ],
   },
 ];

@@ -1111,7 +1111,7 @@ END_IF;`,
     kind: 'howto',
     title: 'How to Configure a Modbus Connection',
     summary:
-      'Set up a Modbus RTU or TCP link between a controller and a device: gather the device register map, match the physical and protocol settings, build the read and write requests, handle the data types and the addressing offset, and verify with a protocol tool before trusting a single value.',
+      'Set up a Modbus RTU or TCP link between a controller and a device: get the register map, match the physical and protocol settings, build the reads and writes, handle data types and the addressing offset, and verify with a protocol tool before trusting a value.',
     answer:
       'To configure a Modbus connection, get the register map from the device manual, set the physical layer (serial parameters and wiring for RTU, IP address and port 502 for TCP), set the unit identifier, build read requests that cover the registers you need in as few polls as possible, decode the data types the device uses, resolve the one-based versus zero-based addressing offset, add a write for each command, and verify every value against the device display with a Modbus test tool before the controller uses it.',
     keyPoints: [
@@ -1327,7 +1327,7 @@ END_IF;`,
     kind: 'howto',
     title: 'How to Calculate a Panel SCCR',
     summary:
-      'Determine the short-circuit current rating of an industrial control panel by the UL 508A Supplement SB method: list every power circuit component, find each rating, apply series combinations and current-limiting where they are published, and mark the panel with the lowest number that results.',
+      'Determine the short-circuit current rating of a control panel by the UL 508A Supplement SB method: list every power circuit component, find each rating, apply published series combinations and current limiting, and mark the panel with the lowest result.',
     answer:
       'To calculate a panel short-circuit current rating, list every component in the power circuit from the incoming terminals to each load, find the SCCR or interrupting rating of each from its listing or the UL 508A default table, raise any that have a published series combination or current-limiting protection ahead of them, and take the lowest value as the panel SCCR. The result is marked on the panel nameplate and compared with the available fault current at the installation, which must not exceed it.',
     keyPoints: [
@@ -1439,7 +1439,7 @@ END_IF;`,
     kind: 'howto',
     title: 'How to Configure a Radar Level Transmitter',
     summary:
-      'Commission a non-contact radar on a wet well or tank: mount it right, set the reference and the range from measured elevations, map the false echoes with the vessel empty, set damping and the output for the application, and verify against a tape at two levels before the controller uses it.',
+      'Commission a non-contact radar on a wet well or tank: mount it, set the reference and range from measured elevations, map false echoes with the vessel empty, set damping and the output, and verify against a tape at two levels before the controller uses it.',
     answer:
       'To configure a radar level transmitter, mount it with a clear view of the surface away from walls, inflows, and obstructions, enter the distance from its reference point to the vessel bottom and the span you want as 4 to 20 mA, run a false echo mapping with the level as low as possible so the transmitter ignores fixed reflections, set damping for the application, confirm the output direction, and verify the reading against a tape measure at two levels. Record every setting and the elevations they were derived from.',
     keyPoints: [
@@ -1540,6 +1540,545 @@ END_IF;`,
       '/how-to/plc-how-to/scale-a-4-20-ma-input',
       '/controls/plc-systems/analog-control/signal-validation',
       '/water-wastewater/wastewater-systems/lift-stations/wet-well-control',
+    ],
+  },
+  {
+    path: '/how-to/network-how-to/assign-ip-addresses',
+    kind: 'howto',
+    title: 'How to Assign IP Addresses on a Control Network',
+    summary:
+      'Build an addressing plan before the first device is configured: one subnet per zone and site, a fixed block layout so an address says what the device is, static addresses on everything that controls a process, and a schedule that is kept current.',
+    answer:
+      'To assign IP addresses on a control network, choose a private range that will not collide with vendor defaults or home routers, give each site and each security zone its own /24 subnet, lay out fixed blocks inside every subnet for gateways, switches, controllers, I/O, instruments, servers, and laptops, assign static addresses to every device that takes part in control, record every address in an IP schedule with the device, MAC address, location, VLAN, and switch port, and verify with ping and the ARP table that no address is duplicated.',
+    keyPoints: [
+      'Plan the whole system first; a network addressed one device at a time cannot be segmented or routed later.',
+      'One /24 per zone per site. The second and third octets say where and what; the last octet says which.',
+      'Static addresses on controllers, I/O, drives, instruments, and servers. No DHCP pool on a control VLAN.',
+      'Avoid 192.168.0.0/24 and 192.168.1.0/24; they collide with vendor defaults, cellular modems, and VPN clients.',
+      'The IP schedule is part of the drawings. An address that is not on the schedule does not exist.',
+      'Verify with ping and ARP from inside the subnet; a duplicate address shows up as two MAC addresses answering.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['Networking', 'Ethernet', 'Design', 'Documentation', 'How-To'],
+    supplies: [
+      'The list of sites, zones, and every network device with its role',
+      'The existing addresses of anything already installed, from the device displays or a network scan',
+      'Access to the switch and firewall configuration',
+      'The programming software for each controller and a laptop with an Ethernet port',
+      'A spreadsheet or the project network schedule template',
+      'Label material for the devices and the drawings',
+    ],
+    blocks: [
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Changing a live address',
+        text: 'Changing the address of a running controller breaks every connection to it: the HMI, the historian, remote I/O, and peer controllers. Readdress during a planned outage, change the clients at the same time, and keep the old address written down until everything reconnects.',
+      },
+      { t: 'h2', text: 'Procedure' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Inventory what exists', text: 'List every device that has or will have an address: controllers, I/O adapters, drives, instruments with Ethernet, switches, firewalls, radios, cellular modems, servers, HMIs, printers, cameras. Record the current address, mask, gateway, and MAC of anything already running. Read the address from the device itself, not from memory.' },
+          { title: 'Choose the private range', text: 'Use the 10.0.0.0/8 range for anything larger than one panel. It gives 65,000 subnets and does not collide with the 192.168.x.x defaults used by vendor equipment, cellular modems, home routers, and VPN clients. Keep 192.168.x.x for temporary bench work and out-of-box device defaults only.' },
+          { title: 'Assign a subnet per zone per site', text: 'Give each site a number and each security zone a number, and form the subnet as 10.SITE.ZONE.0/24. A plant with a control zone, a supervisory zone, and a management zone at site 5 uses 10.5.10.0, 10.5.20.0, and 10.5.99.0. Remote sites follow the same pattern with their own site number, so a site-to-site VPN can route without address translation.' },
+          { title: 'Lay out fixed blocks inside every subnet', text: 'Reserve the same host ranges in every subnet, per the table below, so that the last octet identifies the device class anywhere in the system. A technician who sees 10.7.10.21 knows it is a controller at site 7 in the control zone without looking anything up.' },
+          { title: 'Assign static addresses', text: 'Every controller, I/O adapter, drive, instrument, server, and switch gets a static address from its block. Set it in the device, set the mask to 255.255.255.0, and set the gateway only if the device must talk across subnets; a device with no gateway cannot be reached from another subnet, which is a feature for I/O and a fault for a server.' },
+          { title: 'Handle the devices that insist on DHCP', text: 'A few devices ship with DHCP on and no way to set a static address until they get one. Use a DHCP reservation tied to the MAC on the management network for the first configuration, then set the static address. Do not leave a DHCP pool active on a control VLAN; an address that changes at lease renewal is an intermittent communication failure waiting to happen.' },
+          { title: 'Set the switch and firewall interfaces', text: 'The firewall interface for each subnet takes .1, the gateway address. Switch management addresses go in the management subnet, not in the control subnet, so a switch is reachable only through the management VLAN.' },
+          { title: 'Write the schedule', text: 'One row per address: address, hostname or tag, device model, MAC, location, VLAN, switch and port, and a note. Include the spare blocks so nobody invents an address. Put the schedule with the network drawing and revise both together.' },
+          { title: 'Label', text: 'The address goes on the device label, on the network drawing, and in the switch port description. A controller whose address is visible on its label is diagnosed in seconds; one whose address is in a laptop somewhere is diagnosed in an hour.' },
+          { title: 'Verify', text: 'From a laptop inside each subnet, ping every address on the schedule and confirm the ARP table shows one MAC per address. Ping every spare address and confirm nothing answers. Then check reachability across subnets only where the firewall rules intend it.' },
+        ],
+      },
+      { t: 'h2', text: 'Block layout inside each /24' },
+      {
+        t: 'table',
+        caption: 'A fixed layout that applies in every subnet at every site',
+        head: ['Last octet', 'Use', 'Note'],
+        rows: [
+          ['.1', 'Gateway (firewall or router interface)', 'Same in every subnet'],
+          ['.2 to .9', 'Switches and network infrastructure', 'Management addresses normally live in the management subnet; these are for switches that must be reachable locally'],
+          ['.10 to .49', 'Controllers and PLC communication modules', 'Primary controller at .10 or .11, redundant partner adjacent'],
+          ['.50 to .99', 'Remote I/O adapters and drives', 'In order of the drawing; adapter, then its drives'],
+          ['.100 to .149', 'Instruments and analyzers with Ethernet', 'Match the loop number where possible'],
+          ['.150 to .199', 'Servers, HMIs, historians, workstations', 'Redundant servers adjacent'],
+          ['.200 to .239', 'Engineering laptops and temporary devices', 'Reserved addresses, not a pool'],
+          ['.240 to .254', 'Spare', 'Never assigned without updating the schedule'],
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'When one /24 is not enough',
+        text: 'A site with more than 40 controllers or more than 50 I/O adapters in one zone is unusual. Before enlarging the mask to /23, split the zone into two subnets by process area; a smaller broadcast domain contains a storm, a chatty device, or a loop to one area, and the firewall between areas becomes possible later.',
+      },
+      { t: 'h2', text: 'Checking for duplicates' },
+      {
+        t: 'p',
+        text: 'A duplicate address is intermittent by nature: whichever device answered ARP last gets the traffic. Check from a laptop in the same subnet.',
+      },
+      {
+        t: 'code',
+        lang: 'text',
+        caption: 'Windows commands to confirm which device holds an address',
+        code: `ping 10.5.10.21
+arp -a | findstr 10.5.10.21
+
+REM one line with one MAC is correct
+REM ping the address, unplug the device you think it is, ping again
+REM if it still answers, something else has the address`,
+      },
+      {
+        t: 'p',
+        text: 'On a managed switch, the MAC address table shows the port for each MAC. Two MACs claiming one address show up in the switch log as an IP conflict on some platforms, and always show up as two different ports answering the same address over time.',
+      },
+      { t: 'h2', text: 'Verification' },
+      {
+        t: 'ul',
+        items: [
+          'Every device on the schedule answers ping from inside its subnet with one MAC in the ARP table.',
+          'No spare or unassigned address answers.',
+          'Cross-subnet traffic works only where a firewall rule permits it, and fails everywhere else.',
+          'The controller, HMI, historian, and I/O all reconnected after any readdressing.',
+          'The schedule, the network drawing, the device labels, and the switch port descriptions agree.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Why not just use 192.168.1.x like the vendor defaults?',
+        a: 'Because everything else uses it too. A cellular modem, a laptop on a home network over VPN, a vendor tool, and a new device out of the box all default into 192.168.0.x or 192.168.1.x, and every one of them collides with a control network that lives there. A 10.x.x.x plan avoids every collision and gives room to number sites and zones.',
+      },
+      {
+        q: 'Can two remote sites use the same subnet?',
+        a: 'Only if they will never be connected. Two sites at 192.168.1.0/24 cannot be joined by a VPN or a central SCADA without address translation, which is confusing to troubleshoot. Give every site its own subnet from the start; it costs nothing.',
+      },
+      {
+        q: 'Should the gateway be set on every device?',
+        a: 'Set it where the device must communicate outside its subnet: servers, HMIs, controllers that report to a central SCADA. Leave it blank on remote I/O adapters, drives, and instruments that only talk to the local controller; without a gateway they cannot be reached from, or reach, another subnet even if a firewall rule is wrong.',
+      },
+      {
+        q: 'What about IPv6?',
+        a: 'Turn it off on control devices and workstations where the option exists, and do not plan around it. Control equipment overwhelmingly uses IPv4, and an IPv6 stack left enabled on a workstation is an unmanaged path that no firewall rule was written for.',
+      },
+    ],
+    related: [
+      '/how-to/network-how-to/configure-vlans',
+      '/cybersecurity/network-segmentation/zones-and-conduits',
+      '/cybersecurity/firewalls/firewall-rule-design',
+      '/how-to/network-how-to/troubleshoot-ethernet',
+      '/controls/plc-systems/communications/ethernet-ip',
+    ],
+  },
+  {
+    path: '/how-to/network-how-to/configure-vlans',
+    kind: 'howto',
+    title: 'How to Configure VLANs on a Control Network',
+    summary:
+      'Turn a zone plan into switch configuration: a VLAN per zone with its own subnet, access ports for devices, tagged trunks between switches, a native VLAN that carries nothing, a separate management VLAN, and routing between VLANs only through the firewall.',
+    answer:
+      'To configure VLANs on a control network, map each security zone to a VLAN ID and a subnet, create the VLANs on every switch, set each device port as an access port in the VLAN of its zone, set the links between switches and to the firewall as 802.1Q trunks that carry only the VLANs needed, move the native VLAN off VLAN 1 to an unused ID, put switch management in its own VLAN, configure the firewall as the gateway for every VLAN so that traffic between zones passes its rules, and verify that devices reach their own zone and cannot reach another without a rule.',
+    keyPoints: [
+      'A VLAN is a separate broadcast domain on shared switches; it is only a security boundary when a firewall sits between VLANs.',
+      'One VLAN per zone, one subnet per VLAN, the same IDs at every site.',
+      'Device ports are access ports. Only switch-to-switch and switch-to-firewall links are trunks, and trunks carry only the VLANs they need.',
+      'Nothing lives on VLAN 1. Set the native VLAN on every trunk to an unused ID.',
+      'Switch management goes in its own VLAN, reachable only from the engineering zone.',
+      'Route between VLANs at the firewall, never on a layer 3 switch that bypasses it.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['Networking', 'Ethernet', 'Cybersecurity', 'Design', 'How-To'],
+    supplies: [
+      'The zone and conduit diagram with the VLAN ID and subnet for each zone',
+      'The IP schedule with every device, its VLAN, switch, and port',
+      'Console access to every managed switch and the firewall',
+      'The switch vendor manual for the VLAN and trunk commands',
+      'A laptop that can be moved between ports for testing',
+      'A backup of every switch configuration before starting',
+    ],
+    blocks: [
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Changing a port VLAN on a live system',
+        text: 'Moving a port to a new VLAN disconnects the device from everything it was talking to until its clients are moved and its address matches the new subnet. Do the work in an outage window, one zone at a time, with the console cable connected so a mistake on the management VLAN cannot lock you out of the switch.',
+      },
+      { t: 'h2', text: 'Procedure' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Map zones to VLANs', text: 'Take the zone diagram and assign a VLAN ID and a subnet to each zone, using the same IDs at every site: VLAN 10 for the control zone, 20 for supervisory, 30 for remote I/O, 99 for switch management, for example. Write the plan as a table before touching a switch.' },
+          { title: 'Back up every switch', text: 'Export the running configuration of every switch and the firewall to a file with the date. A VLAN change that goes wrong is undone by restoring the file, not by remembering what you typed.' },
+          { title: 'Create the VLANs on every switch', text: 'Every switch that carries a VLAN must have it defined, including switches that only pass it through. Name each VLAN with its zone so the name shows in status displays.' },
+          { title: 'Configure access ports', text: 'Each device port is an access port in the VLAN of its zone. Disable trunk negotiation on access ports; a device port that can be talked into becoming a trunk is a way into every VLAN. Add a port description with the device tag.' },
+          { title: 'Configure trunks', text: 'Links between switches and to the firewall are 802.1Q trunks. Restrict each trunk to the VLANs it must carry; a trunk that carries everything by default lets a mistake on one switch reach every zone.' },
+          { title: 'Move the native VLAN', text: 'Frames without a tag on a trunk land in the native VLAN, which is VLAN 1 by default on most switches. Set the native VLAN on every trunk to an unused ID such as 999, and put no ports in it, so untagged frames from a misconfigured device go nowhere.' },
+          { title: 'Set up the management VLAN', text: 'Give each switch its management address in the management VLAN, remove the address from VLAN 1, and allow the management VLAN only on trunks that reach the engineering zone. Confirm you can still reach the switch before you disconnect the console cable.' },
+          { title: 'Configure the firewall as gateway', text: 'Create a sub-interface on the firewall for each VLAN with the .1 address of that subnet, and write the rules that allow the intended conduits between zones. Devices in different VLANs can now talk only through those rules.' },
+          { title: 'Move devices zone by zone', text: 'For each zone: readdress the devices if their subnet changed, move their ports, move their clients, and confirm communication returns before starting the next zone.' },
+          { title: 'Verify and document', text: 'Test reachability within and between zones as described below. Save the configuration on every switch, export a fresh backup, and update the network drawing and IP schedule with the VLAN IDs and port assignments.' },
+        ],
+      },
+      { t: 'h2', text: 'Example VLAN plan' },
+      {
+        t: 'table',
+        caption: 'One site; the same IDs repeat at every other site with its own second octet',
+        head: ['VLAN', 'Name', 'Subnet', 'Members'],
+        rows: [
+          ['10', 'CONTROL', '10.5.10.0/24', 'Controllers, local HMI panels'],
+          ['20', 'SUPERVISORY', '10.5.20.0/24', 'SCADA servers, historian, operator workstations'],
+          ['30', 'IO', '10.5.30.0/24', 'Remote I/O adapters, drives, Ethernet instruments'],
+          ['40', 'DMZ', '10.5.40.0/24', 'Data relay, remote access jump host'],
+          ['99', 'MGMT', '10.5.99.0/24', 'Switch and firewall management interfaces'],
+          ['999', 'NATIVE', 'none', 'Native VLAN on trunks; no members'],
+        ],
+      },
+      { t: 'h2', text: 'Example switch configuration' },
+      {
+        t: 'p',
+        text: 'Command-line syntax varies by vendor, but the objects are the same everywhere: a VLAN database, access ports, trunks with an allowed list and a native VLAN, and a management interface. This example uses IOS-style syntax, which also applies to the industrial switches built on it.',
+      },
+      {
+        t: 'code',
+        lang: 'text',
+        caption: 'Access port, trunk, and management interface',
+        code: `vlan 10
+ name CONTROL
+vlan 30
+ name IO
+vlan 99
+ name MGMT
+vlan 999
+ name NATIVE
+!
+interface GigabitEthernet1/0/5
+ description PLC-101
+ switchport mode access
+ switchport access vlan 10
+ switchport nonegotiate
+ spanning-tree portfast
+!
+interface GigabitEthernet1/0/24
+ description TRUNK-to-FW
+ switchport mode trunk
+ switchport trunk native vlan 999
+ switchport trunk allowed vlan 10,20,30,40,99
+!
+interface Vlan99
+ ip address 10.5.99.2 255.255.255.0
+!
+no interface Vlan1`,
+      },
+      {
+        t: 'p',
+        text: 'Switches configured through a web page use the same terms: a VLAN table, a port VLAN membership page with untagged for access and tagged for trunk, a PVID that is the native VLAN of a port, and a management VLAN setting.',
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Multicast on the I/O VLAN',
+        text: 'Some remote I/O and drive connections use multicast. Enable IGMP snooping on the I/O VLAN and configure an IGMP querier on it, otherwise every switch floods the multicast to every port in the VLAN. This is a per-VLAN setting, and one more reason the I/O lives in its own VLAN.',
+      },
+      { t: 'h2', text: 'Verification' },
+      {
+        t: 'ul',
+        items: [
+          'Every switch shows the same VLAN list, and each trunk shows the intended allowed VLANs and native VLAN.',
+          'A laptop on an access port in VLAN 10 pings devices in VLAN 10 across the trunk between switches.',
+          'The same laptop cannot ping a device in VLAN 20 or 30 unless a firewall rule permits it, and the firewall log shows the denied attempt.',
+          'Switch management pages answer only from the engineering zone.',
+          'Nothing has a port in VLAN 1 or in the native VLAN.',
+          'All controller, HMI, historian, and I/O connections are restored, and the configuration is saved and backed up.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Is a VLAN a security boundary?',
+        a: 'Only with a firewall between VLANs. Two VLANs on the same switch with no router between them cannot talk, which isolates them, but the moment a layer 3 switch or a router joins them the boundary is whatever that device enforces. Route between zones on the firewall, where rules and logs exist.',
+      },
+      {
+        q: 'Why not use the layer 3 switch to route between VLANs? It is faster.',
+        a: 'It is also unfiltered and unlogged unless access lists are written and maintained on it, which rarely happens. Control traffic between zones is small; a firewall handles it without difficulty. Reserve switch routing for cases where the firewall is the documented bottleneck, and then write the access lists.',
+      },
+      {
+        q: 'What is the harm in using VLAN 1?',
+        a: 'It is the default for every port and every trunk native VLAN, so a new switch, a reset switch, or a forgotten port lands in it, and management traffic on it mixes with anything untagged. Keeping VLAN 1 empty means those defaults land in a VLAN that connects to nothing.',
+      },
+      {
+        q: 'How do I add a VLAN to an unmanaged switch?',
+        a: 'You cannot. An unmanaged switch passes tagged frames without understanding them, which sometimes works between two managed switches, and puts every device on it in whatever VLAN its uplink port is assigned. Replace unmanaged switches in the path with managed ones before building VLANs.',
+      },
+    ],
+    related: [
+      '/how-to/network-how-to/assign-ip-addresses',
+      '/cybersecurity/network-segmentation/zones-and-conduits',
+      '/cybersecurity/network-segmentation/dmz-design',
+      '/cybersecurity/firewalls/firewall-rule-design',
+      '/cybersecurity/firewalls/industrial-firewalls',
+    ],
+  },
+  {
+    path: '/how-to/network-how-to/troubleshoot-ethernet',
+    kind: 'howto',
+    title: 'How to Troubleshoot an Ethernet Connection',
+    summary:
+      'Work an Ethernet problem one layer at a time: link light and cable, then speed, duplex, and VLAN on the switch port, then address, mask, and gateway, then the application port through the firewall. Each layer has a one-minute test that rules it in or out.',
+    answer:
+      'To troubleshoot an Ethernet connection, establish what changed and whether one device or many are affected, check the link light and the switch port status and swap the cable, read the port speed, duplex, and error counters on the switch, confirm the port VLAN matches the device subnet, confirm the device address, mask, and gateway, ping from a laptop in the same subnet before testing across the firewall, check the ARP and MAC tables to see who is actually answering, test the application port with a TCP connection test, and record the cause when the connection is restored.',
+    keyPoints: [
+      'Bottom up: physical, then switch port, then addressing, then firewall and application. Do not skip a layer because it looks fine.',
+      'The switch port counters tell the truth: CRC errors and late collisions mean a cable or a duplex mismatch, not a software problem.',
+      'Test from inside the subnet first. A ping across the firewall tests three things at once and tells you nothing when it fails.',
+      'A duplex mismatch works at low traffic and fails under load; force both ends or auto-negotiate both ends, never one of each.',
+      'Ping proves the network path; only a connection to the application port proves the device will talk.',
+      'Write down what changed, what you measured, and what fixed it; the next failure is usually the same one.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['Networking', 'Ethernet', 'Troubleshooting', 'Communications', 'How-To'],
+    supplies: [
+      'A laptop with an Ethernet port, a known-good patch cable, and the switch console or management login',
+      'The network drawing and IP schedule for the affected segment',
+      'A cable tester or a spare cable of the right length',
+      'The device manual for its Ethernet status indicators',
+      'Access to the firewall log',
+      'The controller or SCADA communication status display',
+    ],
+    blocks: [
+      {
+        t: 'callout',
+        kind: 'safety',
+        title: 'Working inside a live panel',
+        text: 'Ethernet cables in a control panel run next to control power and sometimes next to drive output cables. Wear the PPE the panel label requires, and do not open a drive compartment to reach a switch without following the lockout procedure.',
+      },
+      { t: 'h2', text: 'Procedure' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Define the failure', text: 'One device or many? Total or intermittent? Since when, and what changed just before: a firmware update, a new cable, a moved port, a firewall rule, a power event? A failure across many devices behind one switch or link points at that switch or link; a single device points at its cable, port, or configuration.' },
+          { title: 'Check the physical layer', text: 'Look at the link light on the device and the port light on the switch. No light on either end means the cable, the port, or the device port is dead: swap in the known-good cable, then try another switch port. Fiber: confirm the transceiver type matches at both ends and the fibers are not swapped.' },
+          { title: 'Read the switch port status', text: 'On the switch, show the port status: up or down, speed, duplex, VLAN, and the error counters. A port that is administratively down or error-disabled was turned off by a person or by a protection feature, and the log says which.' },
+          { title: 'Check speed and duplex', text: 'Both ends should agree. Auto on one end and forced on the other produces a duplex mismatch: the auto end falls back to half duplex, and the port shows late collisions on the half side and CRC or alignment errors on the full side. Set both ends to auto-negotiate or both to the same forced setting.' },
+          { title: 'Check the error counters over time', text: 'Clear the counters, wait ten minutes under normal traffic, and read them again. CRC and input errors that climb point at the cable, a connector, or noise coupled from a nearby drive cable. Output drops point at congestion. Zero errors with no communication means the problem is above the physical layer.' },
+          { title: 'Confirm the VLAN', text: 'The port VLAN must match the subnet the device is addressed in. A device moved to another switch port on a different VLAN links fine and reaches nothing.' },
+          { title: 'Confirm the device addressing', text: 'Read the address, mask, and gateway from the device itself. A mask of 255.255.0.0 on a device whose neighbors use 255.255.255.0, a gateway in the wrong subnet, or a duplicate address each produces a device that partly works.' },
+          { title: 'Ping from inside the subnet', text: 'Put the laptop on an access port in the same VLAN with an address in the same subnet, and ping the device. Success here means the device, cable, port, and VLAN are good and the problem is routing or firewall. Failure here rules those out and keeps the search local.' },
+          { title: 'Check who is answering', text: 'Look at the ARP table on the laptop after the ping and at the MAC address table on the switch. The MAC should be the device and the port should be the one on the drawing. A different MAC is a duplicate address; a different port is a mislabeled cable.' },
+          { title: 'Test across the firewall', text: 'Now ping from the client that actually needs the device. If it fails while the local ping works, read the firewall log for the denied connection and check the gateway on both devices.' },
+          { title: 'Test the application port', text: 'Ping success does not mean the protocol works. Test a TCP connection to the port the application uses, such as 502 for Modbus TCP or 44818 for EtherNet/IP. A refused or timed-out connection with a working ping is a service not running, a device connection limit, or a firewall rule that allows ping but not the port.' },
+          { title: 'Restore and record', text: 'After the fix, watch the counters and the communication status for long enough to see the original failure would have recurred. Record the symptom, the measurements, the cause, and the fix on the work order and in the network notes.' },
+        ],
+      },
+      { t: 'h2', text: 'Symptoms and where to look' },
+      {
+        t: 'table',
+        head: ['Symptom', 'Most likely layer', 'First check'],
+        rows: [
+          ['No link light either end', 'Physical', 'Cable swap, then another switch port, then the device port'],
+          ['Link light, no ping from same subnet', 'Port or addressing', 'Port VLAN, device address and mask, duplicate address'],
+          ['Ping works locally, not from the client', 'Routing or firewall', 'Gateway on both ends, firewall log'],
+          ['Ping works, protocol does not', 'Application', 'TCP test to the port, device connection count, service enabled'],
+          ['Works then drops under load', 'Duplex mismatch or congestion', 'Late collisions, CRC errors, output drops on the port'],
+          ['Drops when a drive runs', 'Noise', 'Cable routing next to drive output cable, shield bonding, CRC errors that track the drive'],
+          ['Whole switch or area drops for seconds', 'Loop or spanning tree', 'Switch log for topology changes, a new cable between two switches, storm control counters'],
+        ],
+      },
+      { t: 'h2', text: 'Useful commands' },
+      {
+        t: 'code',
+        lang: 'text',
+        caption: 'Windows and PowerShell on the laptop; IOS-style commands on the switch',
+        code: `ipconfig /all
+ping 10.5.10.21 -t
+arp -a
+tracert 10.5.10.21
+Test-NetConnection 10.5.10.21 -Port 502
+
+show interfaces status
+show interfaces GigabitEthernet1/0/5
+show mac address-table interface GigabitEthernet1/0/5
+show logging | include 1/0/5
+clear counters GigabitEthernet1/0/5`,
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Cables in drive panels',
+        text: 'A patch cable that shares a wireway with a drive output cable picks up enough noise to produce CRC errors every time the drive runs. Route Ethernet away from drive output cables, cross them at right angles where they must meet, use shielded cable with metal connectors bonded at the switch, and keep the patch cable short.',
+      },
+      { t: 'h2', text: 'Verification' },
+      {
+        t: 'ul',
+        items: [
+          'Link is up at the expected speed and duplex on both ends.',
+          'Error counters do not increase over ten minutes of normal traffic, including with drives running.',
+          'Ping from inside the subnet and from the client both succeed with no loss.',
+          'The application connection is established and the communication status on the controller or SCADA is good.',
+          'The cause is recorded and the drawing or schedule is corrected if it was wrong.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'The link light is on but the switch shows the port down. How?',
+        a: 'The device sees a carrier from the switch while the switch has the port administratively down, error-disabled, or in a state that stops forwarding. Read the switch port status and log; the port was disabled by configuration, by a security feature such as port security or BPDU guard, or by a loop protection feature.',
+      },
+      {
+        q: 'Should I force 100 Mb full duplex on PLC ports?',
+        a: 'Only if both ends are forced identically and the setting is documented. Modern equipment auto-negotiates reliably, and the classic failure is a forced switch port talking to an auto device, which negotiates to half duplex. Default to auto on both ends.',
+      },
+      {
+        q: 'The device pings but its web page and its protocol both time out. What does that mean?',
+        a: 'The network path is good and the device is not serving the port. Common causes: the service is disabled, the device has reached its connection limit and needs old connections to time out, the firmware crashed the TCP stack while ICMP still answers, or a firewall allows ICMP but not the port. Power cycle the device only after checking the firewall and connection count.',
+      },
+      {
+        q: 'How do I find a loop?',
+        a: 'A loop shows as every port on the switch flashing continuously, high CPU on the switch, and devices across the whole VLAN dropping. Look at the switch log for topology changes and the storm control counters, then find the cable that was added most recently between two switches or between two ports on the same switch. Enable spanning tree and loop protection so the next one is blocked instead of felt.',
+      },
+    ],
+    related: [
+      '/troubleshooting/network-troubleshooting/ethernet-device-drops-offline',
+      '/how-to/network-how-to/diagnose-packet-loss',
+      '/troubleshooting/communications-troubleshooting/device-times-out',
+      '/how-to/network-how-to/assign-ip-addresses',
+      '/how-to/network-how-to/configure-vlans',
+    ],
+  },
+  {
+    path: '/how-to/network-how-to/diagnose-packet-loss',
+    kind: 'howto',
+    title: 'How to Diagnose Packet Loss',
+    summary:
+      'Find where and why frames are dropped: measure loss with a continuous ping, localize it hop by hop from both directions, read the port counters on the path, and match the pattern to its cause: a cable, a duplex mismatch, congestion, a loop, or a radio link.',
+    answer:
+      'To diagnose packet loss, confirm it with a continuous timestamped ping from a station near the affected device, then ping each hop along the path in turn to find the first segment that loses packets, ping from the far end back to confirm the segment, clear and read the error and drop counters on every switch port in that segment, and match the pattern of loss to its cause: random loss with CRC errors is a cable or noise, loss under load is congestion or a duplex mismatch, periodic bursts are a device or a scheduled job, brief total loss is a link flap or spanning tree, and loss behind a radio is the radio link.',
+    keyPoints: [
+      'Measure before you touch anything: a timestamped continuous ping gives the loss rate and the pattern.',
+      'Localize by hop: the first hop that loses is where the problem is, and the far-end ping confirms it.',
+      'Port counters name the layer: CRC errors are physical, output drops are congestion, both zero means the loss is beyond the switch.',
+      'The pattern is the diagnosis. Random, under load, periodic, and burst each have a short list of causes.',
+      'A controller that drops pings under load is often the controller, not the network; the protocol timeouts are the real measure.',
+      'Zero loss over an hour, with counters not moving, is the finish line.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['Networking', 'Ethernet', 'Troubleshooting', 'Telemetry', 'How-To'],
+    supplies: [
+      'A laptop that can be plugged into the switches along the path',
+      'The network drawing with every switch, link, and radio on the path',
+      'Management access to every switch on the path and to any radio or cellular modem',
+      'The controller or SCADA communication status and timeout counters',
+      'A spare patch cable and, for fiber, a light meter',
+      'A text file or notebook for the ping logs and counter readings',
+    ],
+    blocks: [
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'What ping does and does not tell you',
+        text: 'Ping measures whether a small packet crosses the path and comes back. A control protocol that times out at one second can fail from delay that ping reports as success, and a busy controller can drop pings while its protocol works. Use ping to find where frames are lost, and use the protocol communication status to decide whether the problem is solved.',
+      },
+      { t: 'h2', text: 'Procedure' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Confirm and measure the loss', text: 'From a station as close to the affected device as practical, run a continuous ping with timestamps for at least fifteen minutes and save the output. Note the loss percentage and the pattern: single random drops, bursts, drops at regular intervals, or long outages.' },
+          { title: 'Walk the path on the drawing', text: 'List every hop between the client and the device: switches, trunks, fiber links, radios, the firewall. Loss on a path can only come from a link, a switch, or the end device, so the list is the list of suspects.' },
+          { title: 'Ping hop by hop', text: 'From the same station, ping the management address of each switch along the path in order, then the far device. The first target that shows loss marks the segment: the loss is between the last clean target and the first lossy one. If every switch is clean and only the device loses, it is the device, its cable, or its port.' },
+          { title: 'Ping from the far end', text: 'Plug the laptop in beside the affected device and ping back toward the client. Loss that appears in both directions on the same segment confirms the segment. Loss in one direction only is often a duplex mismatch or a half-broken pair in one cable.' },
+          { title: 'Read the counters on the segment', text: 'On both ports of the suspect link, clear the counters, wait ten minutes, and read input errors, CRC errors, output drops, and collisions. CRC and input errors are physical: cable, connector, transceiver, noise. Output drops are congestion. Late collisions are a duplex mismatch. Clean counters on a lossy segment point at a radio, a loop elsewhere flooding the VLAN, or the far device.' },
+          { title: 'Check the radio or cellular link', text: 'If the segment includes a radio, read its received signal strength, signal-to-noise ratio, and error or retry counters on both ends, and compare with the values recorded at commissioning. Loss on a radio link that tracks weather, time of day, or a new obstruction is the link, not the network.' },
+          { title: 'Check for a loop or a storm', text: 'Loss across a whole VLAN at once, switches with high CPU, and every port light solid are a loop or a broadcast storm. Read the switch logs for topology changes and the storm control counters, and find the new cable.' },
+          { title: 'Check the end device', text: 'A controller that loses pings only when it is busy, and whose protocol connections stay good, is deprioritizing ICMP. A controller whose protocol connections also time out under load has too many clients or too fast a poll; count the connections and slow the polls.' },
+          { title: 'Fix the cause, not the symptom', text: 'Replace the cable or transceiver, correct the duplex, enable IGMP snooping for multicast flooding, enable spanning tree and storm control for loops, realign or re-aim the antenna, isolate the chatty device, or spread the polls. Then repeat the measurement.' },
+          { title: 'Verify and record', text: 'Run the continuous ping again for an hour with the counters cleared. Save the before and after ping logs and counter readings with the work order so the next person has a baseline.' },
+        ],
+      },
+      { t: 'h2', text: 'Loss patterns and their causes' },
+      {
+        t: 'table',
+        head: ['Pattern', 'Likely cause', 'Confirming evidence'],
+        rows: [
+          ['Random single drops, 1 to 5 percent', 'Cable, connector, transceiver, or noise', 'CRC and input errors climbing on one port; loss tracks a drive or a motor running'],
+          ['Loss only under load', 'Duplex mismatch or congestion', 'Late collisions on one side; output drops on a trunk; loss disappears when polling is paused'],
+          ['Drops at a regular interval', 'A scheduled job or a device with a periodic burst', 'Timestamps match a backup, a scan, a historian job, or a device that floods multicast on a timer'],
+          ['Complete loss for 10 to 60 seconds, then recovery', 'Link flap or spanning tree reconvergence', 'Switch log shows the port going down and up or a topology change at the same time'],
+          ['Loss to everything behind one link', 'That link: fiber, radio, cellular, or the trunk', 'Both ends of the link show it; devices on the near side are clean'],
+          ['Loss to one device only', 'Its cable, port, or the device itself', 'Every switch on the path is clean; counters on its port or none at all'],
+          ['Loss across a whole VLAN', 'Loop, broadcast storm, or multicast flood', 'Switch CPU high, storm control counters, all port lights solid, IGMP snooping off'],
+        ],
+      },
+      { t: 'h2', text: 'Measuring' },
+      {
+        t: 'code',
+        lang: 'text',
+        caption: 'Continuous ping, per-hop loss, and port counters',
+        code: `REM Windows: continuous ping, then per-hop loss
+ping 10.5.10.21 -t
+pathping 10.5.10.21
+
+# Linux: 1000 pings at 200 ms, then per-hop loss
+ping -c 1000 -i 0.2 10.5.10.21
+mtr -r -c 200 10.5.10.21
+
+# Switch: clear, wait, read
+clear counters GigabitEthernet1/0/24
+show interfaces GigabitEthernet1/0/24 | include error|drops|collision`,
+      },
+      {
+        t: 'p',
+        text: 'A ping with a large payload, near 1400 bytes, finds problems that a default 32-byte ping misses: a marginal cable drops long frames first, and a path with a mismatched maximum frame size drops them entirely. Run both sizes when the default ping looks clean and the protocol still times out.',
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Loss versus latency on radio and cellular',
+        text: 'A cellular link normally shows latency of 50 to 200 milliseconds and occasional loss of a percent or two; a licensed radio link normally shows almost none. Compare the measurement with the baseline recorded at commissioning before calling either one a fault, and set poll timeouts on those links to several times the normal round trip so a normal delay is not counted as a lost poll.',
+      },
+      { t: 'h2', text: 'Verification' },
+      {
+        t: 'ul',
+        items: [
+          'A one-hour continuous ping shows zero loss on wired paths, or loss within the commissioning baseline on radio and cellular paths.',
+          'CRC, input error, output drop, and collision counters on every port in the path stay at zero over the same hour.',
+          'The controller and SCADA communication status stays good, and the timeout counters stop incrementing.',
+          'The switch logs show no link flaps or topology changes during the test.',
+          'The before and after measurements and the cause are recorded with the work order.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'The switch counters are all zero but ping still loses packets. Where is the loss?',
+        a: 'Somewhere the counters do not see: a radio link that retries silently, a firewall that rate-limits ICMP, an unmanaged switch in the path, or the end device dropping pings under load. Ping the far side of each of those in turn, and test with the protocol rather than ping if the end device is the suspect.',
+      },
+      {
+        q: 'How much loss is acceptable?',
+        a: 'On a wired control network, none; a switched Ethernet path with good cables delivers every frame. On radio and cellular, a percent or two is normal and the protocol timeouts and retries are designed for it. Anything above the commissioning baseline on any link is a fault to find.',
+      },
+      {
+        q: 'Ping loss started after a firmware update on the controller. What changed?',
+        a: 'Probably the priority the controller gives to ICMP, or the number of connections it accepts. Check the protocol communication status first; if it is good, the loss is a measurement artifact. If the protocol also fails, the update may have changed connection limits or the default port speed and duplex.',
+      },
+      {
+        q: 'Can a bad cable on one device cause loss on other devices?',
+        a: 'On a switched network, a bad cable affects only its own port, unless the errors are severe enough to flood the switch with malformed frames or the cable is a trunk. Loss on several devices at once points at a shared link, a loop, or a storm, not at one device cable.',
+      },
+    ],
+    related: [
+      '/how-to/network-how-to/troubleshoot-ethernet',
+      '/troubleshooting/network-troubleshooting/ethernet-device-drops-offline',
+      '/troubleshooting/communications-troubleshooting/device-times-out',
+      '/troubleshooting/communications-troubleshooting/modbus-device-intermittently-offline',
+      '/how-to/scada-how-to/diagnose-bad-quality',
     ],
   },
 ];

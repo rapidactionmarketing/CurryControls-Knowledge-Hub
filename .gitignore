@@ -58,3 +58,13 @@ generated-icon.png
 # Local analytics file store (ANALYTICS_DATA_DIR fallback).
 # Holds visitor event data; must not be committed.
 .data/
+
+# Secrets. Credentials belong in the host's secret store, never in the repo.
+.env
+.env.*
+!.env.example
+
+# Build archives. The deploy script writes its archive under dist/, which is
+# already ignored; this catches one made by hand in the workspace root.
+*.zip
+*.tar.gz

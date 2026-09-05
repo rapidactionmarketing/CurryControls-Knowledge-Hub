@@ -1,5 +1,10 @@
 RewriteEngine On
 
+# Icon and manifest types, in case the host's mime.types predates them.
+AddType image/svg+xml .svg
+AddType image/x-icon .ico
+AddType application/manifest+json .webmanifest
+
 # Canonical host. Every page on this site declares https://www.currycontrols.com
 # as its canonical URL, so the bare apex is sent to www once, permanently, with
 # the path and query string intact. Two hostnames serving identical content

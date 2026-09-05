@@ -1,6 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="CurryControls.com">
-  <rect width="32" height="32" rx="5" fill="#0A2342"/>
-  <path d="M7 21.5V10.5M7 10.5h4.6a3.2 3.2 0 0 1 0 6.4H7" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-  <path d="M25 12.4a5.6 5.6 0 1 0 0 7.2" stroke="#1E5F9E" stroke-width="2.4" stroke-linecap="round" fill="none"/>
-  <circle cx="16.6" cy="24.5" r="1.5" fill="#2D6A8A"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="CurryControls.com">
+  <defs>
+    <pattern id="grid" width="8" height="8" patternUnits="userSpaceOnUse">
+      <path d="M8 0H0V8" fill="none" stroke="#FFFFFF" stroke-opacity="0.07" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="64" height="64" rx="12" fill="#0A2342"/>
+  <rect width="64" height="64" rx="12" fill="url(#grid)"/>
+  <!-- C monogram: a heavy arc open to the right -->
+  <path d="M43 21.1A17 17 0 1 0 43 42.9" fill="none" stroke="#FFFFFF" stroke-width="8.5" stroke-linecap="round"/>
+  <!-- One control pulse leaving the controller through the opening of the C -->
+  <path d="M26 34h8v-8h9v8h9" fill="none" stroke="#5FA8E6" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

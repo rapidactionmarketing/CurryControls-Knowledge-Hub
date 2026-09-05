@@ -12,6 +12,8 @@ tags:
     description: Health operations
   - name: analytics
     description: First-party, cookieless site analytics
+  - name: contact
+    description: Messages sent through the contact page
 paths:
   /healthz:
     get:
@@ -70,8 +72,111 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AnalyticsSummary"
+  /contact:
+    post:
+      operationId: submitContactMessage
+      tags: [contact]
+      summary: Submit a message from the contact page
+      description: >
+        Stores the message and notifies the site owner by email. The message is
+        personal data the sender chose to provide, kept only so that it can be
+        answered. No IP address or user agent is recorded.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContactMessage"
+      responses:
+        "200":
+          description: Message stored; `delivery` says whether the owner was emailed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContactAck"
+        "400":
+          description: The message failed validation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContactError"
+        "429":
+          description: Too many messages from one connection
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContactError"
+        "503":
+          description: The message could not be stored
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContactError"
 components:
   schemas:
+    ContactMessage:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        company:
+          type: string
+          maxLength: 160
+        email:
+          type: string
+          maxLength: 254
+          pattern: '^[^\s@]+@[^\s@]+\.[^\s@]+$'
+        phone:
+          type: string
+          maxLength: 40
+        subject:
+          type: string
+          maxLength: 200
+        topic:
+          type: string
+          maxLength: 80
+        message:
+          type: string
+          minLength: 1
+          maxLength: 5000
+        page:
+          type: string
+          maxLength: 200
+          description: Site path the form was submitted from.
+        website:
+          type: string
+          maxLength: 200
+          description: Honeypot field. Visitors never see it; it must be empty.
+      required:
+        - name
+        - email
+        - message
+    ContactAck:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        id:
+          type: string
+        delivery:
+          type: string
+          enum: [emailed, stored]
+          description: emailed when the owner notification was accepted by the mail server, stored when the message is kept but the email has not (yet) gone out.
+      required:
+        - ok
+        - delivery
+    ContactError:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        error:
+          type: string
+      required:
+        - ok
+        - error
     HealthStatus:
       type: object
       properties:

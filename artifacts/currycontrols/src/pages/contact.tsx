@@ -1,10 +1,12 @@
 import { useState, type FormEvent } from 'react';
+import { Link } from 'wouter';
 import { CheckCircle2, Mail, Phone } from 'lucide-react';
 import { Seo } from '@/components/seo/seo';
 import { Breadcrumbs } from '@/components/blocks/breadcrumbs';
 import { Disclaimer } from '@/components/blocks/disclaimer';
 import { CONTACT, CONTACT_TOPICS } from '@/data/site';
 import { trackContactSubmit } from '@/lib/analytics';
+import { apiUrl } from '@/lib/api-base';
 import {
   breadcrumbSchema,
   contactPageSchema,
@@ -21,6 +23,8 @@ type FormState = {
   subject: string;
   topic: string;
   message: string;
+  /** Honeypot. Never shown to a person; a bot that fills it is ignored. */
+  website: string;
 };
 
 const EMPTY: FormState = {
@@ -31,7 +35,37 @@ const EMPTY: FormState = {
   subject: '',
   topic: '',
   message: '',
+  website: '',
 };
+
+type Phase = 'form' | 'sent' | 'fallback';
+type Delivery = 'emailed' | 'stored';
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+/** How long the form waits for the message service before composing an email instead. */
+const SUBMIT_TIMEOUT_MS = 30_000;
+
+const trimmedOrUndefined = (value: string): string | undefined => {
+  const trimmed = value.trim();
+  return trimmed ? trimmed : undefined;
+};
+
+/** The fallback: the same details composed into the visitor's own mail application. */
+function mailtoHref(form: FormState): string {
+  const body = [
+    `Name: ${form.name}`,
+    form.company && `Company / Organization: ${form.company}`,
+    `Email: ${form.email}`,
+    form.phone && `Phone: ${form.phone}`,
+    form.topic && `Topic: ${form.topic}`,
+    '',
+    form.message,
+  ]
+    .filter(Boolean)
+    .join('\n');
+  const subject = form.subject || `CurryControls.com enquiry${form.topic ? ` — ${form.topic}` : ''}`;
+  return `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
 
 /**
  * Contact page for Eric Sullivan.
@@ -39,41 +73,83 @@ const EMPTY: FormState = {
  * This is not a Curry Controls Company contact page and it is not a General
  * Control Systems contact page. The phone number and this form reach Eric
  * Sullivan directly regarding CurryControls.com and his personal projects.
+ *
+ * The form posts to the site's message service, which stores the message and
+ * emails Eric. If the service cannot be reached, the same details are composed
+ * into an email in the visitor's own mail application rather than discarded.
  */
 export function ContactPage() {
   const [form, setForm] = useState<FormState>(EMPTY);
-  const [submitted, setSubmitted] = useState(false);
+  const [phase, setPhase] = useState<Phase>('form');
+  const [delivery, setDelivery] = useState<Delivery>('stored');
+  const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const set = (key: keyof FormState) => (event: { target: { value: string } }) =>
     setForm((current) => ({ ...current, [key]: event.target.value }));
 
-  const onSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const reset = () => {
+    setPhase('form');
+    setForm(EMPTY);
+    setError(null);
+  };
+
+  const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (sending) return;
     if (!form.name.trim() || !form.email.trim() || !form.message.trim()) {
       setError('Name, email, and message are required.');
       return;
     }
+    if (!EMAIL_PATTERN.test(form.email.trim())) {
+      setError('Please enter a valid email address so Eric can reply.');
+      return;
+    }
     setError(null);
-
-    // No message backend is connected yet, so the form composes an email
-    // rather than silently discarding what someone wrote.
-    const body = [
-      `Name: ${form.name}`,
-      form.company && `Company / Organization: ${form.company}`,
-      `Email: ${form.email}`,
-      form.phone && `Phone: ${form.phone}`,
-      form.topic && `Topic: ${form.topic}`,
-      '',
-      form.message,
-    ]
-      .filter(Boolean)
-      .join('\n');
-
-    const subject = form.subject || `CurryControls.com enquiry${form.topic ? ` — ${form.topic}` : ''}`;
+    setSending(true);
     trackContactSubmit(form.topic, '/contact');
-    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    setSubmitted(true);
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), SUBMIT_TIMEOUT_MS);
+
+    try {
+      const response = await fetch(apiUrl('/api/contact'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          name: form.name.trim(),
+          company: trimmedOrUndefined(form.company),
+          email: form.email.trim(),
+          phone: trimmedOrUndefined(form.phone),
+          subject: trimmedOrUndefined(form.subject),
+          topic: trimmedOrUndefined(form.topic),
+          message: form.message.trim(),
+          page: '/contact',
+          website: form.website,
+        }),
+        signal: controller.signal,
+      });
+
+      if (response.status === 400 || response.status === 429) {
+        const data = (await response.json().catch(() => null)) as { error?: string } | null;
+        setError(data?.error ?? 'The message could not be sent. Please check the form and try again.');
+        return;
+      }
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+      const data = (await response.json()) as { ok?: boolean; delivery?: Delivery };
+      if (!data.ok) throw new Error('The message service rejected the message.');
+      setDelivery(data.delivery === 'emailed' ? 'emailed' : 'stored');
+      setPhase('sent');
+    } catch {
+      // The message service could not be reached. Compose an email in the
+      // visitor's own mail application rather than discarding what they wrote.
+      window.location.href = mailtoHref(form);
+      setPhase('fallback');
+    } finally {
+      clearTimeout(timer);
+      setSending(false);
+    }
   };
 
   const trail = [{ name: 'Contact Eric Sullivan', path: '/contact' }];
@@ -101,36 +177,52 @@ export function ContactPage() {
       <div className="cc-container py-10">
         <div className="grid gap-9 lg:grid-cols-[1fr_340px]">
           <div className="min-w-0 max-w-2xl">
-            {submitted ? (
+            {phase === 'sent' ? (
               <div className="cc-card p-6" data-testid="contact-submitted">
                 <div className="flex items-center gap-2 text-[hsl(var(--teal))]">
                   <CheckCircle2 size={18} aria-hidden="true" />
-                  <span className="cc-eyebrow">Message prepared</span>
+                  <span className="cc-eyebrow">Message sent</span>
                 </div>
-                <h2 className="cc-h2 mt-2">Your email client should have opened</h2>
+                <h2 className="cc-h2 mt-2">Thank you, your message is on its way</h2>
                 <p className="mt-2.5 text-[0.94rem] leading-7 text-[hsl(var(--ink-2))]">
-                  The details you entered were composed into an email. If nothing opened, the fastest
-                  route is a direct call.
+                  {delivery === 'emailed'
+                    ? 'Your message has been emailed to Eric Sullivan and kept in the site’s private message log, so it will not be lost. Replies go to the email address you entered.'
+                    : 'Your message has been received and kept in the site’s private message log. The email notification to Eric is on its way; if it cannot be delivered, the message is still there and will be read.'}
                 </p>
                 <div className="mt-5 flex flex-wrap gap-3">
                   <a href={CONTACT.phoneHref} data-phone-placement="contact-confirmation" className="cc-btn cc-btn-primary">
                     <Phone size={15} aria-hidden="true" />
                     Call {CONTACT.phoneDisplay}
                   </a>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSubmitted(false);
-                      setForm(EMPTY);
-                    }}
-                    className="cc-btn cc-btn-outline"
-                  >
+                  <button type="button" onClick={reset} className="cc-btn cc-btn-outline">
+                    Write another message
+                  </button>
+                </div>
+              </div>
+            ) : phase === 'fallback' ? (
+              <div className="cc-card p-6" data-testid="contact-fallback">
+                <div className="flex items-center gap-2 text-[hsl(var(--teal))]">
+                  <CheckCircle2 size={18} aria-hidden="true" />
+                  <span className="cc-eyebrow">Message prepared</span>
+                </div>
+                <h2 className="cc-h2 mt-2">Your email application should have opened</h2>
+                <p className="mt-2.5 text-[0.94rem] leading-7 text-[hsl(var(--ink-2))]">
+                  The message service could not be reached just now, so the details you entered were
+                  composed into an email in your own mail application instead. Send it from there. If
+                  nothing opened, the fastest route is a direct call.
+                </p>
+                <div className="mt-5 flex flex-wrap gap-3">
+                  <a href={CONTACT.phoneHref} data-phone-placement="contact-confirmation" className="cc-btn cc-btn-primary">
+                    <Phone size={15} aria-hidden="true" />
+                    Call {CONTACT.phoneDisplay}
+                  </a>
+                  <button type="button" onClick={reset} className="cc-btn cc-btn-outline">
                     Write another message
                   </button>
                 </div>
               </div>
             ) : (
-              <form onSubmit={onSubmit} noValidate data-testid="contact-form">
+              <form onSubmit={(event) => void onSubmit(event)} noValidate data-testid="contact-form">
                 <h2 className="cc-h2">Send a message</h2>
                 <p className="mt-2 text-[0.9rem] text-[hsl(var(--ink-2))]">
                   Fields marked with an asterisk are required.
@@ -195,6 +287,23 @@ export function ContactPage() {
                       data-testid="input-message"
                     />
                   </div>
+
+                  {/* Honeypot: off screen, skipped by keyboard and screen readers, filled only by bots. */}
+                  <div
+                    aria-hidden="true"
+                    style={{ position: 'absolute', left: '-10000px', top: 'auto', width: '1px', height: '1px', overflow: 'hidden' }}
+                  >
+                    <label htmlFor="website">Website</label>
+                    <input
+                      id="website"
+                      name="website"
+                      type="text"
+                      tabIndex={-1}
+                      autoComplete="off"
+                      value={form.website}
+                      onChange={set('website')}
+                    />
+                  </div>
                 </div>
 
                 {error && (
@@ -203,14 +312,24 @@ export function ContactPage() {
                   </p>
                 )}
 
-                <button type="submit" className="cc-btn cc-btn-primary mt-6" data-testid="button-submit-contact">
+                <button
+                  type="submit"
+                  className="cc-btn cc-btn-primary mt-6"
+                  disabled={sending}
+                  aria-busy={sending}
+                  data-testid="button-submit-contact"
+                >
                   <Mail size={15} aria-hidden="true" />
-                  Send message
+                  {sending ? 'Sending…' : 'Send message'}
                 </button>
 
                 <p className="mt-3 text-[0.78rem] leading-5 text-[hsl(var(--ink-2))]">
-                  This form composes an email in your own mail application. Nothing is transmitted or
-                  stored by this website.
+                  Your message is emailed to Eric Sullivan and kept in a private message log so it is not
+                  lost. Only what you type here is stored, and it is used only to reply to you. See the{' '}
+                  <Link href="/privacy" className="cc-link">
+                    privacy notice
+                  </Link>
+                  .
                 </p>
               </form>
             )}

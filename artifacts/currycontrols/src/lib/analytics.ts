@@ -1,4 +1,5 @@
 import type { AnalyticsEvent } from '@workspace/api-client-react';
+import { apiUrl } from './api-base';
 
 /**
  * First-party analytics collector.
@@ -12,7 +13,7 @@ import type { AnalyticsEvent } from '@workspace/api-client-react';
  * Privacy Control, or when the visitor has opted out on the privacy page.
  */
 
-const ENDPOINT = '/api/analytics/events';
+const ENDPOINT = apiUrl('/api/analytics/events');
 const SESSION_KEY = 'ccSessionId';
 const OPT_OUT_KEY = 'ccAnalyticsOptOut';
 const FLUSH_AFTER_MS = 4000;

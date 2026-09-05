@@ -116,3 +116,48 @@ export const GetAnalyticsSummaryResponse = zod.object({
 })
 
 
+/**
+ * Stores the message and notifies the site owner by email. The message is personal data the sender chose to provide, kept only so that it can be answered. No IP address or user agent is recorded.
+ * @summary Submit a message from the contact page
+ */
+export const submitContactMessageBodyNameMax = 120;
+
+export const submitContactMessageBodyCompanyMax = 160;
+
+export const submitContactMessageBodyEmailMax = 254;
+
+
+export const submitContactMessageBodyEmailRegExp = new RegExp('^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$');
+export const submitContactMessageBodyPhoneMax = 40;
+
+export const submitContactMessageBodySubjectMax = 200;
+
+export const submitContactMessageBodyTopicMax = 80;
+
+export const submitContactMessageBodyMessageMax = 5000;
+
+export const submitContactMessageBodyPageMax = 200;
+
+export const submitContactMessageBodyWebsiteMax = 200;
+
+
+
+export const SubmitContactMessageBody = zod.object({
+  "name": zod.string().min(1).max(submitContactMessageBodyNameMax),
+  "company": zod.string().max(submitContactMessageBodyCompanyMax).optional(),
+  "email": zod.string().max(submitContactMessageBodyEmailMax).regex(submitContactMessageBodyEmailRegExp),
+  "phone": zod.string().max(submitContactMessageBodyPhoneMax).optional(),
+  "subject": zod.string().max(submitContactMessageBodySubjectMax).optional(),
+  "topic": zod.string().max(submitContactMessageBodyTopicMax).optional(),
+  "message": zod.string().min(1).max(submitContactMessageBodyMessageMax),
+  "page": zod.string().max(submitContactMessageBodyPageMax).optional().describe('Site path the form was submitted from.'),
+  "website": zod.string().max(submitContactMessageBodyWebsiteMax).optional().describe('Honeypot field. Visitors never see it; it must be empty.')
+})
+
+export const SubmitContactMessageResponse = zod.object({
+  "ok": zod.boolean(),
+  "id": zod.string().optional(),
+  "delivery": zod.enum(['emailed', 'stored']).describe('emailed when the owner notification was accepted by the mail server, stored when the message is kept but the email has not (yet) gone out.')
+})
+
+

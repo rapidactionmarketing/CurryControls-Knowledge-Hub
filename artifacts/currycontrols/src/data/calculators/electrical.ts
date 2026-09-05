@@ -2,7 +2,6 @@ import {
   AMPACITY_310_16,
   AWG_BY_LABEL,
   AWG_SIZES,
-  EMT_AREA,
   K_FACTOR,
   MOTOR_FLC_3PH,
   MOTOR_VOLTAGE_INDEX,
@@ -13,12 +12,26 @@ import {
   temperatureCorrection,
 } from '../reference-data';
 import { fmt, num, pct, sig, str, type Calculator, type FieldOption } from '../calc-types';
+import {
+  CONDUIT_BY_KEY,
+  CONDUIT_TYPES,
+  INSULATION_BY_KEY,
+  INSULATION_TYPES,
+  TRADE_SIZES,
+  conductorArea,
+  conduitArea,
+  conduitSizes,
+  type TradeSize,
+} from '../nec-chapter9';
 
 const awgOptions: FieldOption[] = AWG_SIZES.map((size) => ({ value: size.label, label: size.label }));
 const materialOptions: FieldOption[] = [
   { value: 'copper', label: 'Copper' },
   { value: 'aluminum', label: 'Aluminum' },
 ];
+const insulationOptions: FieldOption[] = INSULATION_TYPES.map((i) => ({ value: i.key, label: i.label }));
+const conduitTypeOptions: FieldOption[] = CONDUIT_TYPES.map((c) => ({ value: c.key, label: `${c.label} (${c.name})` }));
+const tradeSizeOptions: FieldOption[] = TRADE_SIZES.map((size) => ({ value: size, label: `${size} in` }));
 const phaseOptions: FieldOption[] = [
   { value: '1', label: 'Single phase' },
   { value: '3', label: 'Three phase' },
@@ -435,98 +448,144 @@ export const ELECTRICAL_CALCULATORS: Calculator[] = [
     title: 'Conduit Fill Calculator',
     category: 'Electrical',
     summary:
-      'Percentage fill for a conduit run from conductor count and size, checked against the 40, 31, and 53 percent limits, with the smallest conduit that fits.',
+      'Percentage fill for a raceway from conductor size, count, and insulation type, for EMT, RMC, IMC, PVC, ENT, and the flexible conduits, checked against the 53, 31, and 40 percent limits with the smallest trade size that fits.',
     answer:
-      'Conduit fill is the total cross-sectional area of all conductors divided by the internal area of the conduit. The limits are 53% for one conductor, 31% for two, and 40% for three or more. Conductor and conduit areas come from NEC Chapter 9 Tables 5 and 4, and the areas used here are for THHN and THWN-2.',
-    keywords: ['conduit fill', 'raceway fill', '40 percent', 'EMT', 'chapter 9'],
+      'Conduit fill is the total cross-sectional area of the conductors divided by the internal area of the raceway. Chapter 9 Table 1 limits it to 53% for one conductor, 31% for two, and 40% for three or more. Conductor area depends on the insulation type and comes from Table 5; raceway area depends on the conduit type and comes from Table 4. Both are selected here rather than assumed, because a 12 AWG RHW conductor occupies nearly three times the area of a 12 AWG THHN.',
+    keywords: ['conduit fill', 'raceway fill', '40 percent', 'EMT', 'RMC', 'IMC', 'PVC', 'ENT', 'LFMC', 'THHN', 'XHHW', 'THW', 'RHW', 'chapter 9', 'table 4', 'table 5'],
     fields: [
+      {
+        kind: 'select',
+        key: 'insulation',
+        label: 'Conductor insulation',
+        options: insulationOptions,
+        default: 'thhn',
+        help: 'Applies to every conductor entered below.',
+      },
       { kind: 'select', key: 'size1', label: 'Conductor size, group 1', options: awgOptions, default: '12' },
       { kind: 'number', key: 'count1', label: 'How many, group 1', default: 4, min: 0, max: 200 },
       { kind: 'select', key: 'size2', label: 'Conductor size, group 2', options: awgOptions, default: '10' },
       { kind: 'number', key: 'count2', label: 'How many, group 2', default: 0, min: 0, max: 200 },
       { kind: 'select', key: 'size3', label: 'Conductor size, group 3', options: awgOptions, default: '8' },
       { kind: 'number', key: 'count3', label: 'How many, group 3', default: 0, min: 0, max: 200 },
+      { kind: 'select', key: 'conduitType', label: 'Conduit type', options: conduitTypeOptions, default: 'emt' },
       {
         kind: 'select',
-        key: 'conduit',
-        label: 'Conduit trade size to check',
-        options: Object.keys(EMT_AREA).map((size) => ({ value: size, label: `${size} in EMT` })),
+        key: 'conduitSize',
+        label: 'Trade size to check',
+        options: tradeSizeOptions,
         default: '3/4',
+        help: 'Not every type is made in every size. The result says so if the pair does not exist.',
       },
     ],
     run: (v) => {
+      const insulation = INSULATION_BY_KEY[str(v.insulation, 'thhn')];
+      if (!insulation) return { outputs: [], error: 'Select a conductor insulation.' };
+      const conduit = CONDUIT_BY_KEY[str(v.conduitType, 'emt')];
+      if (!conduit) return { outputs: [], error: 'Select a conduit type.' };
+
       const groups = [1, 2, 3]
-        .map((i) => ({
-          size: AWG_BY_LABEL[str(v[`size${i}`])],
-          count: Math.max(0, Math.round(num(v[`count${i}`], 0))),
-        }))
-        .filter((g) => g.size && g.count > 0);
+        .map((i) => {
+          const label = str(v[`size${i}`]);
+          return {
+            label,
+            area: conductorArea(insulation, label),
+            count: Math.max(0, Math.round(num(v[`count${i}`], 0))),
+          };
+        })
+        .filter((g): g is { label: string; area: number; count: number } => g.area !== undefined && g.count > 0);
 
       const totalCount = groups.reduce((sum, g) => sum + g.count, 0);
       if (totalCount === 0) return { outputs: [], error: 'Enter at least one conductor.' };
 
-      const totalArea = groups.reduce((sum, g) => sum + g.size!.thhnArea * g.count, 0);
+      const totalArea = groups.reduce((sum, g) => sum + g.area * g.count, 0);
       const limitPct = totalCount === 1 ? 53 : totalCount === 2 ? 31 : 40;
 
-      const conduitKey = str(v.conduit, '3/4');
-      const conduit = EMT_AREA[conduitKey];
-      if (!conduit) return { outputs: [], error: 'Select a conduit size.' };
-
-      const fillPct = (totalArea / conduit.total) * 100;
+      const sizes = conduitSizes(conduit);
+      const sizeKey = str(v.conduitSize, '3/4') as TradeSize;
+      const id = conduit.internalDiameter[sizeKey];
+      if (id === undefined) {
+        return {
+          outputs: [],
+          error: `${conduit.label} is not listed in ${sizeKey} in. It is made in ${sizes.join(', ')} in.`,
+        };
+      }
+      const area = conduitArea(id);
+      const fillPct = (totalArea / area.total) * 100;
       const within = fillPct <= limitPct;
 
-      const smallest = Object.entries(EMT_AREA).find(
-        ([, area]) => (totalArea / area.total) * 100 <= limitPct,
+      const smallest = sizes.find(
+        (size) => (totalArea / conduitArea(conduit.internalDiameter[size]!).total) * 100 <= limitPct,
       );
+      const largest = sizes[sizes.length - 1];
 
       return {
         outputs: [
           {
-            label: `Fill of ${conduitKey} in EMT`,
+            label: `Fill of ${sizeKey} in ${conduit.label}`,
             value: pct(fillPct, 1),
             emphasis: true,
             status: within ? 'ok' : 'over',
             note: `Limit for ${totalCount} conductor${totalCount === 1 ? '' : 's'} is ${limitPct}%`,
           },
-          { label: 'Total conductor area', value: fmt(totalArea, 4), unit: 'sq in' },
-          { label: 'Conduit internal area', value: fmt(conduit.total, 4), unit: 'sq in' },
-          { label: 'Area available at the limit', value: fmt(conduit.total * (limitPct / 100), 4), unit: 'sq in' },
+          { label: `Total conductor area, ${insulation.label}`, value: fmt(totalArea, 4), unit: 'sq in' },
           {
-            label: 'Smallest EMT that fits',
-            value: smallest ? `${smallest[0]} in` : 'Larger than 4 in',
+            label: `${conduit.label} ${sizeKey} in internal area`,
+            value: fmt(area.total, 3),
+            unit: 'sq in',
+            note: `Internal diameter ${fmt(id, 3)} in`,
+          },
+          { label: 'Area available at the limit', value: fmt(area.total * (limitPct / 100), 4), unit: 'sq in' },
+          {
+            label: `Smallest ${conduit.label} that fits`,
+            value: smallest ? `${smallest} in` : `Larger than ${largest} in`,
             status: smallest ? 'ok' : 'over',
           },
         ],
         steps: [
           ...groups.map(
             (g) =>
-              `${g.count} x ${g.size!.label} at ${fmt(g.size!.thhnArea, 4)} sq in = ${fmt(g.size!.thhnArea * g.count, 4)} sq in`,
+              `${g.count} x ${g.label} ${insulation.label} at ${fmt(g.area, 4)} sq in = ${fmt(g.area * g.count, 4)} sq in`,
           ),
           `Total conductor area = ${fmt(totalArea, 4)} sq in`,
-          `Fill = ${fmt(totalArea, 4)} / ${fmt(conduit.total, 4)} x 100 = ${pct(fillPct, 1)}`,
+          `${conduit.label} ${sizeKey} in area = pi/4 x ${fmt(id, 3)}^2 = ${fmt(area.total, 3)} sq in`,
+          `Fill = ${fmt(totalArea, 4)} / ${fmt(area.total, 3)} x 100 = ${pct(fillPct, 1)}`,
           `Limit for ${totalCount} conductor${totalCount === 1 ? '' : 's'} = ${limitPct}%`,
         ],
         warnings: [
-          'Conductor areas used here are for THHN and THWN-2. Other insulations have different areas, and using the wrong one changes the answer.',
-          'Conduit areas here are for EMT. Rigid metal conduit, IMC, PVC, and flexible raceways have different internal areas.',
+          'Every conductor entered is assumed to have the selected insulation. A raceway with mixed insulations must be summed by hand from Chapter 9 Table 5.',
           'Fill is only one constraint. Conductor count also drives the ampacity adjustment factor, and a conduit that passes fill can still force conductors to be upsized.',
           'Nipples not over 24 inches long are permitted 60% fill under Chapter 9 Note 4. That is not applied here.',
-          ...(within ? [] : ['This combination exceeds the fill limit for the conduit selected.']),
+          'Compact-stranded conductors use Table 5A, and multiconductor cables in a raceway use the cable dimensions. Neither is covered here.',
         ],
       };
     },
     formulas: [
-      { expr: 'Fill % = (sum of conductor areas / conduit internal area) x 100' },
+      {
+        expr: 'Fill % = (sum of conductor areas / raceway internal area) x 100',
+        where: [
+          'conductor area = pi/4 x (approximate diameter)^2, Chapter 9 Table 5',
+          'raceway internal area = pi/4 x (internal diameter)^2, Chapter 9 Table 4',
+        ],
+      },
+    ],
+    standards: [
+      'NFPA 70 Chapter 9 Table 1, percent of cross section permitted',
+      'NFPA 70 Chapter 9 Table 4, dimensions and percent area of conduit and tubing',
+      'NFPA 70 Chapter 9 Table 5, dimensions of insulated conductors',
+      'NFPA 70 Chapter 9 Note 4, nipples not over 24 inches',
     ],
     assumptions: [
-      'Conductor areas are the approximate values commonly published for THHN and THWN-2 in Chapter 9 Table 5.',
-      'Conduit areas are the values commonly published for EMT in Chapter 9 Table 4.',
-      'Applies the 53 / 31 / 40 percent limits from Chapter 9 Table 1 by conductor count.',
-      'Does not handle nipples, mixed raceway types, or conductors of a type other than THHN and THWN-2.',
+      'Conductor areas are Chapter 9 Table 5 approximate dimensions for the selected insulation; the manufacturer data for a specific product may differ.',
+      'Raceway areas are Chapter 9 Table 4 internal dimensions for the selected conduit type.',
+      'Fill limits are Chapter 9 Table 1: 53% for one conductor, 31% for two, 40% for three or more.',
+      'Equipment grounding and bonding conductors count toward fill.',
     ],
-    standards: ['NFPA 70 (NEC) Chapter 9 Tables 1, 4, and 5'],
     relatedCalculators: ['conductor-ampacity'],
     faqs: [
+      {
+        q: 'Why does the insulation type matter so much?',
+        a: 'Fill is measured by the space the insulated conductor occupies, not by the copper. THHN has a thin nylon jacket; RHW has thick rubber insulation plus a fibrous covering. At 12 AWG that is 0.0133 versus 0.0353 square inches, so a raceway that is fine for THHN can be badly overfilled with RHW.',
+      },
       {
         q: 'Why is the limit 40% and not something higher?',
         a: 'The limits exist so conductors can be pulled without damage and so heat can escape. Chapter 9 Table 1 sets 53% for a single conductor, 31% for two, and 40% for three or more.',
@@ -534,6 +593,10 @@ export const ELECTRICAL_CALCULATORS: Calculator[] = [
       {
         q: 'Does the equipment grounding conductor count toward fill?',
         a: 'Yes. Every conductor in the raceway counts toward fill, including grounding conductors, even though grounding conductors do not count toward the ampacity adjustment factor.',
+      },
+      {
+        q: 'Why does the same trade size hold different amounts in different conduit types?',
+        a: 'Trade size is nominal. The wall thickness differs by product, so the bore differs: half-inch Schedule 80 PVC has 0.217 square inches inside, half-inch EMT 0.304, and half-inch IMC 0.342.',
       },
     ],
   },

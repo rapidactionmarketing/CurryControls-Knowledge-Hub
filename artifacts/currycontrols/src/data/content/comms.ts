@@ -716,4 +716,228 @@ point in the device map, you are off by one.`,
       '/controls/instrumentation/signals/ground-loops',
     ],
   },
+  {
+    path: '/controls/plc-systems/communications/gateways',
+    kind: 'reference',
+    title: 'Protocol Gateways',
+    summary:
+      'Protocol converters between a controller and devices that do not speak its language: what a gateway does, the common pairings in water and wastewater, the mapping table that is the whole configuration, the failure modes a gateway adds, and when to use a native interface instead.',
+    answer:
+      'A protocol gateway is a device that speaks one protocol on one side and another on the other, holding a mapping table between them, so that a controller polling Modbus TCP can read a drive that speaks a serial protocol, or a DNP3 master can reach a Modbus RTU. It adds a device, a configuration, a delay, and a failure mode to every path it sits on, which is acceptable when no native interface exists and a poor choice when one does. Its mapping table is the document that matters, and its diagnostics are what tell you whether the data behind it is live.',
+    keyPoints: [
+      'A gateway converts protocol and holds a mapping table. The table is the configuration and the documentation.',
+      'Use one when there is no native interface. Do not use one to avoid buying the right card.',
+      'Data through a gateway is only as fresh as the gateway poll. Watch the timestamp and the status.',
+      'A gateway that keeps serving old data when its serial side dies is the classic hidden failure.',
+      'One gateway per function, labeled, backed up, and on the network drawing.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['Communications', 'Modbus', 'Networking', 'PLC'],
+    blocks: [
+      { t: 'h2', text: 'What a gateway does' },
+      {
+        t: 'p',
+        text: 'Control systems accumulate devices that speak different protocols: a controller on EtherNet/IP, drives on Modbus RTU, a power meter on Modbus TCP, an older RTU on DNP3 serial, a packaged system with a proprietary link. A gateway sits between two of them, polls or serves one side in its protocol, and presents the data on the other side in the other protocol, according to a table that says which register or point on one side corresponds to which on the other. The controller then sees the devices behind the gateway as if they spoke its protocol.',
+      },
+      {
+        t: 'p',
+        text: 'That convenience is real, and so is the cost. The gateway is a device that can fail, a configuration that must be maintained, a poll cycle that adds delay, and a place where a data value can go stale without anyone noticing. Every gateway in a system should be able to justify itself against the alternative of a native interface: a communication card in the controller, a device with the right protocol built in, or a SCADA driver that speaks to the device directly.',
+      },
+      { t: 'h2', text: 'Common pairings' },
+      {
+        t: 'table',
+        head: ['From', 'To', 'Typical use', 'Note'],
+        rows: [
+          ['Modbus TCP (controller or SCADA)', 'Modbus RTU (drives, meters, analyzers)', 'The most common gateway in a utility; a serial device bus made reachable from Ethernet', 'The unit ID on the TCP side selects the serial device; a serial device that stops answering must be reported, not cached'],
+          ['EtherNet/IP (controller)', 'Modbus TCP or RTU', 'A Rockwell controller reading Modbus devices without a Modbus-capable card', 'The gateway maps registers into an assembly the controller reads as I/O; data types must be aligned'],
+          ['DNP3 (SCADA master)', 'Modbus (RTU or devices)', 'A telemetry system standardized on DNP3 talking to Modbus devices at a site', 'The gateway supplies the DNP3 event and timestamp behavior the Modbus device cannot'],
+          ['OPC UA (SCADA or historian)', 'Any', 'A server that publishes many devices as one address space', 'Often software on a server rather than a hardware gateway'],
+          ['Serial (RS-232) to Ethernet', 'The same protocol, a different medium', 'A device serial console or a serial protocol carried over the network', 'A terminal server, not a protocol converter; the protocol is unchanged'],
+          ['Proprietary packaged system', 'Modbus TCP', 'A membrane skid or generator controller exposed to SCADA', 'The vendor supplies the gateway and the map; the utility owns a copy'],
+        ],
+      },
+      { t: 'h2', text: 'The mapping table' },
+      {
+        t: 'p',
+        text: 'The configuration of a gateway is a table: on one side the device, the address, the register or point, the data type, and the poll rate; on the other side the register or point where that value is presented. Everything the controller reads through the gateway is one row of that table. The table is exported from the gateway, kept with the project documentation and the register maps of the devices behind it, and updated whenever a device or a point is added. A gateway whose table exists only inside the gateway is a gateway whose failure takes the documentation with it.',
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Stale data is the gateway failure mode',
+        text: 'A gateway that loses its serial device may keep presenting the last value it read, indefinitely, with no indication on the Ethernet side. The controller reads a plausible number that is hours old. Configure the gateway to zero the data, set a status register, or stop answering for a device that has failed, and read that status in the controller. Never let a gateway cache stand in for a live device.',
+      },
+      { t: 'h2', text: 'Delay and rate' },
+      {
+        t: 'p',
+        text: 'A value read through a gateway goes through two polls: the gateway polls the device at its own rate, and the controller polls the gateway at its rate. The age of a value at the controller is up to the sum of the two intervals plus the response times. On a serial bus with a dozen drives at 9600 baud behind a gateway, the gateway cycle alone can be several seconds. That is fine for a drive current display and not fine for an interlock. Anything the controller acts on quickly does not belong behind a gateway, or the gateway and the poll rates are designed for it and the age is checked in the logic.',
+      },
+      { t: 'h2', text: 'Selecting and installing one' },
+      {
+        t: 'ul',
+        items: [
+          'Match the protocols and the variants exactly: Modbus RTU with the framing the devices use, DNP3 with the level the master expects, EtherNet/IP with the assembly sizes the controller can read.',
+          'Enough serial ports and enough capacity for the device count and the poll rates, with headroom.',
+          'A diagnostic interface: a web page or a tool that shows each device, its status, its counters, and the last error. A gateway without diagnostics is a black box that will one day be the suspect in every communication problem.',
+          'Status registers per device that the controller reads, so that a device failure behind the gateway is an alarm and its data is invalidated.',
+          'Configuration export and import, so that the table is backed up and a replacement gateway is loaded from the file.',
+          'Power from the panel DC supply on its own fuse, an Ethernet port on the control switch with its address on the network drawing, and a label with its name and its addresses.',
+          'Firmware current, default credentials changed, and unused services disabled, because it is a network device with a web server.',
+        ],
+      },
+      { t: 'h2', text: 'When not to use one' },
+      {
+        t: 'p',
+        text: 'A native interface exists on the controller for most protocols a utility meets: Modbus TCP is built into nearly every current controller, DNP3 into most RTUs and many controllers, EtherNet/IP and PROFINET into their families. A communication card costs more than a gateway and removes a device, a poll, a delay, and a failure mode; over the life of the system it is usually the better purchase. A gateway earns its place where the device protocol has no native option, where a legacy device bus must be reached from a new controller, or where a vendor package exposes its data only that way.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'The controller reads good data from the gateway but the values never change. What is wrong?',
+        a: 'The gateway has lost the device and is serving cached values. Check the gateway diagnostics for the device, then configure the gateway to invalidate or flag data on device failure, and read that flag in the controller.',
+      },
+      {
+        q: 'Can one gateway serve two masters?',
+        a: 'Many can, within their connection limits, and it is common for SCADA and a controller to both read a gateway. Each master adds load to the Ethernet side but not to the serial side, which the gateway polls once. Writes from two masters to one device are a design problem the gateway does not solve.',
+      },
+      {
+        q: 'What is the difference between a gateway and a terminal server?',
+        a: 'A terminal server carries a serial protocol over Ethernet without changing it; the master still speaks the serial protocol, encapsulated. A gateway changes the protocol. A Modbus RTU device behind a terminal server is still polled as Modbus RTU over TCP; behind a gateway it is polled as Modbus TCP.',
+      },
+      {
+        q: 'How do I document a gateway?',
+        a: 'On the network drawing with its addresses and ports; in the project files with its exported configuration and the register maps of the devices behind it; on the I/O list as network points with the gateway as the path. A gateway that is not on the network drawing is the device nobody can find when it fails.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/communications/modbus-tcp',
+      '/controls/plc-systems/communications/modbus-rtu',
+      '/controls/plc-systems/communications/dnp3',
+      '/controls/plc-systems/communications/ethernet-ip',
+      '/how-to/plc-how-to/configure-modbus',
+      '/troubleshooting/communications-troubleshooting/device-times-out',
+    ],
+  },
+  {
+    path: '/controls/plc-systems/communications/remote-i-o',
+    kind: 'reference',
+    title: 'Remote I/O',
+    summary:
+      'Extending controller I/O to another panel or another site over a network: the adapter and the rack, the update rate and what it costs, what the outputs do when the link fails, the difference between remote I/O and a remote controller, and the wiring, addressing, and diagnostics that make it dependable.',
+    answer:
+      'Remote I/O places input and output modules in a separate panel, connected to the controller over a network, so that the controller reads and writes them as if they were local. The controller owns the logic; the remote rack has none, and its outputs go to a configured state when the connection is lost. It is the right choice for I/O in another panel in the same building or on a reliable fiber or copper link; for a site at the end of a radio or cellular path, a local controller with its own logic is the right choice, because remote I/O over an unreliable link is a station that stops when the link does.',
+    keyPoints: [
+      'Remote I/O has no logic. When the link drops, the outputs go to their fault state and stay there.',
+      'Use it across a building or a campus on a wired link. Use a controller, not remote I/O, at a site behind a radio.',
+      'The update rate is a setting with a cost. Match it to the process, not the fastest the adapter allows.',
+      'Configure every output fault state deliberately: off, hold, or a value.',
+      'The adapter status and the connection status are tags the controller reads and alarms.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['Communications', 'PLC', 'Ethernet', 'Design'],
+    blocks: [
+      { t: 'h2', text: 'What remote I/O is' },
+      {
+        t: 'p',
+        text: 'A controller chassis holds a processor and a few I/O modules. A plant has I/O in a dozen panels. Remote I/O is the arrangement that puts modules in those panels, each rack with a communication adapter instead of a processor, and connects the adapters to the controller over a network. The controller configures each rack as part of its I/O tree, reads inputs and writes outputs at a set rate, and the program sees the remote points as tags like any other. The rack itself does nothing but move data between its modules and the network.',
+      },
+      {
+        t: 'p',
+        text: 'That is the essential property. A remote rack has no program. If the network between it and the controller fails, the rack has no idea what to do beyond what it was told in advance: turn the outputs off, hold them, or set them to a value. The inputs are simply not read. A pump on a remote output, on a link that has failed, is either off or frozen in whatever state it was in until the link returns.',
+      },
+      { t: 'h2', text: 'Remote I/O or a remote controller' },
+      {
+        t: 'table',
+        head: ['Question', 'Remote I/O', 'Remote controller'],
+        rows: [
+          ['What happens on link loss', 'Outputs go to their fault state; no control', 'The site keeps running on its own program; SCADA loses visibility'],
+          ['Where the logic lives', 'In one controller, one program', 'In each controller; programs coordinated by design'],
+          ['Link required', 'Continuous, low latency, high reliability: copper or fiber', 'Any link that carries the data eventually: radio, cellular, fiber'],
+          ['Typical use', 'Panels across a plant, a building, a campus', 'Lift stations, wells, tanks, any site behind a wide area link'],
+          ['Cost', 'Adapter and modules', 'Controller and modules; a second program to maintain'],
+          ['Update rate', 'Milliseconds to tens of milliseconds', 'Seconds to minutes, by polling or report by exception'],
+          ['Commissioning', 'One program, one download', 'Two programs, two downloads, and the interface between them'],
+        ],
+      },
+      {
+        t: 'p',
+        text: 'The dividing line is the link. A plant with fiber between buildings can put remote I/O anywhere on it. A collection system with radios to forty lift stations cannot: a station that stops pumping when the radio fades is a station that overflows in a storm, which is when radios fade. Remote sites get controllers.',
+      },
+      { t: 'h2', text: 'The update rate' },
+      {
+        t: 'p',
+        text: 'The controller and each adapter exchange data at a configured interval, called the requested packet interval on EtherNet/IP and by other names elsewhere. The interval is a setting, and it has a cost: each rack at each interval consumes network bandwidth and controller communication time, and a system with many racks at a fast interval can exhaust either. A pump station does not need its remote inputs every 5 ms; 50 to 100 ms is more than fast enough for motor control and level, and analog values are often fine at 250 ms or slower. Set the interval per rack from what the process needs, and leave the fast rates for the racks that need them.',
+      },
+      { t: 'h2', text: 'Fault states' },
+      {
+        t: 'p',
+        text: 'Every output on a remote rack has a configured behavior for loss of communication and for controller program mode. The choices are off, hold last state, and go to a defined value. The right choice depends on the load.',
+      },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Off', def: 'The default and the right choice for most motor and valve commands. A pump that stops when the controller loses it is a known state.' },
+          { term: 'Hold last state', def: 'For loads where an abrupt change is worse than continuing: a chemical feed that should keep going for the seconds it takes to reconnect. Hold becomes dangerous when the link is down for hours; combine it with a local timer or a hardwired backup.' },
+          { term: 'Defined value', def: 'For analog outputs: a safe speed reference, a valve position that leaves the process stable.' },
+        ],
+      },
+      {
+        t: 'p',
+        text: 'Whatever the choice, it is made per output, recorded on the I/O list in the fail state column, and tested at commissioning by pulling the network cable and watching the outputs. A remote rack whose fault states were left at defaults has been designed by the module manufacturer.',
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'A remote rack does not know the controller is in program mode',
+        text: 'A controller placed in program mode stops executing logic, and on most platforms stops updating remote outputs, which then go to their program-mode state. On some configurations the outputs hold. Know which, test it, and treat a program-mode change on a controller with remote I/O as an operation that affects every rack on it.',
+      },
+      { t: 'h2', text: 'Installation' },
+      {
+        t: 'ul',
+        items: [
+          'The network: a dedicated control network or VLAN, managed switches with the I/O traffic prioritized where the platform supports it, and no unrelated traffic. Ring or redundant star topologies where the platform offers them, with the recovery time understood.',
+          'Fiber between buildings, always, for the surge and ground potential reasons on the surge protection page. Copper within a building, within the length limits, away from drive conductors.',
+          'Addressing: a static IP per adapter from the network plan, on the network drawing and the adapter label, with the rack and slot layout on the I/O list.',
+          'Power: the adapter and the modules on the remote panel supply, with the supply monitored, because a remote rack that loses power looks to the controller exactly like a rack that lost its network.',
+          'Grounding and shielding per the platform installation manual; remote racks are more sensitive to noise than local ones because of the cable run.',
+          'Spare capacity: spare slots and spare channels in the rack, as for any panel.',
+        ],
+      },
+      { t: 'h2', text: 'Diagnostics' },
+      {
+        t: 'p',
+        text: 'The controller exposes the connection state of every remote rack as a status the program can read: connected, faulted, and often the module status within the rack. Those become tags, alarmed with a short delay so a momentary reconnection does not chatter, and displayed on a network status screen that shows every rack. The program uses the rack status to invalidate the data from that rack: an input from a faulted rack is not a zero, it is unknown, and the logic treats it that way. Switch port statistics and the adapter web page give the next layer of diagnosis when a rack drops: link errors, duplicate addresses, a cable, a power supply.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Can I put a remote rack at a lift station on fiber?',
+        a: 'On fiber that is reliable and owned by the utility, with the station accepting that a fiber cut stops it, yes, and it is done. Most utilities put a small controller there anyway so the station pumps on its own when the plant controller or the fiber is out of service. The cost difference is small and the independence is worth it.',
+      },
+      {
+        q: 'What is the difference between remote I/O and distributed I/O?',
+        a: 'Vendors use the terms loosely. Both mean I/O in a separate rack connected over a network to a controller that owns the logic. Distributed I/O sometimes means very small blocks mounted near the devices; the same rules apply.',
+      },
+      {
+        q: 'How many racks can one controller handle?',
+        a: 'The platform states a connection limit and a bandwidth budget, and the update rate multiplies the cost of each rack. A mid-size controller handles dozens of racks at moderate rates. The practical limit is usually the communication load, which the controller diagnostics report; keep it well under the ceiling so that adding a rack later does not push it over.',
+      },
+      {
+        q: 'Should the adapter be redundant?',
+        a: 'Some platforms offer redundant adapters, redundant media, or both. They are justified where a rack failure stops a critical process and the plant cannot wait for a replacement. For most utility panels, a spare adapter on the shelf and a ring topology on the network give most of the benefit.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/plc-fundamentals/io-systems',
+      '/controls/plc-systems/communications/ethernet-ip',
+      '/controls/plc-systems/plc-fundamentals/plc-architecture',
+      '/controls/instrumentation/signals/surge-protection',
+      '/troubleshooting/network-troubleshooting/ethernet-device-drops-offline',
+      '/engineering-library/lists-schedules/io-lists',
+    ],
+  },
 ];

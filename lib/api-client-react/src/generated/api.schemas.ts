@@ -5,6 +5,65 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+export interface ContactMessage {
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  name: string;
+  /** @maxLength 160 */
+  company?: string;
+  /**
+     * @maxLength 254
+     * @pattern ^[^\s@]+@[^\s@]+\.[^\s@]+$
+     */
+  email: string;
+  /** @maxLength 40 */
+  phone?: string;
+  /** @maxLength 200 */
+  subject?: string;
+  /** @maxLength 80 */
+  topic?: string;
+  /**
+     * @minLength 1
+     * @maxLength 5000
+     */
+  message: string;
+  /**
+     * Site path the form was submitted from.
+     * @maxLength 200
+     */
+  page?: string;
+  /**
+     * Honeypot field. Visitors never see it; it must be empty.
+     * @maxLength 200
+     */
+  website?: string;
+}
+
+/**
+ * emailed when the owner notification was accepted by the mail server, stored when the message is kept but the email has not (yet) gone out.
+ */
+export type ContactAckDelivery = typeof ContactAckDelivery[keyof typeof ContactAckDelivery];
+
+
+export const ContactAckDelivery = {
+  emailed: 'emailed',
+  stored: 'stored',
+} as const;
+
+export interface ContactAck {
+  ok: boolean;
+  id?: string;
+  /** emailed when the owner notification was accepted by the mail server, stored when the message is kept but the email has not (yet) gone out. */
+  delivery: ContactAckDelivery;
+}
+
+export interface ContactError {
+  ok: boolean;
+  error: string;
+}
+
 export interface HealthStatus {
   status: string;
 }

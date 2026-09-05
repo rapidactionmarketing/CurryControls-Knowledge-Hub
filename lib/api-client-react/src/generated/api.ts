@@ -23,6 +23,9 @@ import type {
   AnalyticsAck,
   AnalyticsBatch,
   AnalyticsSummary,
+  ContactAck,
+  ContactError,
+  ContactMessage,
   GetAnalyticsSummaryParams,
   HealthStatus
 } from './api.schemas';
@@ -287,4 +290,76 @@ export function useGetAnalyticsSummary<TData = Awaited<ReturnType<typeof getAnal
 
 
 
+
+export const getSubmitContactMessageUrl = () => {
+
+
+
+
+  return `/api/contact`
+}
+
+/**
+ * Stores the message and notifies the site owner by email. The message is personal data the sender chose to provide, kept only so that it can be answered. No IP address or user agent is recorded.
+ * @summary Submit a message from the contact page
+ */
+export const submitContactMessage = async (contactMessage: ContactMessage, options?: Parameters<typeof customFetch>[1]): Promise<ContactAck> => {
+
+  return customFetch<ContactAck>(getSubmitContactMessageUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(contactMessage)
+  }
+);}
+
+
+
+
+
+export const getSubmitContactMessageMutationOptions = <TError = ErrorType<ContactError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitContactMessage>>, TError,{data: BodyType<ContactMessage>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof submitContactMessage>>, TError,{data: BodyType<ContactMessage>}, TContext> => {
+
+const mutationKey = ['submitContactMessage'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof submitContactMessage>>, {data: BodyType<ContactMessage>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  submitContactMessage(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SubmitContactMessageMutationResult = NonNullable<Awaited<ReturnType<typeof submitContactMessage>>>
+    export type SubmitContactMessageMutationBody = BodyType<ContactMessage>
+    export type SubmitContactMessageMutationError = ErrorType<ContactError>
+
+    /**
+ * @summary Submit a message from the contact page
+ */
+export const useSubmitContactMessage = <TError = ErrorType<ContactError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitContactMessage>>, TError,{data: BodyType<ContactMessage>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof submitContactMessage>>,
+        TError,
+        {data: BodyType<ContactMessage>},
+        TContext
+      > => {
+      return useMutation(getSubmitContactMessageMutationOptions(options));
+    }
 

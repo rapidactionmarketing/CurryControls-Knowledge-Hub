@@ -139,9 +139,16 @@ export function PrivacyPage() {
 
       <H2>The contact form</H2>
       <p>
-        The contact form does not send anything to this website. It composes a message in your own
-        email application, which you then choose to send or discard. Nothing you type into it is
-        transmitted to or stored by this site.
+        When you send a message through the contact form, the details you typed (your name, email
+        address, and message, plus any company, phone, subject, or topic you chose to add) are sent
+        to the site's message service, stored in a private message log, and emailed to Eric
+        Sullivan. That is the only reason they are collected, and they are used only to reply to
+        you. The message service records nothing beyond what you typed: no IP address and no
+        browser details. Messages are kept until Eric deletes them; ask and yours will be removed.
+      </p>
+      <p>
+        If the message service cannot be reached, the form composes the same message in your own
+        email application instead, and you choose whether to send it.
       </p>
 
       <H2>Third-party requests</H2>

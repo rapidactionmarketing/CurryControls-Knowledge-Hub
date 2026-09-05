@@ -5,7 +5,7 @@ import { Breadcrumbs } from '@/components/blocks/breadcrumbs';
 import { ContactCta } from '@/components/blocks/contact-cta';
 import { Disclaimer } from '@/components/blocks/disclaimer';
 import { ProjectCard } from '@/components/blocks/cards';
-import { CONTACT, OWNERSHIP_NOTICE, SITE } from '@/data/site';
+import { AFFILIATION, COMPANIES, CONTACT, OWNERSHIP_NOTICE, SITE } from '@/data/site';
 import { PROJECTS } from '@/data/projects';
 import { NAV_ENTRIES } from '@/data/nav-index';
 import { ENTRIES } from '@/data/content';
@@ -21,7 +21,7 @@ export function AboutSitePage() {
     <>
       <Seo
         title="About CurryControls.com"
-        description="CurryControls.com is independently owned and maintained by Eric Sullivan, and is not affiliated with Curry Controls Company. It is an independent technical resource for control systems and automation."
+        description={AFFILIATION.short}
         path="/about/site"
         jsonLd={graph(websiteSchema(), personSchema(), breadcrumbSchema(trail))}
       />
@@ -36,18 +36,11 @@ export function AboutSitePage() {
       <div className="cc-container py-10">
         <div className="grid gap-9 lg:grid-cols-[1fr_300px]">
           <div className="cc-prose min-w-0 max-w-2xl space-y-4">
-            <p className="text-[1.02rem] leading-7.5">
-              CurryControls.com is independently owned and maintained by Eric Sullivan.
-            </p>
-            <p>
-              Eric Sullivan previously worked with Curry Controls Company and left the company in
-              2021. He is currently employed by General Control Systems, Inc.
-            </p>
-            <p>Eric Sullivan is not affiliated with Curry Controls Company.</p>
-            <p>
-              General Control Systems, Inc. is a separate company and is not affiliated with Curry
-              Controls Company.
-            </p>
+            {AFFILIATION.paragraphs.map((paragraph, index) => (
+              <p key={paragraph} className={index === 0 ? 'text-[1.02rem] leading-7.5' : undefined}>
+                {paragraph}
+              </p>
+            ))}
             <p>
               CurryControls.com is being developed as an independent technical information resource
               focused on control systems, automation, instrumentation, engineering, and the water and
@@ -91,7 +84,7 @@ export function AboutSitePage() {
             <p>
               It is not the website of a systems integration company, it does not sell engineering
               services, and it is not the continuation, successor, affiliate, or current operating
-              business of the former Curry Controls Company.
+              business of {COMPANIES.curry} or {COMPANIES.revere}
             </p>
 
             <div className="!mt-9">
@@ -168,12 +161,10 @@ export function AboutEricPage() {
             usually lives in commissioning notebooks, and to make it findable by the people who need
             it at two in the morning.
           </p>
-          <p>
-            Eric Sullivan previously worked with Curry Controls Company and left the company in 2021.
-            He is currently employed by General Control Systems, Inc. He is not affiliated with Curry
-            Controls Company, and General Control Systems, Inc. is a separate company that is not
-            affiliated with Curry Controls Company.
-          </p>
+          <h2 className="cc-h2 !mt-9">{AFFILIATION.heading}</h2>
+          {AFFILIATION.paragraphs.map((paragraph) => (
+            <p key={paragraph}>{paragraph}</p>
+          ))}
 
           <h2 className="cc-h2 !mt-9">Contact</h2>
           <p>

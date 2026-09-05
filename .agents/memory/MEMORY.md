@@ -1,1 +1,2 @@
 - [Hosting.com shared deployment](hosting-deployment.md) — CurryControls is a static build in the addon-domain document root, with `.htaccess` routing.
+- [Site identity and affiliation wording](site-identity.md) — who owns CurryControls.com, the Revere Control Systems acquisition of Curry Controls Company, and the single `AFFILIATION` constant every page renders from.

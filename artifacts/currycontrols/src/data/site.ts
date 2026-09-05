@@ -16,8 +16,8 @@ export const SITE = {
 
 /**
  * Eric Sullivan's direct contact information for CurryControls.com.
- * This is NOT a Curry Controls Company number and NOT a General Control
- * Systems number. See OWNERSHIP_NOTICE below.
+ * This is NOT a telephone number of Curry Controls Company, Revere Control
+ * Systems, Inc., or General Control Systems, Inc. See AFFILIATION below.
  */
 export const CONTACT = {
   person: 'Eric Sullivan',
@@ -29,6 +29,46 @@ export const CONTACT = {
     "Direct contact for CurryControls.com. This is Eric Sullivan's personal contact information.",
 } as const;
 
+/**
+ * The companies this site must never be confused with, spelled once so the
+ * names are identical wherever they appear.
+ */
+export const COMPANIES = {
+  curry: 'Curry Controls Company',
+  revere: 'Revere Control Systems, Inc.',
+  gcs: 'General Control Systems, Inc.',
+} as const;
+
+/**
+ * The ownership and affiliation statement.
+ *
+ * This is the only place the wording lives. The first-visit notice, the home
+ * page, both About pages, the policies and disclaimer pages, the footer, the
+ * contact page, the llms.txt file, and the WebSite schema all render from
+ * here, so the statement reads identically everywhere and changes in one edit.
+ * Facts stated: CurryControls.com is owned by Eric Sullivan; Curry Controls
+ * Company was acquired by Revere Control Systems, Inc. in 2021; this site was
+ * not part of that and is not associated with either company; Eric left Curry
+ * Controls Company in 2021 and now works for General Control Systems, Inc.,
+ * which has no part in this site.
+ */
+export const AFFILIATION = {
+  /** Section heading used wherever the full statement appears. */
+  heading: 'Ownership and affiliation',
+  /** The full statement, paragraph by paragraph, in this order. */
+  paragraphs: [
+    `${SITE.name} is owned and operated by ${CONTACT.person} as an individual. The domain name, the website, and everything published on it belong to him. The site is his personal knowledge base of technical notes, references, calculators, tools, and projects.`,
+    `${COMPANIES.curry} was acquired by ${COMPANIES.revere} in 2021. That acquisition concerned the company only. ${SITE.name} was not part of it, is not owned by ${COMPANIES.curry} or ${COMPANIES.revere}, and is not associated with either company. It is not operated, sponsored, endorsed, licensed, or authorized by either company; it is not the successor to, a continuation of, or the current operating business of ${COMPANIES.curry}; and it has no business relationship with either company.`,
+    `${CONTACT.person} previously worked with ${COMPANIES.curry} and left the company in 2021. Any association between him or ${SITE.name} and ${COMPANIES.curry} ended at that time. ${SITE.name} is no longer associated with ${COMPANIES.curry} in any way.`,
+    `${CONTACT.person} is currently employed by ${COMPANIES.gcs} ${SITE.name} is his personal project. It is not owned, operated, sponsored, endorsed, or reviewed by ${COMPANIES.gcs}, and nothing on it is published on behalf of ${COMPANIES.gcs} ${COMPANIES.gcs} is a separate company that is not affiliated with ${COMPANIES.curry}.`,
+    `The names ${COMPANIES.curry}, ${COMPANIES.revere}, and ${COMPANIES.gcs} appear on this site only to identify those companies and to state that this site is not connected with them. Nothing on this site represents the views, positions, materials, products, or services of any of those companies.`,
+  ],
+  /** The same facts in two sentences, for the footer and other compact places. */
+  short: `${SITE.name} is owned and operated by ${CONTACT.person} as an individual. It is not associated with ${COMPANIES.curry}, which was acquired by ${COMPANIES.revere} in 2021, with ${COMPANIES.revere}, or with ${COMPANIES.gcs}`,
+  /** The note beside the contact form and the telephone number. */
+  contact: `This page reaches ${CONTACT.person} directly about ${SITE.name} and his personal projects. It is not a contact page for ${COMPANIES.curry}, ${COMPANIES.revere}, or ${COMPANIES.gcs}, and the telephone number on this site is not a telephone number of any of those companies.`,
+} as const;
+
 export const OWNERSHIP_NOTICE = {
   heading: 'ABOUT CURRYCONTROLS.COM',
   /** The modal's title, as it read on the original site. */
@@ -36,11 +76,8 @@ export const OWNERSHIP_NOTICE = {
   /** Opening line, shown above the ownership statement. */
   intro:
     'Welcome to CurryControls.com, Eric Sullivan’s personal knowledge base for controls and automation. Please read the following before you continue.',
-  paragraphs: [
-    'CurryControls.com is independently owned and maintained by Eric Sullivan. It is his personal knowledge base containing technical notes, references, calculators, tools, and projects.',
-    'Curry Controls Company was purchased by Revere Control in 2021. CurryControls.com is not affiliated with, sponsored by, endorsed by, or operated by Curry Controls Company or Revere Control.',
-    'This website is also not affiliated with, sponsored by, endorsed by, or operated by General Control Systems, Inc. General Control Systems, Inc. is not affiliated with CurryControls.com. Nothing on this site represents the official views, materials, or services of any of these companies.',
-  ],
+  /** The ownership and affiliation statement, verbatim from AFFILIATION. */
+  paragraphs: AFFILIATION.paragraphs,
   disclaimerLinkLabel: 'Read the information disclaimer',
   acknowledgeLabel:
     'I have read the information disclaimer and understand that everything on this site is used at my own risk.',
@@ -61,8 +98,8 @@ export const DISCLAIMERS = {
     'Content on this site is general technical reference information. It is not engineering advice for a specific installation. Always follow the applicable codes, standards, manufacturer documentation, and your own site safety procedures. Verify against the equipment in front of you before you act.',
   safety:
     'Work on energized industrial equipment carries risk of injury or death. Follow NFPA 70E, your employer’s electrical safety program, and lockout/tagout procedures. Nothing here replaces qualified supervision.',
-  independence:
-    'CurryControls.com is Eric Sullivan’s personal knowledge base. It is independently owned and is not affiliated with Curry Controls Company or General Control Systems, Inc.',
+  /** The compact ownership and affiliation statement, verbatim from AFFILIATION. */
+  independence: AFFILIATION.short,
   projects: 'A Personal Project of Eric Sullivan',
 
   /** One line, used wherever there is room for only one: the notice, the footer, compact blocks. */

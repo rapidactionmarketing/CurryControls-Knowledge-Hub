@@ -130,9 +130,12 @@ Everything is under `artifacts/currycontrols`.
 ## User preferences
 
 - The phone number is Eric Sullivan's personal contact for CurryControls.com. It must never be
-  presented as a Curry Controls Company number or a General Control Systems number.
-- Never imply corporate succession from Curry Controls Company. The permitted wording lives in
-  `OWNERSHIP_NOTICE` and `DISCLAIMERS` in `src/data/site.ts`; use those constants.
+  presented as a Curry Controls Company, Revere Control Systems, or General Control Systems number.
+- CurryControls.com is owned by Eric Sullivan. Curry Controls Company was acquired by Revere Control
+  Systems, Inc. in 2021, and this site is not associated with either company. Never imply corporate
+  succession. The wording lives in `AFFILIATION` in `src/data/site.ts` (the notice, the About pages,
+  the policies, the footer, the contact note, llms.txt, and the WebSite schema all render from it);
+  never write a separate version.
 - Every personal-project page must carry "A Personal Project of Eric Sullivan".
 - Do not manufacture technical content to fill a page. An unwritten page says so.
 

@@ -7,8 +7,9 @@ import { SitesMenu } from './sites-menu';
  * Permanent contact bar above the primary header.
  *
  * The phone number is Eric Sullivan's direct contact for CurryControls.com.
- * It is deliberately NOT presented as a Curry Controls Company or General
- * Control Systems number — see the ownership notice.
+ * It is deliberately NOT presented as a Curry Controls Company, Revere
+ * Control Systems, Inc., or General Control Systems, Inc. number; see
+ * AFFILIATION in the site data.
  */
 export function UtilityBar() {
   return (

@@ -4,7 +4,7 @@ import { CheckCircle2, Mail, Phone } from 'lucide-react';
 import { Seo } from '@/components/seo/seo';
 import { Breadcrumbs } from '@/components/blocks/breadcrumbs';
 import { Disclaimer } from '@/components/blocks/disclaimer';
-import { CONTACT, CONTACT_TOPICS } from '@/data/site';
+import { AFFILIATION, CONTACT, CONTACT_TOPICS } from '@/data/site';
 import { trackContactSubmit } from '@/lib/analytics';
 import { apiUrl } from '@/lib/api-base';
 import {
@@ -70,9 +70,10 @@ function mailtoHref(form: FormState): string {
 /**
  * Contact page for Eric Sullivan.
  *
- * This is not a Curry Controls Company contact page and it is not a General
- * Control Systems contact page. The phone number and this form reach Eric
- * Sullivan directly regarding CurryControls.com and his personal projects.
+ * This is not a contact page for Curry Controls Company, Revere Control
+ * Systems, Inc., or General Control Systems, Inc. The phone number and this
+ * form reach Eric Sullivan directly regarding CurryControls.com and his
+ * personal projects. The wording of the note is AFFILIATION.contact.
  *
  * The form posts to the site's message service, which stores the message and
  * emails Eric. If the service cannot be reached, the same details are composed
@@ -361,9 +362,7 @@ export function ContactPage() {
             <div className="cc-card mt-4 bg-[hsl(var(--surface))] p-5">
               <p className="cc-eyebrow">Please note</p>
               <p className="mt-2 text-[0.82rem] leading-6 text-[hsl(var(--ink-2))]">
-                This page is for contacting Eric Sullivan regarding CurryControls.com and his personal
-                projects. It is not a contact page for Curry Controls Company, and it is not a contact
-                page for General Control Systems, Inc.
+                {AFFILIATION.contact}
               </p>
             </div>
 

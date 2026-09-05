@@ -1,0 +1,5 @@
+# Site identity and affiliation wording
+
+CurryControls.com is owned and operated by Eric Sullivan as an individual. Curry Controls Company was acquired by Revere Control Systems, Inc. in 2021; that acquisition concerned the company only, and this site was not part of it and is not associated with either company. Eric previously worked with Curry Controls Company and left in 2021. He is employed by General Control Systems, Inc., which has no part in the site. The telephone number on the site is Eric's own and must never be presented as a number of any of those companies.
+
+**The wording lives in one place:** `AFFILIATION` in `artifacts/currycontrols/src/data/site.ts` (`paragraphs`, `short`, `contact`), with the company names in `COMPANIES`. The first-visit notice, the home page About section, `/about/site`, `/about/eric-sullivan`, `/terms`, `/disclaimer`, the footer, the contact page note, `llms.txt`, and the WebSite schema's `disambiguatingDescription` all render from it. Never write a second version of the statement; change the constant. A sentence that ends with a company name ending in "Inc." takes no extra period, or the page shows "Inc..".

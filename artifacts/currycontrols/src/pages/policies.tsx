@@ -4,7 +4,7 @@ import { Check, Phone } from 'lucide-react';
 import { Seo } from '@/components/seo/seo';
 import { Breadcrumbs } from '@/components/blocks/breadcrumbs';
 import { ContactCta } from '@/components/blocks/contact-cta';
-import { CONTACT, DISCLAIMERS, SITE, SITE_DISCLAIMER } from '@/data/site';
+import { AFFILIATION, CONTACT, DISCLAIMERS, SITE, SITE_DISCLAIMER } from '@/data/site';
 import { analyticsStatus, hasOptedOut, setOptOut } from '@/lib/analytics';
 import { breadcrumbSchema, graph, personSchema, websiteSchema } from '@/lib/structured-data';
 
@@ -380,14 +380,10 @@ export function TermsPage() {
         responsible for their content.
       </p>
 
-      <H2>Ownership and affiliation</H2>
-      <p>{DISCLAIMERS.independence}</p>
-      <p>
-        {CONTACT.person} previously worked with Curry Controls Company and left the company in 2021.
-        He is currently employed by General Control Systems, Inc. General Control Systems, Inc. is a
-        separate company and is not affiliated with Curry Controls Company. Nothing on this site
-        should be read as a claim of corporate succession.
-      </p>
+      <H2>{AFFILIATION.heading}</H2>
+      {AFFILIATION.paragraphs.map((paragraph) => (
+        <p key={paragraph}>{paragraph}</p>
+      ))}
 
       <H2>Personal projects</H2>
       <p>

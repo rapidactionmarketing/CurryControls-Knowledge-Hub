@@ -7,7 +7,7 @@
  * question it answers, and where it sits in the taxonomy.
  */
 
-import { CONTACT, SITE } from '@/data/site';
+import { AFFILIATION, CONTACT, SITE } from '@/data/site';
 import type { Entry } from '@/data/content';
 import type { NavEntry } from '@/data/nav-index';
 import { describe } from '@/data/nav-index';
@@ -62,6 +62,7 @@ export function websiteSchema(): JsonLd {
     alternateName: SITE.tagline,
     url: SITE.url,
     description: SITE.description,
+    disambiguatingDescription: AFFILIATION.short,
     inLanguage: 'en-US',
     publisher: { '@id': PERSON_ID },
     potentialAction: {

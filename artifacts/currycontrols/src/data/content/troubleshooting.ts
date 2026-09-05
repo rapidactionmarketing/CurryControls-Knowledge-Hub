@@ -2634,4 +2634,573 @@ export const TROUBLESHOOTING_ENTRIES: Entry[] = [
       '/water-wastewater/wastewater-systems/lift-stations/duplex-lift-stations',
     ],
   },
+  {
+    path: '/troubleshooting/grounding-troubleshooting/ground-loop-symptoms',
+    kind: 'troubleshooting',
+    title: 'Ground Loop Symptoms',
+    summary:
+      'How a ground loop shows itself: hum on analog signals, offsets that change when large loads switch, serial links that error, and readings that differ by location. The mechanism, the measurements that prove it, and fixes that never lift a safety ground.',
+    answer:
+      'A ground loop is a signal circuit with two connections to ground at points that are not at the same potential, so current flows through the signal reference or the shield and appears as an error. It shows as 60 Hz noise, a steady offset, a reading that shifts when a motor or heater switches, low readings on a 4-20 mA loop that has been grounded twice, or serial communication errors. Prove it by measuring the voltage between the two grounds and the current in the reference conductor or shield, then break the loop by removing the second signal ground or adding isolation. The equipment safety ground is never the thing that gets removed.',
+    keyPoints: [
+      'Two grounds at different potentials plus a conductor between them: the current through that conductor is the error.',
+      'Measure the voltage between the two ground points first. A volt or two is common, and enough.',
+      'A 4-20 mA loop is immune to ground potential until it is grounded in two places; then it reads low.',
+      'Shields grounded at both ends, non-isolated inputs, and grounded transmitters are the usual second ground.',
+      'Fix by isolating the signal, never by lifting the equipment ground.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['Troubleshooting', 'Grounding', 'Instrumentation', 'Analog', 'Signals'],
+    symptom:
+      'An analog reading has a hum or an offset, changes when unrelated equipment switches, or reads differently at the transmitter than at the controller; a serial link errors or drops; the problem got worse after a new panel, a new instrument, or a new building feed was connected.',
+    causes: [
+      { cause: 'Signal common grounded at two locations', check: 'With the loop disconnected at one end, measure resistance from the signal common to ground at each end; both low means two grounds. Measure the voltage between the two grounds with the loop connected.' },
+      { cause: 'Shield grounded at both ends', check: 'Lift the shield at the panel and measure resistance from shield to ground; it should be open. Clamp the shield for current before lifting it.' },
+      { cause: 'Non-isolated analog input with a grounded transmitter', check: 'A four-wire transmitter whose output negative is bonded to its case, wired to an input card whose common is bonded to the panel ground, makes a loop through the earth. Check the transmitter manual for output isolation and the card manual for channel isolation.' },
+      { cause: 'Multiple power supplies bonded at different points feeding one circuit', check: 'Trace where each supply negative is bonded. Two negatives bonded in two panels and tied together by a signal wire carry ground current on that wire.' },
+      { cause: 'Serial link with signal ground earthed at both ends', check: 'RS-232 and non-isolated RS-485 tie the signal ground to chassis at each device. Measure the voltage between the two chassis; add an isolated converter.' },
+      { cause: 'Neutral current on the grounding system', check: 'A neutral-to-ground bond in a subpanel puts neutral current on the ground conductors and raises the potential between panels. Measure current on the ground conductor; it should be near zero.' },
+      { cause: 'Drive common-mode current in the ground', check: 'A drive without a shielded motor cable returns high-frequency current through the ground system. Noise that appears only when the drive runs and tracks its speed points here.' },
+      { cause: 'Long runs between buildings on a shared ground', check: 'Two buildings with separate services have grounds at different potentials by design. Signals between them need isolation or fiber, not a copper reference.' },
+    ],
+    blocks: [
+      { t: 'h2', text: 'The mechanism' },
+      {
+        t: 'p',
+        text: 'Ground is not one potential. Between the ground bus in the control room and the ground lug on a transmitter in the field there may be a volt or two, sometimes more, produced by current flowing in the grounding system: neutral current from a wrong bond, drive common-mode current, lightning and utility events, or simply the resistance of a long conductor carrying leakage. A signal circuit that touches ground at both of those points completes a circuit between them, and the current that flows is limited only by the resistance of the signal conductor or the shield. That current produces a voltage drop along the conductor that adds to the signal, or a magnetic field that couples into it.',
+      },
+      { t: 'h2', text: 'What the symptom says' },
+      {
+        t: 'table',
+        head: ['Symptom', 'What it suggests', 'First measurement'],
+        rows: [
+          ['Hum at 60 Hz or 120 Hz on the reading', 'AC potential between grounds', 'AC volts between the two ground points'],
+          ['Steady offset that does not follow the process', 'DC potential difference, or a second path shunting loop current', 'DC volts between grounds; loop current at both ends'],
+          ['Reading shifts when a motor, heater, or breaker switches', 'Ground current that changes with load', 'Watch the offset while switching the load; current on the ground conductor'],
+          ['One channel affected on a card', 'That loop has two grounds', 'Resistance from that loop common to ground at each end'],
+          ['Every channel on a card affected', 'The card common is grounded and so are the transmitters', 'Card isolation in the manual; transmitter output isolation'],
+          ['4-20 mA reads low at the controller, correct at the transmitter', 'Second ground shunts part of the loop current around the input', 'Compare loop current at the transmitter and at the input'],
+          ['Serial link errors, worse at certain times of day', 'Common-mode voltage between devices', 'Volts between the chassis of the two devices'],
+        ],
+      },
+      { t: 'h2', text: 'Diagnostic procedure' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Measure the potential between the grounds', text: 'With a meter on AC and then DC volts, measure between the panel ground bus and the ground at the field device, using a long test lead if needed. Anything above a few hundred millivolts is enough to produce a visible error on a voltage signal, and a volt or more is common where drives or long feeders are involved.' },
+          { title: 'Find the current', text: 'Clamp the signal cable as a whole with a sensitive clamp meter. A cable carrying only a balanced signal shows nearly zero net current; a cable with ground current on its shield or common shows it. Then clamp the shield drain alone.' },
+          { title: 'Compare the loop current at both ends', text: 'On a 4-20 mA loop, measure the current at the transmitter and at the input. Equal current means the loop is intact. Less at the input means part of the current is finding another way back, which is a second ground.' },
+          { title: 'Check for the second ground', text: 'Disconnect the loop at the panel and measure resistance from each conductor and the shield to ground. Then do the same at the field end. The signal circuit should touch ground in exactly one place, and the shield in exactly one place.' },
+          { title: 'Break the loop temporarily', text: 'Lift the suspected second signal ground or shield ground, and watch the reading. If the noise or offset goes, that was the loop. Lift only signal and shield connections; never disconnect an equipment grounding conductor to test.' },
+          { title: 'Fix it permanently', text: 'Remove the second signal ground if it was a wiring error. Where both grounds are required by the equipment, add a loop isolator, an isolated input card, or an isolated transmitter, so the signal crosses the potential difference without a conductor.' },
+          { title: 'Look for the cause of the potential', text: 'A large voltage between grounds is a grounding system problem in its own right: neutral current on the ground, a missing bond, a drive returning current through the earth. Fix that too, or the next signal will suffer.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'safety',
+        title: 'The equipment ground stays',
+        text: 'The green or bare conductor that bonds a panel, a motor, or an instrument housing to ground is there to clear a fault and to keep the metal at earth potential. Lifting it to cure a noise problem removes the protection and leaves the housing at whatever voltage the next fault applies. Ground loops are broken in the signal circuit, never in the safety circuit.',
+      },
+      { t: 'h2', text: 'Why 4-20 mA usually does not care' },
+      {
+        t: 'p',
+        text: 'A current loop is a series circuit; the same current flows through every element regardless of small voltages along the way, so a ground potential difference in series with the loop changes the voltage across the loop and not the current. The loop is immune as long as it touches ground at one point only, usually the negative of the power supply or the negative input terminal. Grounding it at a second point, by a transmitter with a grounded output or a shield landed on the signal terminal, gives some of the current a second path to the supply negative that bypasses the input resistor. The controller then reads less current than the transmitter is sending.',
+      },
+      { t: 'h2', text: 'Fixes that work' },
+      {
+        t: 'ul',
+        items: [
+          'Single-point grounding for each signal circuit, decided on the drawing and marked in the panel.',
+          'Shields grounded at the panel end only for instrument signals, with the field end insulated.',
+          'Loop isolators or isolated input channels where the field device is grounded by design.',
+          'Isolated converters on serial links, and fiber between buildings.',
+          'Shielded motor cable bonded at both ends on drives, so drive current has a path that is not the plant ground.',
+          'Correcting the grounding system: one neutral-to-ground bond at the service, bonding between buildings per the code, a low-impedance ground for the panel.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'How much voltage between grounds is too much?',
+        a: 'For a 0-10 V signal, a few hundred millivolts is a visible error. For a 4-20 mA loop with one ground, a few volts is harmless. For serial RS-485, the standard tolerates about minus 7 to plus 12 volts of common mode, and beyond that transceivers fail. Whatever the signal, several volts between grounds means current is flowing where it should not, and that is a grounding fault to find.',
+      },
+      {
+        q: 'The offset only appears when the well pump runs. Is that a ground loop?',
+        a: 'Probably: the pump motor and its drive put current into the grounding system while running, the potential between grounds rises, and a signal circuit with two grounds shows it. Measure the voltage between grounds with the pump off and on. The fix is the same, isolate the signal, and a shielded motor cable bonded at both ends reduces the cause.',
+      },
+      {
+        q: 'Can a ground loop damage anything?',
+        a: 'Usually it just corrupts signals, but a shield carrying fault current or lightning current can burn, and an input channel exposed to a large common-mode voltage can be destroyed. Isolation protects the input as well as the reading.',
+      },
+      {
+        q: 'Is a battery-powered meter reading the same as the controller proof there is no loop?',
+        a: 'No. A floating meter measures the voltage at its leads and is not part of any ground loop. The controller input has a ground reference and is. Compare the transmitter local display, the loop current at both ends, and the controller reading; the loop shows up as the difference between the last two.',
+      },
+    ],
+    related: [
+      '/controls/instrumentation/signals/ground-loops',
+      '/how-to/instrumentation-how-to/diagnose-ground-loops',
+      '/troubleshooting/grounding-troubleshooting/shield-grounded-at-both-ends',
+      '/troubleshooting/grounding-troubleshooting/floating-reference-between-panels',
+      '/troubleshooting/grounding-troubleshooting/high-neutral-to-ground-voltage',
+      '/troubleshooting/instrumentation-troubleshooting/4-20-ma-signal-unstable',
+    ],
+  },
+  {
+    path: '/troubleshooting/grounding-troubleshooting/floating-reference-between-panels',
+    kind: 'troubleshooting',
+    title: 'Floating Reference Between Panels',
+    summary:
+      'Signals between two panels that misbehave because the panels do not share a DC reference: inputs that never turn on or half turn on, strange voltages to ground, and noise that comes and goes. How DC commons should be bonded and how to cross a panel boundary.',
+    answer:
+      'A signal wired from one panel to another only works if both ends agree on where zero volts is. When each panel has its own 24 VDC supply and the commons are not connected, or one common is bonded to ground and the other floats, a discrete signal from one panel has no return path into the other, and an analog signal reads an offset equal to whatever potential the floating common has drifted to. The reliable fixes are to bond each supply common to its panel ground at one point so the earth is the shared reference for discrete signals, to carry a dedicated common conductor with the signal wires, and to cross the panel boundary with interposing relays for discrete signals and isolators or single-ground current loops for analog signals.',
+    keyPoints: [
+      'A discrete signal needs a return path. Two panels with separate supplies and no common connection have none.',
+      'A floating DC common drifts to whatever leakage sets; half-voltages and phantom inputs are the result.',
+      'Bond each supply common to the panel ground at one point, or bond none and monitor for ground faults; do not mix.',
+      'Interposing relays are the standard way to cross a panel boundary with discrete signals.',
+      'Analog signals cross the boundary as a current loop with one ground, or through an isolator.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['Troubleshooting', 'Grounding', 'Panels', 'Power', 'PLC'],
+    symptom:
+      'An input in one panel driven from another panel never turns on, turns on with a meter reading of a few volts across it, flickers, or turns on when nothing is commanded; voltage from a DC common to ground reads a strange value that changes when things are touched; a signal that worked on the bench fails in the field.',
+    causes: [
+      { cause: 'DC commons not connected between the panels', check: 'Measure resistance between the two DC commons with both supplies off. Open means no shared reference. Check each panel for a common-to-ground bond.' },
+      { cause: 'One supply common bonded to ground, the other floating', check: 'Measure DC volts from each common to ground. The bonded one reads zero; the floating one reads a wandering value, often several volts.' },
+      { cause: 'Signal wired without a return conductor', check: 'A single wire from a contact in panel A to an input in panel B, with no common wire in the same cable. The circuit relies on the earth or is open.' },
+      { cause: 'Shared common carried on an undersized wire that also carries load current', check: 'Measure DC volts between the two commons with the loads running. A volt or more means the common wire is carrying return current for something else and shifting the reference.' },
+      { cause: 'Wetting voltage from panel A into an input referenced to panel B', check: 'The contact in A switches A 24 V into B input, which expects B 24 V relative to B common. Check which supply each side of the input is referenced to.' },
+      { cause: 'Common conductor open in a multi-conductor cable', check: 'Continuity of the common conductor end to end; a broken common turns every signal in the cable into a floating one.' },
+      { cause: 'Ground path between panels of high impedance', check: 'Both commons bonded, but the panels are in different buildings or the bonding conductor is corroded. Measure resistance and AC volts between the two panel grounds.' },
+    ],
+    blocks: [
+      { t: 'h2', text: 'What floating means' },
+      {
+        t: 'p',
+        text: 'A 24 VDC control supply has a positive and a common. If the common is bonded to the panel ground, every voltage in that panel is measured relative to earth, and two such panels share the earth as a reference. If the common is not bonded, the whole supply floats: the difference between positive and common is 24 V, but the voltage from either to ground is set by leakage through the supply, the loads, and cable capacitance, and it can sit anywhere from zero to a few tens of volts and wander. A floating system is legitimate and is used deliberately in some plants with a ground fault monitor, because a single ground fault does not trip anything. The trouble starts when one panel floats and the other does not, or when signals are wired between two floating panels as if they shared a reference.',
+      },
+      { t: 'h2', text: 'Why the input does not turn on' },
+      {
+        t: 'p',
+        text: 'A discrete input turns on when current flows through it from its positive terminal to its common. A contact in panel A that applies panel A 24 V to an input in panel B provides the positive side. The current has to return from panel B common to panel A common, and if there is no wire and no shared ground between them, there is no circuit. The input sits at a voltage the meter can see but that drives no current, or a tiny leakage current turns it partly on. The result is the classic symptom: 20 V across the input and the input is off.',
+      },
+      { t: 'h2', text: 'Diagnostic procedure' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Draw the circuit', text: 'Trace the signal from the contact or output in one panel to the input in the other, and note which supply powers each side. If the drawing does not show a return path, that is the problem.' },
+          { title: 'Measure each common to ground', text: 'DC volts from each panel DC common to its panel ground. Zero means bonded. A wandering value means floating. One of each is a mismatch.' },
+          { title: 'Measure between the commons', text: 'DC and AC volts between the two DC commons, with loads running. Zero means they share a reference. A steady offset means a return current is flowing through the connection. A wandering value means they are not connected.' },
+          { title: 'Test the input locally', text: 'Jumper the input from its own panel 24 V. If it turns on cleanly, the input and the card are fine, and the problem is the reference.' },
+          { title: 'Check the cable', text: 'Continuity of every conductor in the interpanel cable, including the common if one exists. A broken common looks like a floating panel.' },
+          { title: 'Decide the fix', text: 'Bond the commons and add a return conductor, or add interposing relays, or add isolators, per the table below. Then re-measure the commons and confirm the input switches with a clean 24 V or 0 V across it.' },
+        ],
+      },
+      { t: 'h2', text: 'Crossing a panel boundary' },
+      {
+        t: 'table',
+        head: ['Signal', 'Recommended method', 'Why'],
+        rows: [
+          ['Discrete status or command', 'Interposing relay in the sending panel; its dry contact is wetted by the receiving panel supply', 'Each side stays inside its own reference; a supply fault in one panel cannot reach the other'],
+          ['Discrete, both panels bonded to the same ground bus', 'Direct wiring with a common conductor in the same cable', 'Acceptable within one building on one grounding system; the common wire carries the return, not the earth'],
+          ['4-20 mA', 'One loop, powered from one panel, grounded at one point', 'Current is unaffected by a reference difference as long as there is one ground'],
+          ['0-10 V or other voltage signal', 'Signal isolator, or convert to 4-20 mA', 'A voltage signal is measured against a reference, and two panels do not share one'],
+          ['Serial data', 'Isolated converter', 'Common-mode voltage between panels corrupts data and damages transceivers'],
+          ['Any signal between buildings', 'Fiber, radio, or isolators on every conductor', 'Buildings have separate grounds by design; copper between them carries the difference'],
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'Bonded or floating, but not both',
+        text: 'Pick one policy for the plant. Bonded: every supply common goes to the panel ground bus at one point, and a ground fault on a positive wire blows a fuse where it can be found. Floating: no common is bonded, a ground fault monitor alarms on the first fault, and every interpanel signal is isolated. Mixing the two produces exactly the symptoms on this page.',
+      },
+      { t: 'h2', text: 'Bonding the common' },
+      {
+        t: 'p',
+        text: 'Where the policy is bonded, connect the common terminal of each supply to the panel ground bus with a short, sized conductor, once. Do not bond it again at a terminal strip or at a load; a second bond puts return current on the ground conductors. Mark the bond on the drawing so the next person does not remove it as a mistake or add another. Where several supplies share a panel and feed common circuits, bond them at the same bus so their commons are at one potential.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Is it wrong for a 24 VDC supply to be ungrounded?',
+        a: 'No. A control circuit at that voltage may be grounded or ungrounded. Ungrounded systems tolerate one ground fault and need a ground fault monitor so that the fault is found before a second one causes trouble. The fault is inconsistency: one panel grounded and another not, with signals wired directly between them.',
+      },
+      {
+        q: 'Why did it work on the bench?',
+        a: 'On the bench both panels were fed from one supply or sat on one bench ground, and the earth or the shared supply provided the return. In the field each panel had its own supply and its own ground, or a ground path of high impedance, and the return disappeared.',
+      },
+      {
+        q: 'Can I just run a common wire between the panels?',
+        a: 'For discrete signals within one building on one grounding system, yes, if the commons are bonded at one point each and the wire carries only the signal returns, not load current. The cleaner answer that also protects each panel from the other is an interposing relay per signal.',
+      },
+      {
+        q: 'The input reads 12 V and is off. What is that?',
+        a: 'The signature of a floating reference or an open return: the input sees a voltage through leakage but no current flows through it. Measure from the input common to the sending panel common; the wandering or offset voltage you find is the missing reference.',
+      },
+    ],
+    related: [
+      '/troubleshooting/grounding-troubleshooting/ground-loop-symptoms',
+      '/controls/control-panels/panel-components/panel-power-supplies',
+      '/controls/control-panels/panel-components/control-relays',
+      '/troubleshooting/plc-troubleshooting/inputs-not-reading',
+      '/how-to/panel-how-to/size-a-power-supply',
+      '/troubleshooting/grounding-troubleshooting/missing-equipment-ground',
+    ],
+  },
+  {
+    path: '/troubleshooting/grounding-troubleshooting/shield-grounded-at-both-ends',
+    kind: 'troubleshooting',
+    title: 'Shield Grounded at Both Ends',
+    summary:
+      'A shield connected to ground at the panel and again in the field becomes a conductor between two grounds, and its current becomes noise on the pair inside. How to find the second connection, what to measure before lifting it, and when both ends are correct.',
+    answer:
+      'For instrument signal cables the shield is grounded at one end only, normally the panel end, and insulated at the field end. A shield grounded at both ends carries whatever current the potential difference between the two grounds drives through it, and that current couples into the signal conductors as hum and offsets, and in a lightning or fault event can burn the drain wire. Find the second connection by lifting the shield at the panel and measuring resistance from shield to ground, which should be open; measure the shield current with a clamp first, because the value tells you how large the ground potential difference is. High-frequency cables such as Ethernet, fieldbus, and drive motor cables are bonded at both ends by design and are the exception.',
+    keyPoints: [
+      'Instrument cable shields: one ground, at the panel, with the field end insulated and taped.',
+      'Both ends grounded turns the shield into a ground conductor, and its current couples into the pair.',
+      'Test by lifting the panel end: shield to ground should read open. Clamp the shield for current before lifting.',
+      'The second connection is usually at the transmitter terminal, in a junction box, or a bare drain touching a gland.',
+      'Ethernet, fieldbus, and drive motor cables are bonded at both ends on purpose; do not apply the instrument rule to them.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['Troubleshooting', 'Grounding', 'Instrumentation', 'Signals', 'Analog'],
+    symptom:
+      'Hum or a shifting offset on an analog signal, noise that appears when large loads switch, a warm or discolored drain wire, or a burned shield after a storm; the shield at the panel measures continuity to ground after it has been lifted.',
+    causes: [
+      { cause: 'Drain wire landed on the transmitter ground or shield terminal in the field', check: 'Open the transmitter housing and look. Many transmitters have a shield terminal connected to the case; the manual says whether it is isolated.' },
+      { cause: 'Bare drain wire touching the housing inside a cable gland or conduit fitting', check: 'Inspect where the cable enters the housing. A drain wire that is not sleeved finds metal.' },
+      { cause: 'Shield landed on the ground bar in a junction box', check: 'Junction boxes between field and panel are the most common place for a second ground; shields should be carried through on an isolated terminal.' },
+      { cause: 'Shield connected to ground through a connector shell or a metal-bodied terminal', check: 'Connector shells and some terminal styles bond the shield to the mounting rail. Check with the cable disconnected.' },
+      { cause: 'Shield continued through a splice to a second cable that is grounded', check: 'Trace splices; every shield segment should be continuous to the panel and open to ground everywhere else.' },
+      { cause: 'Panel end grounded twice, at the entry gland and at the terminal', check: 'Grounding twice inside one panel is harmless if both points are on the same bus; it is a loop only if they are on different grounds.' },
+      { cause: 'Large ground potential difference making even a small shield leak matter', check: 'Measure AC and DC volts between the panel ground and the field ground after lifting the shield. Several volts is a grounding system problem to fix as well.' },
+    ],
+    blocks: [
+      { t: 'h2', text: 'What a shield is for' },
+      {
+        t: 'p',
+        text: 'A shield around a twisted pair is a barrier against electric field coupling. Grounded at one end it holds the field at ground potential without carrying current; capacitive noise that would have reached the conductors is drained to ground instead. It is not there to carry current, and it is not part of the signal circuit. Grounded at both ends it is a conductor in parallel with the plant grounding system, and whatever voltage exists between the two ground points drives current through it. At 60 Hz that current produces a magnetic field around the shield that induces voltage in the pair inside, and the shield resistance times the current appears as a voltage at the signal end if the shield is also the reference. In a lightning event the shield tries to carry the surge current, and a drain wire is not sized for that.',
+      },
+      { t: 'h2', text: 'Which end' },
+      {
+        t: 'p',
+        text: 'The convention for instrument signals is the panel end, because the panel ground bus is the reference for the input circuits and is the better ground. The field end is cut back, insulated with heat shrink or tape, and left unconnected. At a junction box the shield passes through on an isolated terminal, still with one ground at the panel. A transmitter with a metal housing sees the shield insulated inside the housing, not landed on the housing ground.',
+      },
+      {
+        t: 'table',
+        head: ['Cable', 'Shield practice', 'Reason'],
+        rows: [
+          ['4-20 mA, HART, RTD, thermocouple, 0-10 V', 'One end, at the panel', 'Low-frequency signals; the shield is a capacitive barrier, not a return'],
+          ['RS-485 and RS-232', 'One end as a rule; both only where the manufacturer specifies and the grounds are bonded', 'Common-mode limits are small; ground current on the shield is worse than the noise it blocks'],
+          ['Shielded Ethernet', 'Both ends, through the connector shells', 'High-frequency shield performance requires low impedance at both ends'],
+          ['Fieldbus such as Profibus DP', 'Both ends, 360 degree clamp at every device', 'Manufacturer requirement; the network depends on it'],
+          ['Drive to motor cable', 'Both ends, 360 degree bond at the drive and the motor', 'The shield is the return path for high-frequency drive current, keeping it off the plant ground'],
+          ['Coaxial antenna feed', 'Bonded at the entry to the building', 'Lightning protection, per the radio and surge protector instructions'],
+        ],
+      },
+      { t: 'h2', text: 'Diagnostic procedure' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Clamp the shield', text: 'Before lifting anything, put a sensitive clamp meter around the drain wire at the panel end. A shield with one ground carries no measurable current. Tens of milliamps or more means it is a conductor between two grounds.' },
+          { title: 'Lift the panel end', text: 'Disconnect the shield drain from the panel ground and measure resistance from the drain to ground. Open, above a megohm, means the field end is insulated. Continuity means there is a second connection somewhere.' },
+          { title: 'Measure the potential', text: 'With the shield lifted, measure AC and DC volts from the drain to the panel ground. That is the voltage between the field ground and the panel ground. A few hundred millivolts is normal; several volts means the grounding system has a fault worth finding.' },
+          { title: 'Find the second connection', text: 'Work from the panel toward the field: junction boxes, splices, glands, the transmitter housing. Disconnect the shield at each point and measure again toward the field until the continuity disappears.' },
+          { title: 'Insulate it', text: 'Cut the drain back, sleeve it, and tape or heat shrink so it cannot touch metal. Reconnect the panel end.' },
+          { title: 'Verify', text: 'Clamp the shield again; the current should be gone. Watch the signal for the noise or offset that started the investigation, with the loads that made it worse running.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'When one end is not enough',
+        text: 'Where a transmitter is exposed to radio frequency interference or lightning, a hybrid ground is sometimes used: the field end of the shield connects to ground through a capacitor, which passes high frequency to ground and blocks 60 Hz current. It is a deliberate design choice specified on the drawing, not a field improvisation, and the capacitor must be rated for the surge voltage.',
+      },
+      { t: 'h2', text: 'Fixing the cause, not just the loop' },
+      {
+        t: 'p',
+        text: 'A shield grounded at both ends only causes trouble when there is a potential difference between the grounds. A large difference means the grounding system is carrying current it should not: neutral current from a wrong bond, drive current returning through the earth, or two buildings with no bonding between them. Insulating the shield end removes the symptom on one signal; correcting the grounding system removes it for every signal in the plant.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'The manufacturer says to ground the shield at the transmitter. Who is right?',
+        a: 'Follow the manufacturer for that device, and then do not ground the same shield at the panel. The rule is one ground per shield, and some transmitters, particularly ones with radio frequency protection built in, are designed for the shield to terminate at the device. What is never right is both.',
+      },
+      {
+        q: 'Is it acceptable to leave a shield unconnected at both ends?',
+        a: 'It does nothing then, and the pair is unshielded. Connect it at one end. A shield with no ground can also float up to a voltage through capacitance and give a surprising tingle from a long cable.',
+      },
+      {
+        q: 'Why are drive motor cables bonded at both ends when instrument cables are not?',
+        a: 'Because the motor cable shield has a different job: it is the return path for the high-frequency current the drive pushes through the motor cable capacitance. Bonded at both ends with a 360 degree connection, that current stays in the cable instead of returning through the plant ground, where it would raise the potential differences that cause instrument problems.',
+      },
+      {
+        q: 'Can I ground shields on a common bar with everything else in the panel?',
+        a: 'Yes, if that bar is bonded to the panel ground bus, which is the reference for the analog inputs. Some designs use a separate instrument ground bar tied to the main bus at one point; that is fine too. The point is one connection to one ground per shield.',
+      },
+    ],
+    related: [
+      '/troubleshooting/grounding-troubleshooting/ground-loop-symptoms',
+      '/controls/instrumentation/signals/ground-loops',
+      '/how-to/instrumentation-how-to/diagnose-ground-loops',
+      '/troubleshooting/instrumentation-troubleshooting/4-20-ma-signal-unstable',
+      '/controls/instrumentation/signals/surge-protection',
+      '/troubleshooting/vfd-troubleshooting/drive-trips-on-ground-fault',
+    ],
+  },
+  {
+    path: '/troubleshooting/grounding-troubleshooting/missing-equipment-ground',
+    kind: 'troubleshooting',
+    title: 'Missing Equipment Ground',
+    summary:
+      'An enclosure, motor, or device with no effective equipment ground: how it shows up as a tingle, a fault that does not trip, surge protection that does nothing, or instrument noise; how to test the path safely; and why a ground rod is no substitute.',
+    answer:
+      'The equipment grounding conductor bonds every enclosure and metal part that could become energized back to the source, so that a fault to the enclosure produces enough current to open the breaker at once and the enclosure never stays energized. When it is missing, broken, or interrupted by a painted surface, a nonmetallic section, or a bad conduit joint, a fault leaves the enclosure at line voltage until someone touches it, surge protective devices have no path to divert into, and instrument references float. Test with the power on for voltage between the enclosure and a known ground, then with the power off and locked out for low resistance between the enclosure and the source ground. A ground rod at the equipment is not an equipment ground; its resistance is far too high to trip a breaker.',
+    keyPoints: [
+      'The equipment ground is the fault current path. Without it a fault energizes metal instead of tripping a breaker.',
+      'A ground rod at the equipment is not an equipment ground; at 25 ohms it passes 5 amps at 120 V and trips nothing.',
+      'Test energized for voltage enclosure to ground, then de-energized for resistance enclosure to source ground, below one ohm.',
+      'The usual breaks: paint under a lug, a nonmetallic conduit section without a conductor, a corroded conduit joint, a bonding jumper never installed.',
+      'Surge protection and instrument grounding both depend on the same conductor; fixing it fixes three problems.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['Troubleshooting', 'Grounding', 'Power', 'NEC', 'Panels'],
+    symptom:
+      'A tingle or shock from an enclosure, a conduit, or a motor frame; a fault that trips nothing and instead energizes metal; a surge protector that has not protected anything; GFCI trips with no apparent cause; voltage measured between an enclosure and nearby grounded metal; noise on instruments served from the panel.',
+    causes: [
+      { cause: 'Conduit used as the grounding conductor with a broken path', check: 'A section of nonmetallic conduit, a loose or corroded coupling, a set screw fitting that never bit. Measure resistance across each joint or from the enclosure to the source ground.' },
+      { cause: 'Ground conductor terminated on paint', check: 'Look under the lug. The enclosure ground stud or bus must contact bare metal, with paint removed and a star washer or a listed stud.' },
+      { cause: 'Bonding jumper not installed at a nonmetallic enclosure, hub, or concentric knockout', check: 'Inspect the entries. Concentric and eccentric knockouts and nonmetallic boxes need a bonding jumper or bushing to carry the ground through.' },
+      { cause: 'Feeder to a remote panel run without a ground conductor', check: 'Count the conductors in the feeder. Two hots or a hot and neutral with a rod at the panel is a missing ground.' },
+      { cause: 'Ground rod relied on as the only ground', check: 'Measure the rod resistance or the fault loop impedance. Anything above a fraction of an ohm cannot clear a fault.' },
+      { cause: 'Ground conductor cut or disconnected during work', check: 'Continuity from the enclosure to the source ground; a conductor removed to stop a noise problem is a frequent finding.' },
+      { cause: 'Motor frame not bonded, or bonded through a flexible conduit', check: 'Flexible metal conduit and liquidtight are not a reliable ground; a separate ground conductor to the motor terminal box is needed.' },
+      { cause: 'Neutral used as the ground at a receptacle or panel', check: 'A neutral-to-ground jumper downstream of the service masquerades as a ground and puts neutral current on the enclosure.' },
+    ],
+    blocks: [
+      {
+        t: 'callout',
+        kind: 'safety',
+        title: 'Treat the enclosure as energized',
+        text: 'An enclosure with a missing ground and a fault inside it is at line voltage. Measure before touching, with the meter leads and the PPE the voltage class requires, and do not put yourself between the enclosure and anything grounded until you know it is safe. If it reads voltage, de-energize it and lock it out before doing anything else.',
+      },
+      { t: 'h2', text: 'What the equipment ground does' },
+      {
+        t: 'p',
+        text: 'The equipment grounding conductor is the deliberate, low-impedance path from every enclosure, raceway, and motor frame back to the source, where it is bonded to the neutral at the main bonding jumper. When an energized conductor touches the enclosure, current flows through that path back to the source, and it is large, hundreds or thousands of amps, because the path is a few tenths of an ohm. The breaker opens in a cycle or two and the enclosure is never at a dangerous voltage for longer than that. That is its job. The earth itself is not part of it: the ground rod at the service connects the system to earth for lightning and utility reasons, and its resistance is far too high to clear a fault.',
+      },
+      {
+        t: 'formula',
+        expr: 'I_fault = V / Z_loop',
+        where: [
+          'I_fault = the current that flows during a fault to the enclosure',
+          'V = the line-to-ground voltage, 120 V or 277 V for most control panels',
+          'Z_loop = the impedance of the path from the source through the fault and back along the equipment ground; a few tenths of an ohm with a proper ground, 25 ohms or more through a ground rod',
+        ],
+      },
+      {
+        t: 'p',
+        text: 'At 120 V through a 0.2 ohm path the fault current is 600 A and a 20 A breaker trips instantly. Through a 25 ohm ground rod it is under 5 A, the breaker never trips, and the enclosure sits at nearly 120 V indefinitely.',
+      },
+      { t: 'h2', text: 'How it shows up' },
+      {
+        t: 'table',
+        head: ['Observation', 'What it means'],
+        rows: [
+          ['Tingle or shock from metal', 'Metal is energized, by a fault or by leakage, and has no path to clear it'],
+          ['Fault inside the panel did not trip the breaker; enclosure was hot', 'No effective fault current path'],
+          ['Surge protector shows failed, or storms keep killing equipment', 'The surge protector had no ground to divert into, or a long, high-impedance one'],
+          ['GFCI trips on a circuit feeding the panel', 'Leakage current is finding a path that is not the ground conductor'],
+          ['Instrument noise, offsets, and ground loops that are hard to explain', 'The panel reference is floating or is reached through a long impedance'],
+          ['Voltage between the enclosure and a grounded conduit or water pipe', 'The enclosure is not at ground potential'],
+        ],
+      },
+      { t: 'h2', text: 'Testing' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Energized voltage check', text: 'With the meter on AC volts, measure from the enclosure to a reference that is known to be grounded: a metallic water pipe, a building steel column, the ground bus in the source panel via a long lead. A grounded enclosure reads near zero. Volts means it is not bonded, and there is leakage or a fault.' },
+          { title: 'De-energize and lock out', text: 'Everything that feeds the enclosure. Verify absence of voltage.' },
+          { title: 'Resistance to the source ground', text: 'Measure resistance from the enclosure to the ground bus at the panel that feeds it, with a long test lead or a low-resistance ohmmeter. Under one ohm is expected, usually well under. Higher means a poor path; open means none.' },
+          { title: 'Walk the path', text: 'From the enclosure back to the source: the ground stud and whether it is on bare metal, the ground conductor and where it lands, each conduit joint if conduit is the path, each junction box and the bonding at its knockouts, any nonmetallic section and the conductor that should cross it.' },
+          { title: 'Check the source', text: 'At the panel feeding the equipment, the ground bus must be bonded to the enclosure and carried back to the service, where the main bonding jumper ties it to the neutral. A subpanel with no ground bus, or with the grounds on the neutral bar, is a fault upstream of the one you were chasing.' },
+          { title: 'Fix and retest', text: 'Install or repair the conductor, remove paint under lugs, add bonding jumpers, replace the conduit joint. Then repeat the resistance test and the energized voltage check.' },
+        ],
+      },
+      { t: 'h2', text: 'The ground rod is not the answer' },
+      {
+        t: 'p',
+        text: 'A ground rod at a remote panel is often installed with good intentions and no ground conductor in the feeder. The rod connects the panel to earth; it does not connect it to the source. Earth resistance from the rod is typically 25 ohms or more, and the fault current through it is a few amps, well below any breaker trip point. The panel becomes a piece of energized metal with a wire to the dirt. The feeder must carry a grounding conductor sized for the breaker that protects it, and the rod is a supplement for lightning at most.',
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Isolated ground is not no ground',
+        text: 'An isolated ground receptacle or panel still has an equipment ground; it is simply routed separately back to the service to reduce noise. Anyone who cuts the ground to isolate a piece of equipment has created a missing ground, not an isolated one.',
+      },
+      { t: 'h2', text: 'Motors and drives' },
+      {
+        t: 'p',
+        text: 'A motor frame is bonded by a ground conductor in the motor circuit, landed in the terminal box, not by the flexible conduit that carries the leads. On drive-fed motors, the ground conductor also carries the high-frequency leakage current from the motor cable capacitance, and a missing or long one lets that current find its way through bearings, structures, and instrument grounds instead. Drives also need the ground for their own protective functions; a drive with a missing ground may report ground faults that are not there or miss ones that are.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'The panel is fed through metal conduit. Is that not the ground?',
+        a: 'Metallic conduit with proper fittings is a permitted equipment grounding conductor, and it works until a joint corrodes, a coupling loosens, or someone replaces a section with nonmetallic. Many designers run a separate ground conductor inside the conduit anyway for that reason. If conduit is the ground, every joint is part of the fault path and has to be tested as such.',
+      },
+      {
+        q: 'How low should the resistance to the source ground be?',
+        a: 'Well under one ohm for a panel fed within a building, often under a tenth. What matters is that the fault current through it is enough to trip the breaker quickly, and that requires the impedance of the whole loop to be low. A value over an ohm means a bad connection somewhere in the path.',
+      },
+      {
+        q: 'Can I use a plug-in outlet tester?',
+        a: 'It will show an open ground at a receptacle, which is useful. It cannot tell a good ground from a poor one, and it cannot see a neutral-to-ground jumper masquerading as a ground. Follow up any finding with the resistance test.',
+      },
+      {
+        q: 'Why does the surge protector care?',
+        a: 'A surge protective device works by diverting surge current to ground. With no ground, or a long high-impedance one, the surge has nowhere to go and the protected equipment takes it. The ground conductor to the surge protector should be short and direct; a missing one means the device is decoration.',
+      },
+    ],
+    related: [
+      '/troubleshooting/grounding-troubleshooting/high-neutral-to-ground-voltage',
+      '/troubleshooting/grounding-troubleshooting/ground-loop-symptoms',
+      '/controls/instrumentation/signals/surge-protection',
+      '/controls/control-panels/panel-components/circuit-breakers',
+      '/controls/control-panels/panel-design/ul-508a',
+      '/troubleshooting/vfd-troubleshooting/drive-trips-on-ground-fault',
+    ],
+  },
+  {
+    path: '/troubleshooting/grounding-troubleshooting/high-neutral-to-ground-voltage',
+    kind: 'troubleshooting',
+    title: 'High Neutral-to-Ground Voltage',
+    summary:
+      'What a neutral-to-ground voltage reading means, the values that are normal, and the causes of a high one: a long or heavily loaded neutral, harmonic current, a loose or open neutral, a missing service bond, or an extra bond downstream, and telling them apart.',
+    answer:
+      'Neutral-to-ground voltage at a point in the system is the voltage drop along the neutral conductor between that point and the main bonding jumper at the service, where neutral and ground are connected. A fraction of a volt to about two volts under load is normal on a branch circuit. Higher values come from a long or undersized neutral carrying heavy current, harmonic current from electronic loads adding on a shared neutral, a loose neutral connection, an open neutral, or a missing main bonding jumper. A reading near zero at a loaded subpanel is its own warning: it usually means an extra neutral-to-ground bond downstream, which puts neutral current on the ground system. Measure the voltage at the point, at the panel, and at the service, measure the neutral current, and compare with the drop the conductor should produce.',
+    keyPoints: [
+      'Neutral-to-ground voltage is the voltage drop on the neutral from the point of measurement back to the service bond.',
+      'Under two volts on a loaded branch circuit is normal. Several volts means high current, a long run, harmonics, or a bad connection.',
+      'A reading that swings as loads change points at a loose neutral; an open neutral is a hazard to every 120 V load.',
+      'Near zero at a loaded subpanel means an extra bond downstream, and that puts neutral current on the ground.',
+      'Measure the neutral current and compute the expected drop; the difference from the reading is the bad connection.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['Troubleshooting', 'Grounding', 'Power', 'NEC', 'Panels'],
+    symptom:
+      'A meter reads more than a couple of volts between neutral and ground at a receptacle or panel; power supplies and controllers reset; a UPS alarms on wiring fault; equipment fed from the circuit is unusually noisy; lights flicker or brighten as loads change; a neutral connection is warm.',
+    causes: [
+      { cause: 'Long or heavily loaded branch circuit', check: 'Measure neutral current with a clamp meter and compute the drop from the conductor resistance and length. If the reading matches, the circuit is doing what physics says; reduce load or the run length.' },
+      { cause: 'Shared neutral with unbalanced loads', check: 'A multiwire branch circuit carries the difference of the phase currents on the neutral. Clamp it under normal load.' },
+      { cause: 'Harmonic current from electronic loads', check: 'Drives, switch-mode power supplies, and lighting ballasts put triplen harmonics on the neutral that add rather than cancel. A true RMS clamp shows neutral current above the phase imbalance.' },
+      { cause: 'Loose or corroded neutral connection', check: 'The reading changes sharply as loads switch and the connection is warm. Thermal imaging under load finds it. This is the dangerous one.' },
+      { cause: 'Open neutral', check: '120 V loads see voltages that swing toward 0 and 240 V as the load balance changes; lights flicker bright and dim. Treat as an emergency.' },
+      { cause: 'Missing main bonding jumper at the service', check: 'Neutral-to-ground voltage floats everywhere and may be large. Verify the bond at the service disconnect.' },
+      { cause: 'Extra neutral-to-ground bond in a subpanel or a device', check: 'Near zero neutral-to-ground at a loaded subpanel; measurable current on the ground conductor. Separate the neutrals and grounds in the subpanel.' },
+      { cause: 'Generator or transfer switch neutral arrangement', check: 'A generator with its own neutral bond and a transfer switch that does not switch the neutral creates two bonds when on generator. Check the neutral switching and the generator bonding against the design.' },
+    ],
+    blocks: [
+      { t: 'h2', text: 'What the reading is' },
+      {
+        t: 'p',
+        text: 'At the service, the neutral and the equipment ground are connected by the main bonding jumper, so neutral-to-ground voltage there is zero. Everywhere downstream, the neutral carries load current back to the service and drops voltage along the way, while the ground carries no current and stays at the service potential. The meter reading between them at any point is therefore the voltage drop on the neutral from that point back to the bond. It rises with load current, conductor length, and conductor resistance, and it jumps when a connection in the path goes bad.',
+      },
+      {
+        t: 'formula',
+        expr: 'V_NG ≈ I_N × R_N',
+        where: [
+          'V_NG = the neutral-to-ground voltage at the point of measurement',
+          'I_N = the current in the neutral conductor',
+          'R_N = the resistance of the neutral conductor from the point back to the service bond, including every connection along the way',
+        ],
+      },
+      {
+        t: 'p',
+        text: 'A 100 foot run of 12 AWG copper has about 0.16 ohm of resistance one way; at 10 A of neutral current that is 1.6 V, and that is normal. The same circuit reading 6 V at 10 A has 0.6 ohm in its neutral, and about half an ohm of it is a connection that is failing.',
+      },
+      { t: 'h2', text: 'What the value suggests' },
+      {
+        t: 'table',
+        head: ['Reading at a loaded point', 'Interpretation', 'Next step'],
+        rows: [
+          ['0 V at a loaded subpanel or receptacle', 'An extra neutral-to-ground bond nearby is shorting the reading', 'Clamp the ground conductor for current; inspect the subpanel neutral bar for bonding'],
+          ['0.2 to 2 V', 'Normal voltage drop under load', 'None, unless equipment is sensitive; document the baseline'],
+          ['2 to 5 V', 'High load, long run, or harmonics', 'Measure neutral current and compute the expected drop; check for shared neutrals and electronic loads'],
+          ['More than 5 V, steady', 'Poor connection, undersized neutral, or missing service bond', 'Thermal scan connections under load; verify the main bonding jumper'],
+          ['Any value that swings as loads switch', 'Loose neutral', 'Find the warm connection; treat as urgent'],
+          ['Values that swing with 120 V equipment misbehaving', 'Open neutral', 'De-energize; this destroys equipment and starts fires'],
+        ],
+      },
+      { t: 'h2', text: 'Diagnostic procedure' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Measure at three points', text: 'Neutral-to-ground at the equipment, at the panel that feeds it, and at the service. The drop should accumulate along the path. A large step between two points puts the problem in that segment.' },
+          { title: 'Measure the neutral current', text: 'True RMS clamp meter on the neutral at the panel, under the load that produces the symptom. Compare with the phase currents; neutral current above the imbalance is harmonic current.' },
+          { title: 'Compute the expected drop', text: 'Conductor size and length from the drawing give the resistance; times the current gives the expected voltage. A reading close to it is a design question. A reading well above it is a connection.' },
+          { title: 'Scan the connections', text: 'Under load, a thermal camera or a careful hand near, not on, the terminations finds the hot one: the neutral bar, the breaker panel neutral lugs, splices in junction boxes, receptacle back-stab connections.' },
+          { title: 'Check the bonds', text: 'At the service, confirm the main bonding jumper. At every subpanel, confirm the neutral bar is isolated from the enclosure and the grounds are on a separate bar. Clamp the ground conductor leaving each panel; it should carry no current.' },
+          { title: 'Check the generator path', text: 'If the site has a generator, read the neutral-to-ground voltage and the ground current on utility and on generator. A change between the two points at the neutral bonding and switching arrangement.' },
+          { title: 'Fix and verify', text: 'Tighten or replace the connection, separate the bonds, enlarge the neutral, or rebalance the loads. Re-measure under the same load.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'safety',
+        title: 'An open neutral is an emergency',
+        text: 'On a 120/240 V system the neutral holds the midpoint. When it opens, the two 120 V halves float according to the loads on each, and one side rises toward 240 V while the other falls. Controllers, power supplies, and anything electronic on the high side fail within seconds, and overheated equipment can start a fire. Lights that brighten when another load turns on are the sign. De-energize and find it.',
+      },
+      { t: 'h2', text: 'Why it matters to control equipment' },
+      {
+        t: 'p',
+        text: 'Most control power supplies tolerate a few volts of neutral-to-ground without complaint. Problems begin with the causes behind the reading rather than the reading itself: a loose neutral produces voltage dips and transients that reset controllers, harmonic current heats the neutral and the transformer, and an extra bond puts current on the grounding system that then appears as a potential difference between panels and as ground loops on instrument signals. A UPS that alarms on a wiring fault is usually seeing neutral-to-ground voltage above its threshold, and it is right to complain.',
+      },
+      { t: 'h2', text: 'The extra bond' },
+      {
+        t: 'p',
+        text: 'A neutral-to-ground connection anywhere other than the service creates a second path for neutral current: through the ground conductors, conduits, water pipes, and building steel back to the service. The neutral-to-ground reading near that bond drops to zero, which can look like an improvement, while the ground conductors carry current they were never meant to carry and every enclosure on the way sits at a slightly different potential. Bonding screws left in subpanels, bonded neutrals in equipment such as generators and some transfer switches, and neutrals landed on ground bars by mistake are the usual sources. Clamping the ground conductor at each panel finds them: it should read zero.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'What neutral-to-ground voltage is acceptable for a PLC panel?',
+        a: 'Under two volts under load is the usual guidance, and most control power supplies are unaffected below that. Above it, investigate the cause rather than the number; the same causes produce transients and ground current that hurt the equipment more than a steady two volts does.',
+      },
+      {
+        q: 'My reading is exactly zero at a panel far from the service. Is that good?',
+        a: 'Only if that panel is unloaded. A loaded panel far from the service has to show some drop. Zero almost always means the neutral is bonded to ground in that panel or nearby, and the ground system is carrying part of the neutral current. Clamp the ground conductor to confirm.',
+      },
+      {
+        q: 'Can a drive cause high neutral-to-ground voltage?',
+        a: 'A single-phase drive or a bank of switch-mode power supplies draws current in pulses rich in third harmonic, and on a three-phase four-wire system those add on the neutral instead of cancelling. The neutral current can exceed the phase current, and the drop follows. A true RMS clamp on the neutral shows it; the fix is a larger neutral, separate neutrals per phase, or harmonic mitigation.',
+      },
+      {
+        q: 'Does an isolation transformer fix it?',
+        a: 'A transformer creates a separately derived system with its own neutral-to-ground bond at the transformer, so the panel it feeds starts from a fresh zero and is unaffected by the upstream neutral drop. It is the standard cure for a control panel fed by a long, noisy, heavily loaded circuit, and it also blocks a good deal of common-mode noise. It does not fix the upstream problem, which still needs attention.',
+      },
+    ],
+    related: [
+      '/troubleshooting/grounding-troubleshooting/missing-equipment-ground',
+      '/troubleshooting/grounding-troubleshooting/ground-loop-symptoms',
+      '/troubleshooting/grounding-troubleshooting/floating-reference-between-panels',
+      '/controls/control-panels/panel-components/ups',
+      '/controls/control-panels/panel-components/panel-power-supplies',
+      '/controls/instrumentation/signals/surge-protection',
+    ],
+  },
 ];

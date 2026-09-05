@@ -2109,4 +2109,557 @@ Influent_Valve_Cmd   := (State = 0) OR (State = 50);`,
       '/controls/plc-systems/plc-fundamentals/scan-cycle',
     ],
   },
+  {
+    path: '/controls/plc-systems/programming/permissives',
+    kind: 'reference',
+    title: 'Permissives',
+    summary:
+      'The conditions that must be true before a device may start: how permissives differ from interlocks and trips, the list a pump or feeder usually needs, coding them so the HMI can say why a start was refused, and the rules for time delays and bypasses.',
+    answer:
+      'A permissive is a condition that must be true for a start command to be accepted; it is evaluated when the start is requested and does not by itself stop the device once it is running. An interlock is a condition that must stay true for the device to keep running, and a trip is a hardwired protection that acts without the controller. Good practice codes each permissive as its own named bit, combines them into a single ready bit, shows the list on the HMI so an operator can see which one is blocking, applies short time delays to conditions that flicker, and allows bypasses only where the functional description says so, with the bypass alarmed and logged.',
+    keyPoints: [
+      'Permissive: checked at the start. Interlock: enforced while running. Trip: hardwired, independent of the controller.',
+      'One named bit per condition, combined into one ready bit; never a single anonymous rung of series contacts.',
+      'The HMI shows every permissive with its state, so the answer to why it will not start is on the screen.',
+      'Flickering conditions get a short on-delay; a level cutoff needs a deadband so it does not chatter at the threshold.',
+      'A permissive that is also a run interlock is coded in both places, deliberately, not by accident.',
+      'Bypasses only where the functional description allows, with an alarm while active and a record of who set it.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['PLC', 'Programming', 'Control', 'Pumps', 'Alarms'],
+    blocks: [
+      { t: 'h2', text: 'Permissive, interlock, trip' },
+      {
+        t: 'p',
+        text: 'The three words are used loosely in the field and precisely in a functional description. A permissive gates the start: if the wet well is below the low-level cutoff, the pump may not start. An interlock stops or prevents running as long as the condition exists: a seal-fail or a motor high-temperature signal stops a running pump and keeps it stopped. A trip is protection that works whether or not the controller is running: the motor overload relay, the emergency stop, the high-high level float that drops the starter coil. The distinction matters because the response differs. A permissive that goes false after the pump starts does not necessarily stop the pump; if it should, the condition also belongs in the interlock logic.',
+      },
+      {
+        t: 'table',
+        head: ['Type', 'When evaluated', 'Effect', 'Typical examples'],
+        rows: [
+          ['Permissive', 'At the moment of the start request', 'Start refused; no effect once running', 'Level above cutoff, drive ready, valve position, minimum off time elapsed, in AUTO'],
+          ['Run interlock', 'Continuously while running', 'Device stopped and held off; usually latched with a reset', 'Seal fail, high temperature, low suction pressure after a delay, discharge valve failed to open'],
+          ['Trip', 'Continuously, in hardware', 'Starter or drive de-energized regardless of controller', 'Overload relay, emergency stop, high-high float, drive fault contact'],
+        ],
+      },
+      { t: 'h2', text: 'What a pump start usually needs' },
+      {
+        t: 'ul',
+        items: [
+          'Level: wet well or suction level above the low-level cutoff, with a deadband so the condition does not chatter.',
+          'Drive or starter ready: no fault, control power present, the drive reporting ready, the starter not tripped.',
+          'Selector: the hand-off-auto switch in AUTO for an automatic start; HAND starts bypass the automatic permissives by design and should still respect the trips.',
+          'Valves: suction valve open by limit switch where one exists; discharge valve at the position the sequence expects.',
+          'Anti-cycle: the minimum off time since the last stop has elapsed, and the starts-per-hour count is below the motor limit.',
+          'Maintenance: no lockout tag in the system and no out-of-service flag on the HMI.',
+          'Process: for a chemical feed pump, carrier water flow proven and the day tank not at low level.',
+        ],
+      },
+      { t: 'h2', text: 'Coding pattern' },
+      {
+        t: 'p',
+        text: 'Each permissive is its own bit with a name that says what it is. The bits are combined into one ready bit, and the start command is accepted only while the ready bit is true. Nothing else in the program looks at the individual bits except the HMI, which displays them. This pattern is the same in ladder, structured text, and function block; the structured text version is the shortest to read.',
+      },
+      {
+        t: 'code',
+        lang: 'text',
+        caption: 'Structured text; ladder uses one rung per bit and one rung for the ready bit',
+        code: `// Pump 1 start permissives, one bit each
+P1_Perm_Level  := LT_101_PV > P1_LowLevelCutoff + P1_LevelDeadband;
+P1_Perm_Drive  := VFD1_Ready AND NOT VFD1_Faulted;
+P1_Perm_Valve  := ZSO_101;                 // suction valve open limit
+P1_Perm_Seal   := NOT P1_SealFail;
+P1_Perm_MinOff := P1_MinOffTimer.Q;        // minimum off time elapsed
+P1_Perm_Auto   := P1_HOA_Auto;
+P1_Perm_Maint  := NOT P1_OutOfService;
+
+// One ready bit; the HMI shows the individual bits
+P1_Ready := P1_Perm_Level AND P1_Perm_Drive AND P1_Perm_Valve
+            AND P1_Perm_Seal AND P1_Perm_MinOff AND P1_Perm_Auto AND P1_Perm_Maint;
+
+// Start accepted only while ready; run interlocks are handled separately
+IF P1_AutoStartRequest AND P1_Ready THEN
+    P1_RunCmd := TRUE;
+END_IF;`,
+      },
+      {
+        t: 'p',
+        text: 'The level permissive uses the cutoff plus a deadband, so the pump can start only when the level is comfortably above the point where the interlock would stop it. Without that margin a pump starts, draws the level down through the cutoff on the first stroke, stops, and repeats.',
+      },
+      { t: 'h2', text: 'Time delays' },
+      {
+        t: 'p',
+        text: 'Some conditions are true almost all the time and false for a moment: a pressure switch that bounces as a valve opens, a drive ready contact that drops for a scan as the drive changes state, a level reading that dips for one sample. A permissive built directly on such a signal refuses starts for no reason the operator can see. Give those conditions an on-delay of a second or two before they count as true. Do not delay the conditions that protect equipment, and do not delay the trips at all.',
+      },
+      { t: 'h2', text: 'On the HMI' },
+      {
+        t: 'p',
+        text: 'The most useful thing a permissive list does is answer the question the operator asks at two in the morning: why will it not start. Put the list on the pump faceplate or a detail popup, one line per permissive with its current state, in the same words the functional description uses. The ready bit drives the start button availability. When a start is refused, the line that is false is the reason, and nobody needs to open the program.',
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Same list in the functional description',
+        text: 'Write the permissive list in the functional description first, then code it, then build the HMI display from it. Three documents that agree word for word are the difference between a system that can be maintained and one that has to be reverse-engineered.',
+      },
+      { t: 'h2', text: 'Bypasses' },
+      {
+        t: 'p',
+        text: 'A bypass lets a start proceed with a permissive false: a level bypass to pump a wet well down below the cutoff for cleaning, a valve position bypass when a limit switch has failed and the valve is verified open by hand. Bypasses exist because plants have to keep running, and they are dangerous because they get forgotten. Allow them only where the functional description names them, require a supervisor level login, alarm continuously while any bypass is active, log who set it and when, and clear them automatically on a time limit or on the next stop.',
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Never bypass a trip in software',
+        text: 'A software bypass applies to software permissives and interlocks. The hardwired trips, the overload relay, the emergency stop, and the high-high float, are outside the controller on purpose, and a bypass built by jumpering them in the panel is a hazard, not a workaround.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Should a permissive that goes false while running stop the pump?',
+        a: 'Only if the functional description says so, and then it is coded as a run interlock as well. A drive ready contact that drops out while running should stop the pump; a minimum off time or an AUTO selector already satisfied at the start should not. Decide condition by condition and write it down.',
+      },
+      {
+        q: 'Where does the anti-cycle timer belong?',
+        a: 'In the permissives. The minimum off time and the starts-per-hour limit protect the motor from heating; they are conditions that must be true before a start and have nothing to do with a running pump. A permissive display that shows the remaining off time saves a lot of radio calls.',
+      },
+      {
+        q: 'Should a HAND start respect the permissives?',
+        a: 'A HAND start is the operator taking responsibility, so it usually bypasses the automatic permissives such as level and AUTO. It never bypasses the trips, and a plant may choose to keep a few protective conditions, such as seal fail, in force in HAND. Say which in the functional description; the HOA logic is where accidents are designed in.',
+      },
+      {
+        q: 'How do I keep a long permissive list from being a maintenance burden?',
+        a: 'Use a standard pump block with a fixed list of permissive bits, and leave the unused ones forced true with a configuration flag. Every pump then has the same list in the same order on the same faceplate, and a new pump is configured rather than programmed.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/programming/interlocks',
+      '/controls/plc-systems/programming/state-machines',
+      '/controls/control-panels/pump-panels/hoa',
+      '/how-to/plc-how-to/program-lead-lag-pumps',
+      '/troubleshooting/pump-troubleshooting/pump-will-not-start',
+      '/troubleshooting/vfd-troubleshooting/drive-will-not-start-in-auto',
+    ],
+  },
+  {
+    path: '/controls/plc-systems/programming/sequencers',
+    kind: 'reference',
+    title: 'Sequencers',
+    summary:
+      'Step-based control for operations that always run in the same order: backwash, pump and valve startup, batch makeup, membrane cleans. What every step needs, three ways to implement one, handling faults and power loss mid-sequence, and what the HMI shows.',
+    answer:
+      'A sequencer moves a piece of equipment through a fixed series of steps, each with the actions it performs, the condition that completes it, a timeout, and a defined response to a fault. It is implemented as an integer step number with a case structure, a drum or sequencer output instruction for fixed output patterns, or a sequential function chart where the platform supports it. Every step has a timeout with an alarm, transitions are driven by feedback rather than assumed, faults either hold the sequence or abort it to a safe state as the functional description decides, and after a power loss the sequence restarts from a recovery step that evaluates the plant rather than from wherever it was.',
+    keyPoints: [
+      'Fixed order, one active step, feedback-driven transitions: that is a sequencer. Arbitrary transitions are a state machine.',
+      'Every step has a number, a name, actions, a completion condition, a timeout, and a fault response.',
+      'Integer step and case structure runs on any platform and is the easiest to read in the field.',
+      'Timeouts with alarms turn a stuck sequence into a diagnosed one: the alarm names the step and what it was waiting for.',
+      'Hold keeps outputs and waits; abort drives outputs to a safe state. Decide per step, in the functional description.',
+      'After a power loss the sequence goes to a recovery step, never straight back to the step it was in.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['PLC', 'Programming', 'Control', 'Water', 'Wastewater'],
+    blocks: [
+      { t: 'h2', text: 'What a sequencer is for' },
+      {
+        t: 'p',
+        text: 'Some operations always happen in the same order. A filter backwash closes the influent valve, drains to a level, air scours, washes, settles, filters to waste, and returns to service. A high-service pump start pre-lubricates, opens the suction valve, starts the motor, and opens the discharge valve slowly. A polymer batch fills to a level, adds neat polymer for a time, mixes, and ages. Each of these is a list of steps, and the controller code that runs them is a sequencer. The alternative, a tangle of timers and latches that happens to produce the right order, works until someone has to change step four.',
+      },
+      { t: 'h2', text: 'What every step needs' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Number and name', def: 'Numbered by tens so a step can be inserted later; named in the words the operators use. Step 30, Air Scour.' },
+          { term: 'Actions', def: 'The outputs held while the step is active: valves open, blower running. Outputs not named are in their default state.' },
+          { term: 'Completion condition', def: 'Feedback, not assumption: a valve limit switch, a level, a flow, an analyzer reading, or a timer where time is the only measure. A step that waits for a valve to open watches the open limit, not a five-second timer.' },
+          { term: 'Timeout', def: 'The longest the step may take before something is wrong, with an alarm that names the step and the condition it was waiting for.' },
+          { term: 'Fault response', def: 'Hold, abort, or retry, decided per step. A timeout on the drain step may hold and wait for the operator; a timeout on the discharge valve during a pump start aborts and stops the pump.' },
+          { term: 'Manual advance', def: 'A supervisor-level button that forces the transition, for commissioning and for the day a limit switch is broken, logged when used.' },
+        ],
+      },
+      { t: 'h2', text: 'Three ways to build one' },
+      {
+        t: 'table',
+        head: ['Method', 'How it works', 'Best for', 'Watch out for'],
+        rows: [
+          ['Integer step with case structure', 'A step register holds the current step; a case statement or a set of equal-compare rungs runs the logic for that step and sets the next step number', 'Anything; readable on every platform; easy to add steps', 'Every write to the step register must be in one place, or two rungs fight over it'],
+          ['Drum or sequencer output instruction', 'A table of output patterns indexed by step, advanced by time or by an event input', 'Fixed output patterns such as wash cycles and simple valve sequences', 'Conditions and timeouts live outside the instruction; harder to see what is waiting'],
+          ['Sequential function chart', 'Graphical steps and transitions with actions attached; parallel branches supported', 'Long sequences with parallel paths, on platforms and with staff that know it', 'Not every platform has it; a field technician who has never seen one cannot troubleshoot it at 2 a.m.'],
+        ],
+      },
+      { t: 'h2', text: 'Example: filter backwash' },
+      {
+        t: 'table',
+        caption: 'Step times and setpoints come from the functional description and the plant; the structure is the point',
+        head: ['Step', 'Actions', 'Completion', 'Timeout', 'On timeout'],
+        rows: [
+          ['0 Idle', 'Filter in service', 'Backwash request and permissives true', 'none', 'none'],
+          ['10 Isolate', 'Close influent valve, close effluent valve', 'Both closed limits', '2 min', 'Abort, alarm valve'],
+          ['20 Drain down', 'Open drain or waste valve', 'Level below air scour level', '30 min', 'Hold, alarm'],
+          ['30 Air scour', 'Open air valve, start blower', 'Timer, typically a few minutes', 'timer + 1 min', 'Abort, alarm blower'],
+          ['40 Air and water', 'Start wash pump at low rate with air', 'Timer', 'timer + 1 min', 'Abort'],
+          ['50 Water wash', 'Stop blower, close air valve, wash pump to high rate', 'Timer, or waste turbidity below setpoint', 'timer + 2 min', 'Hold, alarm'],
+          ['60 Settle', 'Stop wash pump, close wash valves', 'Closed limits, settle timer', '5 min', 'Alarm valve'],
+          ['70 Filter to waste', 'Open influent, open waste valve', 'Effluent turbidity below setpoint', 'Per the plant', 'Hold, alarm'],
+          ['80 Return', 'Close waste valve, open effluent valve', 'Effluent open limit', '2 min', 'Alarm valve'],
+        ],
+      },
+      { t: 'h2', text: 'Coding pattern' },
+      {
+        t: 'code',
+        lang: 'text',
+        caption: 'Structured text case structure; each step owns its outputs, its transition, and its timeout',
+        code: `CASE BW_Step OF
+  10: (* Isolate *)
+      FV_Influent_Close := TRUE;  FV_Effluent_Close := TRUE;
+      IF ZSC_Influent AND ZSC_Effluent THEN BW_Step := 20; END_IF;
+      IF BW_StepTimer.ET > T#2m THEN BW_Fault := TRUE; BW_Step := 900; END_IF;
+
+  20: (* Drain down *)
+      FV_Waste_Open := TRUE;
+      IF LT_Filter_PV < BW_ScourLevel THEN BW_Step := 30; END_IF;
+      IF BW_StepTimer.ET > T#30m THEN BW_Hold := TRUE; END_IF;  (* hold, alarm *)
+
+  30: (* Air scour *)
+      FV_Air_Open := TRUE;  Blower_RunCmd := TRUE;
+      IF BW_StepTimer.ET > BW_ScourTime THEN BW_Step := 40; END_IF;
+
+  (* ... *)
+
+  900: (* Abort: safe state *)
+      Blower_RunCmd := FALSE;  WashPump_RunCmd := FALSE;
+      FV_Air_Open := FALSE;    FV_Waste_Open := FALSE;
+      IF BW_Reset THEN BW_Fault := FALSE; BW_Step := 0; END_IF;
+END_CASE;
+
+(* Step timer restarts on any step change; step number written only inside the CASE *)`,
+      },
+      {
+        t: 'p',
+        text: 'Two disciplines keep this readable for years. The step number is written only inside the case structure, so there is exactly one place to look for how the sequence advances. And outputs are set inside the step that uses them and cleared in a common section that runs when the step changes, so a step cannot leave a valve open by forgetting to close it.',
+      },
+      { t: 'h2', text: 'Faults, holds, and power loss' },
+      {
+        t: 'p',
+        text: 'A hold freezes the sequence in its current step with outputs as they are, and waits for an operator to resume, advance, or abort. It fits steps where waiting is safe, such as a drain that is slow because the waste line is restricted. An abort drives every output the sequence controls to a defined safe state and goes to an abort step that waits for a reset. It fits steps where waiting is not safe, such as a blower running against a closed valve. The functional description says which applies to each step; the code should not guess.',
+      },
+      {
+        t: 'p',
+        text: 'Power loss in the middle of a sequence is the case that gets forgotten. If the step number is retentive, the controller powers up in step 50 with the wash pump commanded to run and the valves in whatever positions they drifted to. If it is not retentive, the sequence restarts at idle with the filter half drained and the influent valve closed, and the filter sits there. The robust answer is a recovery step: on first scan, the sequence goes to a step that reads the valve positions and level, alarms that a sequence was interrupted, and either returns to idle safely or lets the operator choose where to resume.',
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Feedback, not time',
+        text: 'A sequence that assumes a valve opened because five seconds passed will one day run a pump against a closed valve. Every transition that can be confirmed by a limit switch, a level, a flow, or a pressure is confirmed that way. Timers measure duration; they do not prove that anything happened.',
+      },
+      { t: 'h2', text: 'What the HMI shows' },
+      {
+        t: 'ul',
+        items: [
+          'The current step number and name, in the same words as the functional description.',
+          'The step timer and the timeout, so a slow step is visible before it alarms.',
+          'The condition the step is waiting for, as text: Waiting for influent valve closed limit.',
+          'Start, hold, resume, abort, and the supervisor-level advance, each logged.',
+          'The last completed sequence with its total time and any holds, and a trend of step durations over time; a wash that takes longer every week is telling you something.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'What is the difference between a sequencer and a state machine?',
+        a: 'A sequencer runs a fixed list of steps in order and returns to idle; the only branches are hold and abort. A state machine has a set of states with transitions in any direction, such as a pump that moves between stopped, starting, running, stopping, and failed. Use a sequencer for an operation with a beginning and an end, and a state machine for equipment that lives in modes.',
+      },
+      {
+        q: 'Where do the step times come from?',
+        a: 'From the functional description, which got them from the process designer, the equipment manufacturer, and the plant. Put them in setpoint registers with limits, editable from a supervisor screen, never as constants in the code. A wash duration that has to be changed by a programmer is a wash duration that never gets optimized.',
+      },
+      {
+        q: 'Can two sequences run at the same time?',
+        a: 'Two sequences on different equipment, yes; each has its own step register and code. Two filters backwashing at once is a process question, and usually the answer is a permissive that lets only one backwash run at a time because the wash supply and the waste handling are sized for one.',
+      },
+      {
+        q: 'How do I test a sequence without running the plant?',
+        a: 'With the outputs disabled or the equipment isolated, step through it with simulated feedback: force the limit switches and levels in the order the sequence expects, then in the wrong order, then not at all, and confirm every timeout and abort behaves. Then run it once for real with someone at the equipment. Sequences that were only tested on the happy path fail on the first unhappy one.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/programming/state-machines',
+      '/controls/plc-systems/programming/permissives',
+      '/controls/plc-systems/programming/interlocks',
+      '/controls/plc-systems/programming/structured-text',
+      '/controls/plc-systems/plc-fundamentals/retentive-memory',
+      '/water-wastewater/water-systems/water-pumping/well-pumps',
+    ],
+  },
+  {
+    path: '/controls/plc-systems/programming/program-organization',
+    kind: 'reference',
+    title: 'Program Organization',
+    summary:
+      'Structuring a controller program so that someone else can maintain it: a layout that follows the plant, one routine per job, standard device blocks, I/O mapped in one place, a fixed execution order, naming that means something, and comments that say why.',
+    answer:
+      'A well-organized controller program mirrors the plant: a main routine that calls the others in a fixed order, an input mapping routine that copies physical inputs to named tags, a routine per process area or piece of equipment built from standard device blocks, separate routines for alarms and communications, control loops in a periodic task at a fixed rate, and an output mapping routine at the end. Tags are named by equipment and attribute, setpoints live in named registers rather than as constants, every rung or block has a comment that says what it is for, and a revision record inside the program says what changed and when. The test is whether a technician who has never seen the program can find the logic for one pump in under a minute.',
+    keyPoints: [
+      'Structure follows the plant: area, then equipment, then device. Nobody should have to search a 3,000-rung routine.',
+      'Map physical I/O to named tags in one routine at the start and one at the end; the logic never touches an address.',
+      'Standard device blocks for pumps, valves, and analyzers; every pump behaves the same and is configured, not programmed.',
+      'Fixed execution order: inputs, logic, alarms, communications, outputs. A tag written after it is read costs a scan.',
+      'Setpoints in named registers with limits, never constants in the code.',
+      'Comments say why, tag descriptions say what, and a revision record inside the program says what changed.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['PLC', 'Programming', 'Documentation', 'Design', 'Engineering'],
+    blocks: [
+      { t: 'h2', text: 'The test' },
+      {
+        t: 'p',
+        text: 'Hand the program to a technician who has never seen it, and ask them to find why pump 2 is not starting. If they open the program tree, see a routine named for the lift station, open it, find pump 2, and read a permissive list, the program is organized. If they scroll through one enormous routine searching for the output tag, it is not. Organization is not tidiness for its own sake; it is the property that makes a control system maintainable by someone other than the person who wrote it.',
+      },
+      { t: 'h2', text: 'The vocabulary by platform' },
+      {
+        t: 'table',
+        caption: 'Different names for the same organizational tools',
+        head: ['Concept', 'IEC 61131-3', 'Rockwell Logix', 'Schneider Control Expert', 'Siemens TIA Portal'],
+        rows: [
+          ['Scheduling unit', 'Task', 'Task (continuous, periodic, event)', 'Task (MAST, FAST, event)', 'Organization block (OB)'],
+          ['Container of logic', 'Program', 'Program with routines', 'Section', 'Function (FC) or function block (FB)'],
+          ['Reusable block with memory', 'Function block', 'Add-On Instruction', 'Derived function block (DFB)', 'Function block with instance data block'],
+          ['Reusable block without memory', 'Function', 'Add-On Instruction without state', 'Elementary function', 'Function (FC)'],
+          ['Structured data type', 'Structure', 'User-defined type (UDT)', 'Derived data type (DDT)', 'PLC data type (UDT)'],
+          ['Global data', 'Global variables', 'Controller tags', 'Unlocated variables', 'Global data block (DB)'],
+        ],
+      },
+      { t: 'h2', text: 'A layout that works' },
+      {
+        t: 'table',
+        head: ['Routine or section', 'Purpose', 'Notes'],
+        rows: [
+          ['Main', 'Calls every other routine in a fixed order', 'Nothing else; a reader sees the whole program flow on one page'],
+          ['FirstScan', 'Initialization after power up or download', 'Sequence recovery, default setpoints if lost, communication resets'],
+          ['Inputs_Map', 'Copy physical inputs to named tags; scale analog inputs', 'The only place physical input addresses appear'],
+          ['Area routines', 'One per process area: LiftStation, Filters, Chemical, Disinfection', 'Each built from device blocks; pump 2 lives in its area routine'],
+          ['Loops', 'PID and other continuous control', 'In a periodic task at a fixed rate; never in the continuous task'],
+          ['Alarms', 'Alarm conditions, delays, and acknowledgment handling', 'Every alarm in one place, in the order of the alarm list'],
+          ['Comms', 'Messages to other controllers and devices, with status handling', 'Communication status bits feed signal validation in the area routines'],
+          ['HMI', 'Handshakes, command pulses, and the tags the HMI writes', 'Commands from the HMI are consumed and cleared here'],
+          ['Outputs_Map', 'Copy named output tags to physical outputs', 'The only place physical output addresses appear'],
+          ['Diagnostics', 'Module status, scan time, battery, redundancy', 'Feeds the controller health alarms'],
+        ],
+      },
+      { t: 'h2', text: 'Mapping I/O' },
+      {
+        t: 'p',
+        text: 'The logic reads a tag named for the device, not a channel address. An input mapping routine at the start of the scan copies each physical input to its named tag and scales the analog ones; an output mapping routine at the end copies the named output tags to the physical channels. The cost is a few dozen rungs. The return is that a failed input card can be replaced by a spare in another slot by editing one routine, the program can be tested in simulation by disabling the mapping, and every rung in the logic reads in plain language.',
+      },
+      { t: 'h2', text: 'Standard device blocks' },
+      {
+        t: 'p',
+        text: 'A plant has twelve pumps that all need the same things: a run command, running feedback, a fail-to-start timer, a fail-while-running check, run hours, start counts, permissives, interlocks, HOA handling, and an HMI faceplate. Written twelve times, the twelve copies drift apart until no two pumps behave alike. Written once as a device block and instanced twelve times, every pump behaves the same, a fix applies to all of them, and a new pump is an instance with a configuration. The same applies to valves, analyzers, and drives. The block interface becomes the vocabulary of the whole system: every pump has a Sts.Running, a Cmd.Start, and an Alm.FailToStart, and the HMI faceplate binds to them by name.',
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Parameters, not copies',
+        text: 'When one pump is different, the difference is a parameter of the block, such as a fail-to-start delay or a flag that disables the seal-fail interlock, not a modified copy of the block. A block with a flag can be found; a modified copy cannot.',
+      },
+      { t: 'h2', text: 'Execution order' },
+      {
+        t: 'p',
+        text: 'The controller executes the routines in the order the main routine calls them, once per scan. If the alarm routine reads a tag that the area routine writes, and the alarm routine runs first, the alarm sees the value from the previous scan. One scan late rarely matters, but a chain of such dependencies can add several scans of delay to a sequence and produce behavior that is hard to reproduce. Call the routines in the order data flows: inputs, area logic, loops, alarms, communications, HMI, outputs. And write each output from exactly one place; two rungs writing the same coil is the classic error, and the last one wins silently.',
+      },
+      { t: 'h2', text: 'Naming' },
+      {
+        t: 'p',
+        text: 'A tag name says what equipment and what attribute: P_101_Run, LT_101_PV, FV_102_ZSO. Where the platform supports structures, the device tag is the structure and the attribute is the member: P_101.Sts.Running. Use the tag numbers from the drawings and the instrument list, so the field, the drawings, the program, and the HMI all use the same identifiers. Descriptions carry the words: Lift Station 1 Pump 1 Running. Setpoints are named tags with engineering units and limits, editable from the HMI: LS1_LeadStartLevel_ft, not a constant 8.5 in a compare instruction.',
+      },
+      { t: 'h2', text: 'Comments and revisions' },
+      {
+        t: 'p',
+        text: 'A tag description says what a tag is. A rung or block comment says why the logic is the way it is: Delay is 15 s because the check valve slams if the pump stops with the discharge valve open. The reader can see what the rung does; the comment explains the intent, which is the thing that is lost when the author leaves. Keep a revision record inside the program, in a comment or a dedicated routine: date, who, what changed, and why, and export the project file to version control at every change so the history exists somewhere other than the laptop.',
+      },
+      { t: 'h2', text: 'Signs of a program that needs reorganizing' },
+      {
+        t: 'ul',
+        items: [
+          'One routine of thousands of rungs, or routines named Routine1 through Routine9.',
+          'The same pump logic copied per pump with small, undocumented differences.',
+          'Physical input and output addresses scattered through the logic.',
+          'Constants in compare and math instructions where setpoints should be.',
+          'Outputs written from more than one rung.',
+          'No comments, or comments that restate the instruction: Turn on output.',
+          'No record of what changed since the last time anyone looked.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'How big should a routine be?',
+        a: 'Small enough to read in one sitting and to describe in one sentence: this routine runs the filters. A routine that needs a table of contents is two routines. On most projects that is a few dozen to a couple of hundred rungs, and a device block instance counts as one rung.',
+      },
+      {
+        q: 'Are device blocks worth it on a small system?',
+        a: 'Yes, on anything with more than one pump. The block takes longer to write the first time than a few rungs of logic, and it pays back on the second pump, on the HMI faceplate that binds by name, and on every future change. Small systems grow.',
+      },
+      {
+        q: 'Should loops really be in a periodic task?',
+        a: 'Yes. A PID computes with an assumed sample time; in a continuous task that time varies with scan length and the loop tuning changes with it. A periodic task at 100 to 500 ms gives the loop a fixed sample time and predictable behavior. The same applies to totalizers and rate calculations.',
+      },
+      {
+        q: 'What is the minimum for a program someone else can maintain?',
+        a: 'A main routine that shows the flow, routines named for the plant areas, I/O mapped in one place, tags named from the drawings with descriptions, setpoints as named tags, a comment on every rung whose purpose is not obvious, and a revision record. That is a day of work on a program of any size, and it is the day that saves the most later.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/programming/iec-61131-3',
+      '/controls/plc-systems/programming/ladder-logic',
+      '/controls/plc-systems/programming/function-block-diagram',
+      '/controls/plc-systems/plc-fundamentals/tasks',
+      '/controls/plc-systems/plc-fundamentals/scan-cycle',
+      '/how-to/plc-how-to/program-lead-lag-pumps',
+    ],
+  },
+  {
+    path: '/controls/plc-systems/programming/control-strategies',
+    kind: 'reference',
+    title: 'Control Strategies',
+    summary:
+      'Choosing how a loop is controlled before choosing how to program it: on-off with deadband, staging, PID, ratio and feedforward, cascade, split range, and override, with the water and wastewater applications each fits and the questions that pick between them.',
+    answer:
+      'The control strategy is chosen by what the process needs and what the final control element can do. On-off control with a deadband fits a level held between two points by a fixed-speed pump. Staging fits several fixed units serving one demand. PID fits a variable held at a setpoint by a modulating element such as a drive or a control valve. Ratio and feedforward fit a dose that follows a measured flow. Cascade fits a slow variable that is best controlled by setting the setpoint of a faster inner loop. Override fits a loop that must respect a constraint on a second variable. The simplest strategy that meets the requirement is the right one, and combinations such as PID speed control with staging are normal.',
+    keyPoints: [
+      'Start from the process and the final control element, not from the instruction set.',
+      'On-off with deadband is the right choice for a level between two points with a fixed-speed pump; do not add PID to it.',
+      'PID needs a modulating element and a measurable variable that responds to it; otherwise it is decoration.',
+      'Ratio and feedforward act on the disturbance before the error appears; feedback trims what they miss.',
+      'Cascade only helps when the inner loop is several times faster than the outer, and the inner loop is tuned first.',
+      'Every loop gets a documented fallback: what happens when the transmitter fails, and what the operator does in manual.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 11,
+    tags: ['PLC', 'Control', 'PID', 'Programming', 'Water', 'Wastewater'],
+    blocks: [
+      { t: 'h2', text: 'The strategies' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'On-off with deadband', def: 'The output is fully on above one threshold and fully off below another. The deadband between them sets the cycle time. Wet well pumping between start and stop levels, tank filling, a heater in a panel.' },
+          { term: 'Staging', def: 'Several fixed-capacity units are started and stopped in turn to match demand: lead, lag, lag 2 pumps by level or pressure; blowers by air demand; compressors by receiver pressure. Alternation shares wear.' },
+          { term: 'PID feedback', def: 'A modulating element is adjusted continuously to hold a measured variable at a setpoint: pump speed for discharge pressure, valve position for flow, blower speed for dissolved oxygen, chemical pump speed for residual.' },
+          { term: 'Ratio', def: 'One flow is held in proportion to another: chemical feed paced to plant flow at a dose setpoint. The controller computes the feed rate from the flow and the dose; there may be no feedback at all.' },
+          { term: 'Feedforward with feedback trim', def: 'A measured disturbance sets most of the output and a feedback loop corrects the remainder: flow-paced hypochlorite with the dose trimmed by a residual analyzer.' },
+          { term: 'Cascade', def: 'The output of a slow outer loop is the setpoint of a fast inner loop: dissolved oxygen sets an air flow setpoint, and air flow controls the blower. Level sets a flow setpoint that controls a pump speed.' },
+          { term: 'Split range', def: 'One controller drives two elements over different parts of its output: a small valve for the first half of the range and a large valve for the second, or heating below 50 percent and cooling above.' },
+          { term: 'Override and selector', def: 'Two controllers compete for one element and a selector picks the safer output: pressure control overridden by a maximum flow, or a low-select so that a suction pressure limit takes over from discharge pressure control.' },
+        ],
+      },
+      { t: 'h2', text: 'Choosing' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'What does the process need?', text: 'A variable held between two limits, or held at a value? Between two limits is on-off or staging. At a value is modulating control of some kind.' },
+          { title: 'What can the final control element do?', text: 'A fixed-speed pump can only run or stop; the strategy is on-off or staging no matter what the process would prefer. A drive, a control valve, or a metering pump can modulate; PID and its relatives become possible.' },
+          { title: 'How does the variable respond?', text: 'Fast and direct, such as pressure to pump speed: PID alone. Slow with dead time, such as chlorine residual at a downstream sample point: feedforward or ratio does the bulk of the work and PID trims slowly.' },
+          { title: 'Is there a measurable disturbance?', text: 'Plant flow, influent load, a tank being filled: measure it and feed it forward or use it as the ratio basis, rather than waiting for the error.' },
+          { title: 'Is there a faster secondary variable?', text: 'If the element affects a fast variable that in turn affects the slow one, cascade: the fast inner loop rejects disturbances before the slow outer loop sees them.' },
+          { title: 'Are there constraints?', text: 'A pressure that must not exceed a limit, a flow that must not fall below one: override control with a selector, and an alarm when the override is active.' },
+          { title: 'What is the fallback?', text: 'Transmitter failure, communication loss, and manual operation: what does the loop do, and what does the operator do. Write it before writing the loop.' },
+        ],
+      },
+      { t: 'h2', text: 'Applications' },
+      {
+        t: 'table',
+        head: ['Application', 'Strategy', 'Why', 'Common mistake'],
+        rows: [
+          ['Lift station with fixed-speed pumps', 'On-off with lead-lag staging and alternation', 'Level between two points; the pumps cannot modulate', 'Adding a PID that has nothing to modulate'],
+          ['Lift station with drives', 'PID on level to lead pump speed, staging when the lead is at maximum', 'Smoother flow to the plant and fewer starts', 'Running the drive at minimum speed for hours below the pump curve'],
+          ['High service pumping', 'PID on discharge pressure to drive speed; staging by speed and pressure', 'Pressure held at a value; several pumps serve one demand', 'Staging on pressure alone, which fights the PID'],
+          ['Hypochlorite feed', 'Ratio to plant flow with residual trim', 'Dose follows flow immediately; residual corrects slowly for demand', 'Pure residual feedback with a long sample lag, which oscillates'],
+          ['Aeration dissolved oxygen', 'Cascade: DO sets air flow, air flow controls blower', 'DO responds slowly; air flow responds fast', 'DO directly to blower speed, which hunts'],
+          ['Filter effluent', 'PID on filter level to effluent valve', 'Constant level keeps the head loss curve honest', 'Tuning too aggressively and cycling the valve'],
+          ['Chemical day tank', 'On-off fill with deadband, high-high shutoff', 'Level between limits; a solenoid valve', 'Filling on a PID and hunting a solenoid'],
+          ['Pressure with a flow limit', 'Override: low-select between pressure PID and flow limit PID', 'Pressure held unless flow would exceed the limit', 'Alarming on nothing, so nobody knows the override is active'],
+        ],
+      },
+      { t: 'h2', text: 'Ratio and feedforward' },
+      {
+        t: 'p',
+        text: 'For chemical feed the ratio calculation does most of the work. The feed rate is the plant flow times the dose setpoint, converted to the units of the feed pump and corrected for the strength of the chemical.',
+      },
+      {
+        t: 'formula',
+        expr: 'F = Q × D / (C × k)',
+        where: [
+          'F = chemical feed rate, in the units the feed pump uses',
+          'Q = plant flow',
+          'D = dose setpoint, in mg/L as the active chemical',
+          'C = concentration of the chemical as supplied, as the same active chemical',
+          'k = the unit conversion between flow times dose and feed rate',
+        ],
+      },
+      {
+        t: 'p',
+        text: 'Feedback trim then adjusts the dose setpoint slowly from a residual analyzer. The trim loop is tuned gently, because the analyzer is downstream and reports the result minutes after the change. A common arrangement limits how far the trim can move the dose, so a failed analyzer cannot drive the dose to zero or to the maximum.',
+      },
+      { t: 'h2', text: 'Cascade' },
+      {
+        t: 'p',
+        text: 'In a cascade the outer loop does not touch the equipment; it writes the setpoint of the inner loop, which does. The inner loop must be faster, several times faster as a rule, or the two loops interact and the result is worse than a single loop. Commission the inner loop first, with the outer loop in manual, and tune it to be fast and stable. Then close the outer loop and tune it slowly. If the inner loop is switched to manual or loses its transmitter, the outer loop must stop integrating, which the PID instruction on most platforms handles if the cascade is configured rather than improvised.',
+      },
+      { t: 'h2', text: 'Combining strategies' },
+      {
+        t: 'p',
+        text: 'Real loops are usually combinations. A high service system holds pressure with PID on the lead pump speed, stages the lag pump when the lead has been at maximum speed for a time and pressure is still low, and destages when the lead has been at minimum for a time and pressure is high. The staging logic uses speed and time as its basis so that it cooperates with the PID rather than competing with it on pressure. An aeration system cascades DO to air flow, with a most-open-valve strategy setting the blower pressure setpoint so the blowers work no harder than the neediest zone requires. Each layer is a simple strategy; the design is in how they hand off.',
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Simplest that meets the requirement',
+        text: 'A control strategy has to be understood by the operator who runs it, the technician who fixes it, and the engineer who changes it in ten years. On-off control that meets the requirement beats PID that meets it slightly better. Add complexity only for a reason you can write in the functional description.',
+      },
+      { t: 'h2', text: 'Fallbacks' },
+      {
+        t: 'ul',
+        items: [
+          'Transmitter failure: the loop holds its last output, goes to a safe fixed output, or switches to a backup measurement, and alarms. Never lets the failed value drive the output.',
+          'Manual mode: the operator sets the output directly, with the setpoint tracking so the return to automatic is bumpless.',
+          'Communication loss to a remote setpoint: hold the last setpoint, or revert to a local default, and alarm.',
+          'Override active: an alarm that says which controller has the element, so a pressure that is not being held is explained.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'When is on-off control better than PID?',
+        a: 'Whenever the final control element cannot modulate, and whenever the process only needs to stay between two limits. A wet well pumped by fixed-speed pumps, a tank filled by a solenoid valve, a heater: on-off with a suitable deadband is the correct design, not a compromise.',
+      },
+      {
+        q: 'How do I combine drive speed control with staging pumps?',
+        a: 'Let PID control the lead pump speed. Stage the lag pump when the lead has been at or near maximum speed for a set time and the controlled variable is still below setpoint; destage when the lead is at minimum for a set time and the variable is above. Base staging on speed and time, not on the variable alone, so the two mechanisms do not fight.',
+      },
+      {
+        q: 'What is override control for?',
+        a: 'Holding one variable at setpoint while respecting a limit on another. A discharge pressure loop with a low-select against a maximum flow controller keeps pressure until flow would exceed the limit, and then the flow controller takes the pump speed. Alarm when the override is active so operators know why the pressure is off.',
+      },
+      {
+        q: 'Why tune the inner loop first in a cascade?',
+        a: 'Because the outer loop sees the inner loop as part of its process. An inner loop that is slow or oscillating makes the outer loop impossible to tune, and any outer tuning done first becomes wrong the moment the inner loop is changed. Inner loop fast and stable, then outer loop slow.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/analog-control/pid',
+      '/controls/plc-systems/analog-control/deadband',
+      '/how-to/plc-how-to/create-a-pid-loop',
+      '/controls/control-panels/pump-panels/lead-lag',
+      '/water-wastewater/wastewater-systems/wastewater-pump-control/level-pid',
+      '/water-wastewater/wastewater-systems/wastewater-pump-control/vfd-pump-control',
+    ],
+  },
 ];

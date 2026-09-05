@@ -1,9 +1,21 @@
 RewriteEngine On
 
-# Keep real files and directories working normally.
+# Canonical host. Every page on this site declares https://currycontrols.com
+# as its canonical URL, so www is sent to the apex once, permanently, with
+# the path and query string intact. Two hostnames serving identical content
+# splits ranking signals; this collapses them onto one.
+RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+RewriteRule ^ https://%1%{REQUEST_URI} [R=301,L]
+
+# Keep real files and directories working normally. This is the rule that
+# serves the site: the build prerenders one HTML document per route as
+# <route>/index.html, so a request for /calculators/voltage-drop matches a
+# real directory here and Apache serves that directory's index.html.
 RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d
 RewriteRule ^ - [L]
 
-# Send client-side routes back to the React entry point.
+# Only routes with no prerendered file reach this line: the placeholder
+# taxonomy nodes that are linked in the menus but deliberately kept out of
+# the sitemap. The client router renders those.
 RewriteRule ^ index.html [L]

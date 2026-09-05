@@ -16,6 +16,7 @@ import {
 } from '@/data/calculators';
 import { REFERENCE_TABLES, tablePath, TABLE_BY_SLUG } from '@/data/tables';
 import { getContent } from '@/data/content';
+import { SITE } from '@/data/site';
 import { describe, getEntry } from '@/data/nav-index';
 import {
   breadcrumbSchema,
@@ -166,7 +167,7 @@ export function CalculatorPage({ slug }: { slug: string }) {
             '@type': 'WebApplication',
             name: calculator.title,
             description: calculator.summary,
-            url: `https://www.currycontrols.com${path}`,
+            url: `${SITE.url}${path}`,
             applicationCategory: 'EngineeringApplication',
             operatingSystem: 'Any modern web browser',
             browserRequirements: 'Requires JavaScript',
@@ -447,7 +448,7 @@ export function TablePage({ slug }: { slug: string }) {
             about: table.title,
             name: table.title,
             description: table.summary,
-            url: `https://www.currycontrols.com${path}`,
+            url: `${SITE.url}${path}`,
           },
           breadcrumbSchema(trail),
         )}

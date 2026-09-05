@@ -2486,4 +2486,973 @@ export const INSTRUMENTATION_ENTRIES: Entry[] = [
       '/controls/instrumentation/level/hydrostatic-level',
     ],
   },
+  {
+    path: '/controls/instrumentation/flow/ultrasonic-flow',
+    kind: 'reference',
+    title: 'Ultrasonic Flowmeters',
+    summary:
+      'Transit-time and Doppler ultrasonic flow measurement: how each works, which liquids each suits, clamp-on versus wetted transducers, the pipe data the meter needs, the accuracy to expect, and the installation details that decide whether to trust the reading.',
+    answer:
+      'A transit-time ultrasonic flowmeter sends sound pulses diagonally through the pipe in both directions and computes velocity from the difference in travel time with and against the flow; it suits clean liquids such as potable water and treated effluent and, with good installation, reads within a percent or two. A Doppler meter bounces sound off particles or bubbles in the liquid and computes velocity from the frequency shift; it needs a dirty or aerated liquid such as raw wastewater or sludge and is less accurate. Both are available as clamp-on units that need no pipe penetration and depend on correct pipe material, wall thickness, liner, and transducer spacing entered by the installer, and as wetted spool meters that are calibrated by the manufacturer. Straight run, a full pipe, and a signal strength check are the conditions for a reading that means something.',
+    keyPoints: [
+      'Transit time for clean liquids, Doppler for liquids with particles or bubbles. Each fails on the liquid the other needs.',
+      'Clamp-on accuracy is set by installation: pipe parameters, transducer spacing, couplant, and straight run.',
+      'A wetted spool meter is factory calibrated; a clamp-on is only as good as the numbers the installer typed in.',
+      'Air entrainment scatters the beam; transit time loses signal, and Doppler reads the bubbles instead of the liquid.',
+      'Signal strength and sound speed are the diagnostics; read them at commissioning and record them.',
+      'Ideal for large pipes, chemical lines, and verifying other meters without cutting pipe.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['Instrumentation', 'Flow', 'Water', 'Wastewater', 'Commissioning'],
+    blocks: [
+      { t: 'h2', text: 'Transit time' },
+      {
+        t: 'p',
+        text: 'Two transducers are mounted on the pipe some distance apart, one upstream of the other, so that a sound path between them crosses the flow at an angle. Each transducer sends a pulse to the other. The pulse travelling with the flow arrives sooner than the one travelling against it, and the difference in transit time is proportional to the average velocity along the path. Because the meter measures both directions, the speed of sound in the liquid cancels out of the velocity calculation, which is why transit-time meters tolerate temperature changes better than the physics might suggest.',
+      },
+      {
+        t: 'formula',
+        expr: 'v = (L / (2 cos θ)) × (t_up − t_down) / (t_up × t_down)',
+        where: [
+          'v = average liquid velocity along the sound path',
+          'L = path length between the transducers through the liquid',
+          'θ = angle between the sound path and the pipe axis',
+          't_up = transit time against the flow; t_down = transit time with the flow',
+        ],
+      },
+      {
+        t: 'p',
+        text: 'The meter multiplies the path velocity by the pipe area and by a profile factor that converts velocity along one diagonal into average velocity across the pipe. That profile factor assumes a fully developed turbulent profile, which is what the straight-run requirement is for. A single-path meter downstream of an elbow measures a distorted profile and applies the wrong factor; a two- or four-path meter averages several diagonals and is much less sensitive to that.',
+      },
+      { t: 'h2', text: 'Doppler' },
+      {
+        t: 'p',
+        text: 'A Doppler meter transmits a continuous tone into the liquid and listens for the reflection from particles, bubbles, or solids moving with the flow. The reflected frequency is shifted in proportion to the velocity of whatever reflected it. The meter needs reflectors: a clean liquid returns almost nothing and the meter reads noise. It also measures the velocity of the reflectors, which are concentrated where the beam penetrates, usually near the wall, rather than the average of the whole pipe. The result is a measurement that works on raw sewage, sludge, and slurries where a transit-time meter cannot, at an accuracy of a few percent of reading at best.',
+      },
+      { t: 'h2', text: 'Choosing' },
+      {
+        t: 'table',
+        head: ['', 'Transit time', 'Doppler', 'Magnetic (for comparison)'],
+        rows: [
+          ['Liquid', 'Clean, or lightly loaded', 'Particles or bubbles required', 'Conductive; any solids content'],
+          ['Typical accuracy', '1 to 2 percent of reading, clamp-on; better for wetted multipath', '2 to 5 percent of reading', '0.2 to 0.5 percent of reading'],
+          ['Pipe penetration', 'None for clamp-on; spool for wetted', 'None', 'Spool or insertion'],
+          ['Pipe size', 'Small to very large; large pipes favor it on cost', 'Small to large', 'Cost rises steeply with size'],
+          ['Air entrainment', 'Loses signal', 'Reads the bubbles', 'Noisy'],
+          ['Typical use', 'Raw water, finished water, effluent, chemical lines, verification', 'Raw wastewater, sludge, slurries', 'Most plant flows where the spool can be installed'],
+        ],
+      },
+      { t: 'h2', text: 'Clamp-on installation' },
+      {
+        t: 'p',
+        text: 'The meter computes velocity from the transit-time difference and the geometry, and the geometry is what the installer enters: outside diameter, wall thickness, pipe material, liner material and thickness, and the liquid. From those the meter calculates the transducer spacing, and the transducers are mounted at that spacing on a clean section of pipe with couplant between the transducer face and the pipe. A wrong wall thickness or an unrecorded liner produces a wrong area and a wrong spacing, and the meter reads confidently and wrongly. Measure the pipe rather than reading the nominal size off a drawing, use an ultrasonic thickness gauge for the wall, and find out what the pipe is lined with.',
+      },
+      {
+        t: 'table',
+        head: ['Mode', 'Arrangement', 'Use'],
+        rows: [
+          ['V', 'Both transducers on the same side; the beam crosses the pipe twice', 'Small and medium pipes; the usual default'],
+          ['Z', 'Transducers on opposite sides; the beam crosses once', 'Large pipes, dirty liquids, lined or scaled pipes where signal is weak'],
+          ['W', 'Same side; the beam crosses four times', 'Very small pipes, to lengthen the path'],
+        ],
+      },
+      {
+        t: 'ul',
+        items: [
+          'Straight run: ten diameters upstream and five downstream from the transducers is the usual minimum, and more after a pump, a partially open valve, or two elbows in different planes.',
+          'Full pipe: mount on a rising vertical pipe or a horizontal run that cannot drain; never at a high point. Mount transducers at 3 and 9 o clock on a horizontal pipe, not at the top where air collects or the bottom where sediment does.',
+          'Pipe condition: remove paint or scale under the transducers, and avoid welds and seams on the path. Old cast iron with tuberculation and loose liners scatter the beam.',
+          'Couplant: permanent installations use a solid coupling pad or a couplant that does not dry out; temporary gel dries in weeks and the signal fades.',
+          'Cable: the transducer cables are matched pairs of specified length; do not cut, extend, or run them with power cables.',
+        ],
+      },
+      { t: 'h2', text: 'Diagnostics' },
+      {
+        t: 'p',
+        text: 'Every ultrasonic meter reports a signal strength or signal quality figure and, on transit-time meters, the measured speed of sound in the liquid. At commissioning, record both. Signal strength that later falls says the couplant dried, the transducers moved, or the pipe is scaling or the liquid is aerated. A measured sound speed that is far from the expected value for water at the process temperature says the pipe parameters are wrong or the transducers are not where the meter thinks they are. Those two numbers, read once a year, catch most clamp-on problems before the flow total is wrong for a season.',
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Verification without cutting pipe',
+        text: 'A clamp-on transit-time meter is the standard tool for checking a magnetic meter or a pump curve in the field. Install it on a good straight run, enter the pipe parameters carefully, and compare over an hour at steady flow. Agreement within two or three percent means both meters are probably right; a larger difference means one of them needs attention, and the clamp-on is not automatically the one that is wrong.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Can a transit-time meter work on raw wastewater?',
+        a: 'Sometimes, on screened wastewater with low solids and no aeration, and often not. The beam is scattered by solids and bubbles until the meter loses signal. Doppler is designed for that liquid, and a magnetic meter is the accurate answer where a spool can be installed.',
+      },
+      {
+        q: 'How accurate is a clamp-on meter really?',
+        a: 'One to two percent of reading with correct pipe parameters, adequate straight run, a full pipe, and good coupling. Any of those missing and the error grows, sometimes to ten percent, with no indication on the display. The accuracy is in the installation, not the box.',
+      },
+      {
+        q: 'Why does the meter read flow when the pump is off?',
+        a: 'Noise being interpreted as a small velocity, or a real small flow through a leaking check valve. Set the low-flow cutoff so that velocities below the noise floor read zero, and confirm with the check valve whether the flow is real. Doppler meters are especially prone to reading noise as flow in still, dirty liquid.',
+      },
+      {
+        q: 'Will it work on a PVC or lined pipe?',
+        a: 'PVC and HDPE transmit sound well and work. Cement mortar lining bonded to the pipe works when the liner thickness is entered. Loose liners, rubber liners, and heavily corroded steel scatter or absorb the beam; the Z mode and a wetted meter are the fallbacks.',
+      },
+    ],
+    related: [
+      '/controls/instrumentation/flow/magnetic-flowmeters',
+      '/controls/instrumentation/flow/differential-pressure-flow',
+      '/controls/instrumentation/flow/flow-installation',
+      '/controls/instrumentation/flow/flow-troubleshooting',
+      '/controls/instrumentation/flow/open-channel-flow',
+      '/troubleshooting/pump-troubleshooting/pump-runs-but-no-flow',
+    ],
+  },
+  {
+    path: '/controls/instrumentation/flow/flow-installation',
+    kind: 'reference',
+    title: 'Flowmeter Installation',
+    summary:
+      'The installation rules that decide whether a flowmeter reads correctly: straight run by meter type, keeping the pipe full, orientation, velocity range, grounding for magnetic meters, isolation and access, and the commissioning checks that prove the meter.',
+    answer:
+      'A flowmeter measures correctly when the pipe is full, the velocity profile is developed, the velocity is within the range the meter is designed for, and the meter is electrically and mechanically installed as its manual requires. That means a straight run upstream and downstream that depends on the meter type and the disturbance ahead of it, a location where the pipe cannot drain or trap air, a size that keeps velocity in the working range, grounding rings or electrodes on magnetic meters in lined or plastic pipe, isolation valves and access so the meter can be verified and serviced, and cables run in their own conduit. Commissioning confirms zero with the pipe full and still, the configuration against the nameplate, and the reading against an independent check.',
+    keyPoints: [
+      'Full pipe, developed profile, correct velocity: the three conditions every meter needs.',
+      'Straight run depends on the meter and what is upstream; when in doubt, more.',
+      'Rising vertical pipe or a low horizontal run keeps the meter full; a high point traps air and reads wrong.',
+      'Size the meter for velocity, not for the pipe; a meter in an oversized pipe reads at the bottom of its range.',
+      'Magnetic meters need a fluid ground: grounding rings on lined and plastic pipe, and a bonded meter body on steel.',
+      'Isolation, bypass, and access are installation items; a meter that cannot be verified cannot be trusted.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['Instrumentation', 'Flow', 'Design', 'Commissioning', 'Water'],
+    blocks: [
+      { t: 'h2', text: 'Straight run' },
+      {
+        t: 'p',
+        text: 'Every velocity-based meter assumes a symmetrical, fully developed flow profile. An elbow, a valve, a pump, or a reducer upstream distorts the profile, and the distortion persists for a distance downstream that depends on the disturbance. The straight run requirement is the distance needed for the profile to recover enough that the meter error is within its specification. Manufacturers state it in pipe diameters, upstream and downstream of the meter, and the upstream number rises with the severity of the disturbance.',
+      },
+      {
+        t: 'table',
+        caption: 'Use the manufacturer figure for the specific meter; these are the common values',
+        head: ['Meter type', 'Upstream, typical minimum', 'Downstream', 'Notes'],
+        rows: [
+          ['Magnetic', '5 diameters', '2 to 3 diameters', 'Some designs accept less; a reducer just upstream is tolerable, a butterfly valve is not'],
+          ['Ultrasonic transit-time clamp-on', '10 diameters', '5 diameters', '20 or more after a pump or a partially open valve; multipath meters need less'],
+          ['Ultrasonic Doppler', '10 diameters', '5 diameters', 'Profile sensitivity is high; more is better'],
+          ['Orifice or venturi', '10 to 40 diameters depending on the disturbance', '5 diameters', 'Flow conditioners reduce the requirement; consult the standard'],
+          ['Turbine', '10 diameters', '5 diameters', 'A strainer upstream; the conditioner is often built in'],
+          ['Vortex', '10 to 20 diameters', '5 diameters', 'More after a control valve'],
+          ['Coriolis', 'None', 'None', 'Mass measurement is profile independent; support and vibration matter instead'],
+        ],
+      },
+      { t: 'h2', text: 'Keeping the pipe full' },
+      {
+        t: 'p',
+        text: 'A meter in a partially full pipe measures the velocity of the liquid that is there and multiplies by the whole pipe area. Air at the top of a horizontal pipe, a pipe that drains when the pump stops, or a high point that collects gas produces a reading that is wrong by the fraction of the pipe that is empty, and it is wrong in a way the meter cannot detect unless it has empty-pipe detection. Mount the meter in a vertical pipe with flow upward, or in a horizontal run at a low point with a rise downstream, or with a downstream valve or loop that keeps it flooded. Never at the highest point of the piping, and never on a pump suction where the pressure can fall below atmospheric and pull air out of solution.',
+      },
+      { t: 'h2', text: 'Orientation and velocity' },
+      {
+        t: 'ul',
+        items: [
+          'Magnetic meters in horizontal pipe: electrode axis horizontal, so bubbles at the top and sediment at the bottom do not touch the electrodes.',
+          'Velocity in the working range: for a magnetic meter, roughly 1 to 30 feet per second, with 3 to 10 feet per second the comfortable range. Below a foot per second the signal is small and the error large; reduce the meter size with reducers rather than accept a meter that reads at 3 percent of range.',
+          'Reducers: concentric reducers at a shallow angle count as a mild disturbance; eccentric reducers on horizontal pipe keep the top flat so air does not trap.',
+          'Insertion meters: the probe at the depth that measures the average velocity for the profile, per the manufacturer, and on the straight run like any other meter.',
+          'Open-channel primary devices: level, approach conditions, and submergence are the installation, and the flow accuracy is entirely in the civil work.',
+        ],
+      },
+      { t: 'h2', text: 'Grounding magnetic meters' },
+      {
+        t: 'p',
+        text: 'A magnetic meter measures a voltage of millivolts between its electrodes, referenced to the liquid. The liquid must be at the same potential as the meter electronics, or the reading wanders with every stray current in the pipe. On conductive unlined pipe, bonding the meter body to the pipe flanges on both sides with jumpers does it. On lined pipe, plastic pipe, or where cathodic protection puts current on the pipe, grounding rings between the flanges, or a third grounding electrode in the meter, connect the liquid to the meter ground. Skipping the rings is the most common magnetic meter installation error and produces a noisy, offset reading that no configuration change fixes.',
+      },
+      { t: 'h2', text: 'Mechanical and electrical' },
+      {
+        t: 'ul',
+        items: [
+          'Gaskets and liners: gaskets that do not protrude into the bore; liner protectors on magnetic meters removed only at installation and flanges tightened to the specified torque in sequence.',
+          'Support: the meter is not a pipe support; piping is supported on both sides so that the meter body carries no bending load.',
+          'Isolation and bypass: isolation valves both sides and a bypass where the process cannot stop, so the meter can be zeroed, verified, and replaced.',
+          'Access: room to reach the transmitter display and the terminals, and a place to clamp a verification meter on a straight run.',
+          'Cables: coil and electrode cables of a magnetic meter in separate conduit from power, using the manufacturer cable and within its length limit; transducer cables of an ultrasonic meter uncut and away from drives.',
+          'Environment: transmitter out of direct sun where the display and electronics overheat, and above flood level in a vault.',
+        ],
+      },
+      { t: 'h2', text: 'Commissioning' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Confirm the configuration', text: 'Meter size, meter factor or calibration constants from the nameplate or the calibration certificate, flow units, range, damping, low-flow cutoff, pulse scaling for the totalizer.' },
+          { title: 'Zero with a full, still pipe', text: 'Close the downstream valve with the pipe full and perform the meter zero. A zero done with the pipe draining or with flow through a leaking valve is a permanent offset.' },
+          { title: 'Check the empty-pipe detection', text: 'Where fitted, confirm it declares empty when the pipe is drained and full when it is refilled.' },
+          { title: 'Verify the signal chain', text: 'Simulate a flow from the transmitter and confirm the controller and the HMI show the same value in the same units, and that the totalizer counts at the right rate.' },
+          { title: 'Compare against an independent reference', text: 'A clamp-on ultrasonic on a straight run, a tank drawdown, or the pump curve at a known speed and head. Record the comparison.' },
+          { title: 'Record', text: 'Configuration, zero, verification results, signal strength on ultrasonic meters, and the electronic verification signature on magnetic meters that support it, in the instrument file.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'The tank drawdown check',
+        text: 'Where a meter feeds or drains a tank of known geometry, close everything else, run for a timed interval, and compute the volume from the level change. It is the simplest independent check available in a water plant, it exercises the totalizer as well as the rate, and it takes an hour. Do it at commissioning and once a year.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'The pipe layout does not allow the straight run. What are the options?',
+        a: 'A meter that needs less: a multipath ultrasonic or a magnetic meter designed for short runs. A flow conditioner upstream. Accepting a larger error and documenting it. Or rearranging the pipe, which is cheaper before construction than after. What is not an option is installing the meter and assuming the specification still applies.',
+      },
+      {
+        q: 'Can a magnetic meter be installed on a pump discharge?',
+        a: 'Yes, with the straight run measured from the discharge nozzle or the check valve, and usually a longer one than after a plain elbow because the pump discharge swirls. Five diameters after a pump is often not enough; ten is safer, and a clamp-on verification will tell you.',
+      },
+      {
+        q: 'Why does the meter read flow when the pump is off?',
+        a: 'A zero that was done with flow present, a leaking check valve passing real flow, air moving in a partially full pipe, or electrical noise from a missing fluid ground. Check the fluid ground and the pipe fullness first, then re-zero with the pipe proven full and still.',
+      },
+      {
+        q: 'How much does meter size matter?',
+        a: 'A lot at low flow. A meter one size smaller than the pipe doubles the velocity and halves the fraction of range at which it operates, at the cost of a small pressure drop. Size the meter for the flow range, and expect that to be smaller than the pipe in many water applications where pipes are sized for future demand.',
+      },
+    ],
+    related: [
+      '/controls/instrumentation/flow/magnetic-flowmeters',
+      '/controls/instrumentation/flow/ultrasonic-flow',
+      '/controls/instrumentation/flow/differential-pressure-flow',
+      '/controls/instrumentation/flow/flow-troubleshooting',
+      '/controls/instrumentation/calibration/loop-checks',
+      '/engineering-library/checklists/commissioning',
+    ],
+  },
+  {
+    path: '/controls/instrumentation/flow/flow-troubleshooting',
+    kind: 'reference',
+    title: 'Flow Troubleshooting',
+    summary:
+      'A method for a flow reading that is wrong, noisy, zero, or disputed: establish the truth with an independent check, separate installation from configuration from signal chain, then the specific checks for magnetic, ultrasonic, and DP meters.',
+    answer:
+      'Troubleshoot a flow reading by first establishing what the flow really is, with a clamp-on meter, a tank drawdown, or the pump curve, then checking the signal chain from the transmitter to the HMI, then the meter configuration against the nameplate and the calibration certificate, and then the installation: a full pipe, adequate straight run, the fluid ground on a magnetic meter, the pipe parameters and coupling on an ultrasonic meter, the impulse lines on a differential pressure meter. The symptom narrows it: zero with flow is a failed sensor or an empty-pipe condition, a steady wrong value is configuration or installation, noise is air, profile, or electrical interference, and a totalizer that disagrees is scaling or low-flow cutoff.',
+    keyPoints: [
+      'Get an independent flow value first; two readings that disagree tell you nothing about which is wrong.',
+      'Signal chain, then configuration, then installation: each layer is checked by a comparison that takes minutes.',
+      'Zero with flow: sensor, empty-pipe detection, or isolation. Steady and wrong: configuration or installation. Noisy: air, profile, or electrical.',
+      'Magnetic meters fail electrically: fluid ground, coated electrodes, coil and electrode cable. Ultrasonic meters fail by installation: parameters, coupling, air.',
+      'A totalizer that disagrees with the rate is pulse scaling, low-flow cutoff, or rollover, not the meter.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['Instrumentation', 'Flow', 'Troubleshooting', 'Water', 'Wastewater'],
+    blocks: [
+      { t: 'h2', text: 'Establish the truth' },
+      {
+        t: 'p',
+        text: 'A flow reading is disputed because it disagrees with something: the pump curve, the plant balance, the billing meter, the operator. Before touching the meter, find out what the flow actually is by a method that does not depend on it. A clamp-on transit-time meter on a straight run gives a rate within a few percent. A tank drawdown or fill over a timed interval gives both rate and volume. A pump running at known speed against a measured head gives a rate from its curve, good to perhaps five percent on a pump in good condition. With that number in hand, the question changes from why are these different to which one is wrong, and the answer is often not the meter.',
+      },
+      { t: 'h2', text: 'Narrow by symptom' },
+      {
+        t: 'table',
+        head: ['Symptom', 'Likely causes', 'First checks'],
+        rows: [
+          ['Reads zero with flow present', 'Empty-pipe detection tripped; coil or electrode failure on a magnetic meter; no signal on an ultrasonic; DP transmitter isolated or equalized', 'Empty-pipe status, transmitter diagnostics, signal strength, manifold valve positions'],
+          ['Steady reading, wrong value', 'Wrong meter factor, pipe size, or units; wrong span in the controller; partially full pipe; square root applied twice or not at all on DP; wrong pipe parameters on ultrasonic', 'Nameplate against configuration; controller scaling; pipe fullness; DP output mode'],
+          ['Noisy or jumping', 'Air entrainment; flow profile from a nearby disturbance; missing fluid ground; electrical noise from a drive; pulsating flow from a positive displacement pump; electrode coating', 'Correlate with pumps and drives; check grounding rings; inspect for air; damping setting'],
+          ['Drifts over weeks', 'Electrode coating; scaling in a DP orifice; couplant drying on clamp-on; impulse line filling with sediment', 'Electronic verification; signal strength trend; impulse line purge'],
+          ['Reads flow with pump off', 'Zero offset; leaking check valve; noise floor above the low-flow cutoff; air movement in a draining pipe', 'Re-zero with pipe full and still; check valve; cutoff setting'],
+          ['Negative or reverse flow', 'Real reverse flow through a failed check valve; electrode or transducer wiring reversed; reverse flow enabled or disabled wrongly', 'Check valve; wiring against the manual; reverse flow configuration'],
+          ['Rate is right, total is wrong', 'Pulse scaling; low-flow cutoff dropping small flows; totalizer rollover; units mismatch between meter and controller', 'Count pulses against the rate for ten minutes; cutoff value; rollover value'],
+        ],
+      },
+      { t: 'h2', text: 'Signal chain' },
+      {
+        t: 'p',
+        text: 'With the meter reading a value on its own display, compare that value with the controller input and with the HMI. If the display and the HMI disagree, the problem is between them: the 4-20 mA scaling, a pulse count, a damping or filter in the controller, a units conversion. Simulate a known output from the transmitter and follow it through. Only when the display and the HMI agree is the meter itself in question.',
+      },
+      { t: 'h2', text: 'Configuration' },
+      {
+        t: 'p',
+        text: 'The transmitter holds a set of numbers that convert the sensor signal to a flow: the meter factor or calibration constants from the sensor nameplate, the nominal size, the units, the range for the analog output, the damping, the low-flow cutoff, and the pulse output scaling. Compare each with the nameplate and the calibration certificate. A transmitter replaced under warranty and configured from memory, a meter factor entered in the wrong units, or a size chosen from a drop-down list one step off will each produce a confident wrong reading that survives every other check.',
+      },
+      { t: 'h2', text: 'Magnetic meters' },
+      {
+        t: 'ul',
+        items: [
+          'Fluid ground: grounding rings or a reference electrode on lined or plastic pipe, bonding jumpers on steel pipe. A missing ground is the first thing to check for a noisy or offset reading.',
+          'Electrodes: coating by grease or scale raises electrode impedance and produces noise and drift. Electronic verification tools measure it; some meters have electrode cleaning.',
+          'Coil and cable: coil resistance and insulation, and the electrode cable insulation, against the manual values. Water in a cable or a junction box is a common failure in vaults.',
+          'Empty-pipe detection: a threshold set too sensitively declares the pipe empty in low-conductivity or aerated water and forces the reading to zero.',
+          'Conductivity: very pure water or a liquid below the minimum conductivity gives a weak signal and a noisy reading.',
+          'Electronic verification: most modern meters can compare the sensor signature with the factory record and report whether the sensor has changed; run it before pulling the meter.',
+        ],
+      },
+      { t: 'h2', text: 'Ultrasonic meters' },
+      {
+        t: 'ul',
+        items: [
+          'Signal strength and sound speed against the commissioning record; falling strength is coupling or pipe condition, wrong sound speed is wrong parameters or spacing.',
+          'Pipe parameters: measured outside diameter and wall thickness, liner entered, material correct.',
+          'Transducer spacing and alignment: moved by vibration, a bumped bracket, or a re-mount after painting.',
+          'Couplant dried out, or the mounting surface corroded under the transducer.',
+          'Air: entrained air scatters the beam; the signal drops when the pump starts or when a tank drains.',
+          'Doppler reading noise as flow in still liquid; raise the low-flow cutoff.',
+        ],
+      },
+      { t: 'h2', text: 'Differential pressure meters' },
+      {
+        t: 'ul',
+        items: [
+          'Impulse lines plugged, leaking, or with unequal legs; purge and refill, and check for trapped air in liquid service.',
+          'Manifold valves: a closed block or an open equalizer reads zero; a partly open block reads slow.',
+          'Zero shift with static pressure or with time; re-zero with the equalizer open.',
+          'Square root: extracted once, in the transmitter or the controller, never both and never neither.',
+          'Orifice plate worn, installed backwards, or with a damaged edge; a venturi throat scaled.',
+          'Range: differential pressure flow has a ten to one turndown at best; below a third of range the error grows fast.',
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Fix the cause, then re-verify',
+        text: 'After any change, compare with the independent reference again under the same conditions, and record the before and after. A meter that has been zeroed, reconfigured, and re-grounded in one visit without a verification at the end is a meter whose next reading will be disputed too.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'The magnetic meter and the pump curve disagree by fifteen percent. Which is right?',
+        a: 'Neither, until a third measurement is made. Pump curves drift as impellers wear and the head measurement may be wrong; magnetic meters drift when electrodes coat or the ground is lost. Clamp on an ultrasonic meter or run a tank drawdown, and the odd one out is the wrong one.',
+      },
+      {
+        q: 'The reading is noisy only when the raw water pump runs on the drive. What is it?',
+        a: 'Electrical noise from the drive coupling into the electrode cable or the fluid ground, or air drawn in on the suction at low speed. Check the drive installation and the electrode cable route first, then look for air with the pump at different speeds.',
+      },
+      {
+        q: 'The totalizer is always a few percent below the rate integrated by the historian. Why?',
+        a: 'The low-flow cutoff in the transmitter drops flows below its threshold from the pulse output while the analog rate still shows them, or the historian is integrating a sampled value with a coarse interval. Compare the two over a period of steady flow; if they agree there, the difference is at low flows and the cutoff is the cause.',
+      },
+      {
+        q: 'When should the meter be pulled and sent for calibration?',
+        a: 'When electronic verification fails, when the sensor has physical damage or heavy coating that cleaning does not fix, or when a regulatory requirement sets a calibration interval. Most disputed readings are installation or configuration, and pulling the meter fixes neither.',
+      },
+    ],
+    related: [
+      '/controls/instrumentation/flow/magnetic-flowmeters',
+      '/controls/instrumentation/flow/ultrasonic-flow',
+      '/controls/instrumentation/flow/differential-pressure-flow',
+      '/controls/instrumentation/flow/flow-installation',
+      '/troubleshooting/instrumentation-troubleshooting/transmitter-reads-wrong-value',
+      '/troubleshooting/pump-troubleshooting/pump-runs-but-no-flow',
+    ],
+  },
+  {
+    path: '/controls/instrumentation/level/differential-pressure-level',
+    kind: 'reference',
+    title: 'Differential Pressure Level',
+    summary:
+      'Measuring level in a closed or pressurized vessel with a DP transmitter: high and low side connections, dry legs and wet legs, zero suppression and elevation, the range calculation with a worked example, remote seals, and the density dependence.',
+    answer:
+      'In a vessel that is closed or under pressure, a single pressure transmitter at the bottom reads the liquid head plus whatever pressure is above the liquid, so level is measured with a differential pressure transmitter whose high side connects to the bottom tap and whose low side connects to the vapor space, cancelling the vessel pressure. When the low side connection stays empty it is a dry leg and the transmitter reads the liquid head directly; when it fills with condensate or is deliberately filled it is a wet leg that applies a constant head to the low side, and the range is shifted to compensate, which is called zero elevation. The transmitter range is computed from the liquid density and the tap elevations, the reading changes with density, and remote diaphragm seals replace impulse lines where the liquid is dirty or the lines would freeze.',
+    keyPoints: [
+      'Bottom tap to the high side, vapor space to the low side; the vessel pressure appears on both and cancels.',
+      'Dry leg: the low side is empty and the range is the liquid head. Wet leg: the low side holds a constant head and the range is elevated by that amount.',
+      'Range comes from density times height; a transmitter reads head, and level only if the density is what the range assumed.',
+      'Zero suppression corrects for a transmitter mounted below the tap; zero elevation corrects for a wet leg.',
+      'Remote seals eliminate impulse lines but add temperature effects; equal capillary lengths on both sides.',
+      'Water applications: hydropneumatic tanks, digesters, pressure filters, closed clearwells and reservoirs.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['Instrumentation', 'Level', 'Water', 'Wastewater', 'Engineering'],
+    blocks: [
+      { t: 'h2', text: 'Why differential' },
+      {
+        t: 'p',
+        text: 'A pressure transmitter at the bottom of an open tank reads the head of liquid above it, and that is level. Close the tank, pressurize it, or let gas accumulate above the liquid, and the transmitter reads the head plus the gas pressure, and level is lost inside it. A differential pressure transmitter has two connections. Connect the high side to the bottom tap and the low side to the top of the vessel, and the gas pressure is applied to both sides equally. The transmitter reads the difference, which is the head of liquid between the two taps, whatever the vessel pressure does.',
+      },
+      { t: 'h2', text: 'Dry leg and wet leg' },
+      {
+        t: 'p',
+        text: 'The low side connection runs from the top of the vessel down to the transmitter. If the vapor above the liquid does not condense, that line stays full of gas, weighs nothing, and the low side sees only the vessel pressure: a dry leg. If the vapor condenses, the line fills with liquid over time, and the transmitter sees a head on the low side that changes as the line fills, which is an error that wanders. The cure is to fill the line deliberately, keep it full with a fill tee at the top, and account for the constant head it applies: a wet leg. In water and wastewater service, dry legs are the norm on air-cushioned tanks and gas-blanketed vessels, and wet legs appear on hot or humid services where condensation is unavoidable.',
+      },
+      {
+        t: 'table',
+        caption: 'H is the distance between the taps; ρ is the process liquid density; ρ_fill is the wet leg fill density',
+        head: ['Arrangement', 'Low side', 'Differential at empty', 'Differential at full', 'Range'],
+        rows: [
+          ['Open tank, gauge transmitter at the tap', 'Atmosphere', '0', 'ρ g H', '0 to ρ g H'],
+          ['Closed tank, dry leg', 'Vapor space, empty line', '0', 'ρ g H', '0 to ρ g H'],
+          ['Closed tank, wet leg', 'Vapor space through a filled line of height h_wet', '− ρ_fill g h_wet', 'ρ g H − ρ_fill g h_wet', 'Elevated zero: from − ρ_fill g h_wet to ρ g H − ρ_fill g h_wet'],
+          ['Transmitter mounted below the bottom tap by d', 'Either', '+ ρ g d added to both ends', '', 'Suppressed zero: the whole range shifted up by ρ g d'],
+        ],
+      },
+      { t: 'h2', text: 'Worked example' },
+      {
+        t: 'p',
+        text: 'A closed clearwell has taps 20 feet apart and holds water, so the head at full is 20 feet of water, which is 240 inches of water column or about 8.7 psi. With a dry leg the range is 0 to 240 inches of water. Suppose instead the low side must be a wet leg because the tank is warm and the line condenses, and the fill tee is 25 feet above the transmitter. The wet leg applies 25 feet, 300 inches, of water to the low side at all times. At empty the differential is 0 minus 300, or minus 300 inches; at full it is 240 minus 300, or minus 60 inches. The transmitter is ranged from minus 300 to minus 60 inches of water, and it outputs 4 mA at minus 300 and 20 mA at minus 60. The span is still 240 inches; only the zero moved.',
+      },
+      {
+        t: 'formula',
+        expr: 'ΔP = ρ g h − ρ_fill g h_wet',
+        where: [
+          'ΔP = the differential pressure the transmitter sees',
+          'ρ g h = the head of process liquid above the bottom tap, up to ρ g H at full',
+          'ρ_fill g h_wet = the constant head of the wet leg; zero for a dry leg',
+          'In water units, head in inches of water column equals height in inches times specific gravity',
+        ],
+      },
+      { t: 'h2', text: 'Density' },
+      {
+        t: 'p',
+        text: 'The transmitter measures head, and the range converts head to level by assuming a density. Sludge in a digester, water at a different temperature, or a chemical whose concentration changes each read a different level for the same height. For most water vessels the error is small; for a digester with sludge of varying solids it can be several percent, and a radar or ultrasonic measurement that does not depend on density may be the better instrument. Where differential pressure is used on a variable-density liquid, state the assumed density on the loop sheet and expect the level to be biased when it changes.',
+      },
+      { t: 'h2', text: 'Remote seals' },
+      {
+        t: 'p',
+        text: 'A diaphragm seal at each tap, connected to the transmitter by a fill-fluid capillary, keeps sludge, scale, and freezing liquids out of the impulse lines and lets the transmitter mount where it is convenient. The fill fluid has its own head, which is a constant offset handled by ranging, and it expands and contracts with temperature, which is an error that tracks the sun on the capillaries. Keep capillaries the same length on both sides so their temperature effects cancel, route them together, shade them, and mount the transmitter at or below the lower seal. Seals are the usual choice on digesters and on chemical tanks; plain impulse lines are fine on clean water.',
+      },
+      { t: 'h2', text: 'Applications' },
+      {
+        t: 'table',
+        head: ['Vessel', 'Low side', 'Notes'],
+        rows: [
+          ['Hydropneumatic tank', 'Air space at the top', 'Reads water level regardless of air pressure; a single gauge transmitter would read the air charge as level'],
+          ['Anaerobic digester', 'Gas space, usually through a seal', 'Sludge density varies; seals avoid plugged lines; gas pressure is low but not zero'],
+          ['Pressure filter', 'Space above the media, or the influent', 'Often the same transmitter gives head loss across the bed from a different tap pair'],
+          ['Closed clearwell or covered reservoir', 'Vent space', 'Dry leg on most; a gauge transmitter works if the vent is truly at atmosphere'],
+          ['Chemical storage under nitrogen blanket', 'Blanket gas', 'Seals for the chemical; density from the concentration'],
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Commissioning a wet leg',
+        text: 'Fill the wet leg from the top with the tank isolated, confirm it is full and free of air by venting at the transmitter, then apply the zero with the tank empty or at a known level. A wet leg that was never filled, or that drains through a leaking fitting, produces a level that rises slowly for no reason. Put the fill point and the range calculation on the loop drawing, because the next technician will otherwise zero the transmitter with the leg empty and shift the whole range.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'When is a single gauge pressure transmitter enough?',
+        a: 'When the space above the liquid is truly at atmospheric pressure: an open tank, a wet well, a vented reservoir. Any tank that can hold pressure or vacuum, including one whose vent can plug or freeze, needs a differential measurement or a level technology that does not use pressure.',
+      },
+      {
+        q: 'What is the difference between suppression and elevation?',
+        a: 'Both shift the zero. Suppression handles a transmitter mounted below the bottom tap, so a positive head exists at zero level, and the range starts above zero. Elevation handles a wet leg, so a negative differential exists at zero level, and the range starts below zero. Transmitters accept both; the arithmetic is the head at the empty condition.',
+      },
+      {
+        q: 'The digester level reads high after a feed of thin sludge. Is the transmitter wrong?',
+        a: 'No, the density is. The transmitter reads head, and thinner sludge produces less head for the same height, so the reading falls; thicker sludge produces more and the reading rises. If the bias matters, measure the density or use radar.',
+      },
+      {
+        q: 'Can the low side just be left open to atmosphere on a closed tank?',
+        a: 'Only if the tank is open to atmosphere too. Otherwise the transmitter reads the tank pressure as level, and a pressure swing of a few psi is several feet of false level. The low side goes to the vessel, always.',
+      },
+    ],
+    related: [
+      '/controls/instrumentation/level/hydrostatic-level',
+      '/controls/instrumentation/pressure/impulse-lines',
+      '/controls/instrumentation/pressure/differential-pressure',
+      '/controls/instrumentation/level/radar-level',
+      '/controls/instrumentation/level/level-troubleshooting',
+      '/how-to/instrumentation-how-to/calibrate-a-pressure-transmitter',
+    ],
+  },
+  {
+    path: '/controls/instrumentation/level/level-troubleshooting',
+    kind: 'reference',
+    title: 'Level Troubleshooting',
+    summary:
+      'A method for a level reading that is wrong, frozen, jumping, or lost: establish the true level, check the signal chain and configuration, then the checks for ultrasonic, radar, hydrostatic, DP, and float instruments, and the failure behavior to design in.',
+    answer:
+      'Troubleshoot a level reading by measuring the true level with a tape or a sight glass from the same reference the instrument uses, comparing the instrument display, the controller value, and the HMI to find which layer disagrees, checking the configuration against the instrument list, and then examining the sensor and its environment for the failures that belong to its technology: false echoes, foam, and temperature for ultrasonic; false echoes and buildup for radar; fouling, vent tube, and density for hydrostatic; impulse lines and wet legs for differential pressure; and tangling, grease, and stuck switches for floats. The symptom points at the cause: a constant offset is reference or zero, a proportional error is span or density, a frozen value is a lost signal being held, and jumps are echoes or electrical noise.',
+    keyPoints: [
+      'A tape measure from the instrument reference point is the truth; every diagnosis starts there.',
+      'Display, controller, HMI: the layer where the numbers stop agreeing is where the fault is.',
+      'Offset means reference or zero; proportional error means span or density; frozen means lost signal; jumping means echoes or noise.',
+      'Each technology has its own short list: echoes and foam, fouling and vent tubes, impulse lines, tangled floats.',
+      'Decide what the controller does on a lost or bad level before the day it happens; a level held at the last value has drained wet wells.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['Instrumentation', 'Level', 'Troubleshooting', 'Wastewater', 'Water'],
+    blocks: [
+      { t: 'h2', text: 'Start with the truth' },
+      {
+        t: 'p',
+        text: 'Measure the level independently, from the same reference the instrument uses. In a wet well that is a tape from the transducer face or the top of the wall to the water, converted with the same reference elevation the transmitter has. In a tank it is a sight glass, a staff gauge, or a tape through the hatch. Write down the true level, the instrument display, the controller value, and the HMI value at the same moment. The pattern in those four numbers is the diagnosis: all four agree, the complaint is somewhere else; display right and HMI wrong, the problem is the signal chain or scaling; display wrong, the instrument or its installation.',
+      },
+      { t: 'h2', text: 'What the error pattern says' },
+      {
+        t: 'table',
+        head: ['Pattern', 'Meaning', 'Look at'],
+        rows: [
+          ['Constant offset at every level', 'Wrong reference point, zero shift, elevation of a pressure sensor, a wet leg not accounted for', 'Reference distance, zero, mounting'],
+          ['Error grows with level', 'Span or range wrong in one place, density different from the range assumption, wrong tank height entered', 'Range in the transmitter against the controller scaling; density'],
+          ['Value frozen', 'Lost echo or lost signal with the output holding last value; a failed transmitter; communication stopped', 'Instrument diagnostics, signal quality, communication status'],
+          ['Value at maximum or minimum', 'Loss of signal driving the output to a fail value; a sensor out of range; a plugged line', 'Fail-safe setting, sensor diagnostics'],
+          ['Jumps between two values', 'A false echo competing with the true one; a float bouncing; electrical noise', 'Echo profile, mounting, nearby objects, cable route'],
+          ['Slow drift over days', 'Fouling on a pressure sensor; vent tube blocked; buildup on an antenna; wet leg filling', 'Sensor condition, vent, wet leg'],
+          ['Reads correctly only at some levels', 'A false echo at a specific distance; a float snagging at one point; a bend in a stilling well', 'Echo profile at the bad level; physical inspection'],
+        ],
+      },
+      { t: 'h2', text: 'Ultrasonic' },
+      {
+        t: 'ul',
+        items: [
+          'Loss of echo: foam, a surface too turbulent, condensation or buildup on the face, too much range for the transducer, or a target beyond the blanking distance at the top. Read the echo profile and the signal quality.',
+          'False echoes: ladders, pipes, inflow streams, wall seams, and the cone of a tank return echoes that the instrument may lock onto. Map them with the vessel empty and use a stilling well where the geometry is bad.',
+          'Temperature: the speed of sound changes with air temperature, and a transducer in the sun with a cold liquid reads wrong by a percent or two. Shade it; use the built-in temperature sensor.',
+          'Blanking: a level that rises into the blanking zone reads full or lost; mount high enough that full level is outside it.',
+          'Mounting: not plumb, or on a wall where the beam clips something; the beam is wider than it looks.',
+        ],
+      },
+      { t: 'h2', text: 'Radar' },
+      {
+        t: 'ul',
+        items: [
+          'False echoes from the same objects as ultrasonic, though the beam is narrower; map them.',
+          'Buildup on the antenna or the lens; a purge or a drip-off design in wet wells.',
+          'Low dielectric liquids reflect weakly; water is easy, hydrocarbons and some chemicals are not.',
+          'Foam is mostly transparent to radar, which is a reason to choose it, but thick dense foam can still absorb.',
+          'Interference between two radars in one vessel, or with a radio nearby, on some frequencies.',
+        ],
+      },
+      { t: 'h2', text: 'Hydrostatic and submersible' },
+      {
+        t: 'ul',
+        items: [
+          'Fouling: grease, rags, or sediment on the diaphragm. The reading drifts or lags; clean and compare.',
+          'Vent tube: a gauge-referenced submersible transmitter vents to atmosphere through its cable; a blocked or wet vent makes the reading follow the barometer and the temperature.',
+          'Density: sludge, brine, and hot water read a different level for the same height.',
+          'Buried: a sensor that has sunk into sediment reads the sediment head.',
+          'Cable damage: chafed at the well cover or the cable hanger, letting water into the vent or the conductors.',
+          'Position: a sensor pulled up during cleaning and put back at a different height has a new zero.',
+        ],
+      },
+      { t: 'h2', text: 'Differential pressure' },
+      {
+        t: 'ul',
+        items: [
+          'Impulse lines plugged, leaking, or holding air; wet legs drained or never filled.',
+          'Manifold valve positions after maintenance: equalizer open reads zero.',
+          'Zero shift with static pressure or temperature; re-zero at a known level.',
+          'Remote seal capillaries unequal or in the sun; fill fluid lost from a damaged seal.',
+          'Density, as for hydrostatic.',
+        ],
+      },
+      { t: 'h2', text: 'Floats and switches' },
+      {
+        t: 'ul',
+        items: [
+          'Tangled, wrapped on a pump cable or a guide, or hung on a ladder rung.',
+          'Grease-coated so the float does not tip, or waterlogged so it does not float.',
+          'Tether length changed during cleaning, moving the switch point.',
+          'Cable insulation failed, giving a false contact or a ground fault.',
+          'Wrong angle: some floats need a tilt to change state and a tether that is too short never lets them.',
+        ],
+      },
+      { t: 'h2', text: 'Failure behavior' },
+      {
+        t: 'p',
+        text: 'Decide what the controller does when the level is lost, and configure it deliberately. A level that holds its last value keeps pumps doing whatever they were doing, which has emptied wet wells and overflowed tanks. A level that goes to a fail value should go to the safe one for the application, usually high in a wet well so the pumps run, with a bad-quality flag and an alarm that operators act on. Backup floats at high and low limits, wired to act independently of the level transmitter, are the standard defense in a lift station, and the troubleshooting page for a level that jumps is much shorter when the floats have been holding things together.',
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Record the reference',
+        text: 'Most constant offsets are a reference distance that was measured once, entered, and forgotten, then changed when the transducer was remounted or the sensor was re-hung. Put the reference distance, the zero elevation, and the mounting height on the loop drawing and on a label at the instrument, and re-measure them after any work on the mounting.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'The ultrasonic reads correctly except when the pump discharge splashes. What is happening?',
+        a: 'The inflow stream or the turbulence returns an echo that the instrument locks onto, or the surface scatters the echo and the instrument loses it and holds. A stilling well, a different mounting position away from the inflow, or a radar with a narrow beam are the fixes. Foam from the splash makes it worse.',
+      },
+      {
+        q: 'The submersible transmitter reads slightly different each morning. Why?',
+        a: 'The vent is blocked or holds water, so the sensor reference is no longer atmosphere and the reading tracks the barometer and the temperature of the trapped air. Check the vent tube path, the breather at the junction box, and the desiccant. A vent that is clear reads the same level every morning.',
+      },
+      {
+        q: 'Is a level that jumps between two values a transmitter fault?',
+        a: 'Almost never. It is two echoes of similar strength, and the instrument choosing between them. Read the echo profile: the false one is at a fixed distance and matches something in the vessel. Suppress it in the echo map or move the sensor so it does not see the object.',
+      },
+      {
+        q: 'How often should a level transmitter be checked against a tape?',
+        a: 'At commissioning, after any work on the mounting or the sensor, and on a routine of a few months in wet wells where fouling and reference changes are common. The check takes five minutes and catches the offsets that slowly become pump cycling problems.',
+      },
+    ],
+    related: [
+      '/troubleshooting/instrumentation-troubleshooting/level-reading-jumps',
+      '/troubleshooting/instrumentation-troubleshooting/transmitter-reads-wrong-value',
+      '/controls/instrumentation/level/ultrasonic-level',
+      '/controls/instrumentation/level/radar-level',
+      '/controls/instrumentation/level/hydrostatic-level',
+      '/controls/instrumentation/level/wet-well-level',
+    ],
+  },
+  {
+    path: '/controls/instrumentation/pressure/differential-pressure',
+    kind: 'reference',
+    title: 'Differential Pressure',
+    summary:
+      'The differential pressure transmitter as an instrument: what it measures, static and overrange ratings, the three-valve manifold and the order of operations that protects the cell, and the applications from filter head loss to membrane TMP, flow, and level.',
+    answer:
+      'A differential pressure transmitter measures the difference between the pressures at its high and low connections, independent of the common pressure applied to both up to its static pressure rating. In water and wastewater it measures head loss across filters, screens, and strainers, transmembrane pressure across membranes, the differential across pumps for head and condition monitoring, flow through orifices and venturis, and level in closed vessels. It is connected through a three-valve or five-valve manifold whose block and equalizer valves must be operated in the right order so that full line pressure is never applied to one side alone, and it is zeroed with the equalizer open at line pressure. Its span is small compared with the line pressure, so it is ranged for the differential of interest and protected against overrange by the manifold procedure.',
+    keyPoints: [
+      'It reads high side minus low side, and ignores the pressure common to both up to the static rating.',
+      'Span is small, line pressure is large: the manifold sequence exists so that one side never sees full line pressure alone.',
+      'To zero: equalizer open, both sides at line pressure, then trim. To run: close the equalizer, then open the low side block.',
+      'Filter head loss, strainer differential, membrane TMP, pump differential, orifice flow, closed-tank level: one instrument, six jobs.',
+      'Static pressure shifts the zero a little; a transmitter zeroed at line pressure is right at line pressure.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['Instrumentation', 'Level', 'Flow', 'Water', 'Wastewater'],
+    blocks: [
+      { t: 'h2', text: 'What it measures' },
+      {
+        t: 'p',
+        text: 'The sensing element sees two pressures, one on each side of a diaphragm or a pair of diaphragms, and produces a signal proportional to their difference. A pressure applied equally to both sides deflects nothing and is not measured; that is the static or line pressure, and the transmitter is rated for the maximum it will tolerate. The differential it is ranged for is usually a small fraction of the line pressure: a filter with 100 inches of water of head loss on a system at 60 psi, which is about 1,660 inches of water, is a differential of 6 percent of the line pressure. Applying the full line pressure to one side alone, by opening the wrong valve, overranges the cell by a factor of sixteen; transmitters are built to survive that up to their overrange rating, and the manifold procedure exists so that it does not happen anyway.',
+      },
+      { t: 'h2', text: 'Ratings' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Span and range', def: 'The differential between 4 and 20 mA. Transmitters have a wide turndown, so one model covers head loss on a filter and flow through an orifice with different ranges.' },
+          { term: 'Static pressure rating', def: 'The maximum common pressure both sides may carry. Water plant pressures are far below it on most transmitters.' },
+          { term: 'Overrange', def: 'The pressure one side may see alone without damage. Usually the static rating; exceeding it can shift the calibration permanently.' },
+          { term: 'Static pressure effect', def: 'The zero and span shift a small amount per unit of line pressure; negligible in water service, real in high-pressure service, and removed by zeroing at line pressure.' },
+          { term: 'Accuracy', def: 'A fraction of a percent of span at the calibrated range; turning a transmitter down to a small span from a large upper range limit costs some of it.' },
+        ],
+      },
+      { t: 'h2', text: 'The manifold' },
+      {
+        t: 'p',
+        text: 'A three-valve manifold has a block valve on each side and an equalizer between them. A five-valve manifold adds vent or drain valves. The sequence protects the cell and makes zeroing possible.',
+      },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Putting into service', text: 'Start with both blocks closed and the equalizer open. Open the high side block: line pressure reaches both sides through the equalizer and the transmitter reads zero. Close the equalizer. Open the low side block. The transmitter now reads the differential.' },
+          { title: 'Zeroing', text: 'With the high side block open, close the low side block, then open the equalizer. Both sides are at line pressure and the reading should be zero; trim if it is not. Close the equalizer, then reopen the low side block.' },
+          { title: 'Taking out of service', text: 'Close the low side block. Open the equalizer. Close the high side block. Vent or drain through the vent valves if fitted.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Never both blocks open with the equalizer closed and one side vented',
+        text: 'That applies line pressure to one side and atmosphere to the other, which is the overrange the sequence is designed to avoid. Read the valve positions before touching anything, and do the steps in order. On a hot or hazardous service the vent valves are opened only with the block valves closed.',
+      },
+      { t: 'h2', text: 'Applications' },
+      {
+        t: 'table',
+        head: ['Application', 'High side', 'Low side', 'Typical range', 'Purpose'],
+        rows: [
+          ['Gravity filter head loss', 'Above the media, or the influent channel', 'Filter effluent', '0 to 120 inches of water', 'Backwash initiation, filter run tracking'],
+          ['Strainer or screen differential', 'Upstream', 'Downstream', '0 to 10 psi', 'Cleaning alarm and interlock'],
+          ['Membrane transmembrane pressure', 'Feed side', 'Permeate side', '0 to 15 or 0 to 30 psi depending on the membrane', 'Fouling trend, clean-in-place trigger, integrity'],
+          ['Pump differential', 'Discharge', 'Suction', '0 to the shutoff head', 'Head for the pump curve, wear and blockage detection'],
+          ['Orifice or venturi flow', 'Upstream tap', 'Throat or downstream tap', '0 to 100 inches of water, square root', 'Flow where a spool meter is not fitted'],
+          ['Closed tank level', 'Bottom tap', 'Vapor space', 'Liquid head between taps', 'Level independent of vessel pressure'],
+        ],
+      },
+      { t: 'h2', text: 'Pump differential' },
+      {
+        t: 'p',
+        text: 'A differential transmitter across a pump, or two pressure transmitters whose readings are subtracted, gives the pump head, which together with speed and flow places the pump on its curve. Head that falls at a given speed and flow means wear or recirculation; head that rises with flow falling means a blockage downstream. The head in feet is the differential in psi times 2.31 divided by the specific gravity, corrected for the elevation difference between the two taps and the difference in velocity head where the suction and discharge pipe sizes differ.',
+      },
+      {
+        t: 'formula',
+        expr: 'H = 2.31 × ΔP / SG + (z_d − z_s) + (v_d² − v_s²) / 2g',
+        where: [
+          'H = pump total head in feet',
+          'ΔP = discharge pressure minus suction pressure in psi, at the taps',
+          'SG = specific gravity of the liquid, 1.0 for water',
+          'z_d − z_s = elevation of the discharge tap above the suction tap in feet',
+          'v_d, v_s = velocities at the discharge and suction taps in feet per second; g = 32.2 feet per second squared',
+        ],
+      },
+      { t: 'h2', text: 'Installation notes' },
+      {
+        t: 'ul',
+        items: [
+          'Impulse lines of equal length and the same fill, both sloped so that air vents back to the process on liquid service.',
+          'Taps at the same elevation on flow and pump service, or the elevation difference accounted for.',
+          'The transmitter below the taps on liquid service so the lines stay full, with a vent at the transmitter.',
+          'Diaphragm seals on sludge, membrane feed with solids, and chemical services, with matched capillaries.',
+          'A gauge on each side for a sanity check, and access to the manifold from the floor.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Why not use two pressure transmitters and subtract in the controller?',
+        a: 'Because each has its own error, and subtracting two large numbers to get a small one multiplies the error. Two transmitters at 60 psi with a quarter percent error each can be wrong by a few tenths of a psi, which is a large fraction of a filter head loss of a few psi. A differential transmitter measures the small number directly. Two transmitters are fine when the differential is large relative to the errors, such as pump head.',
+      },
+      {
+        q: 'The transmitter reads a small negative value with the equalizer open. Is it broken?',
+        a: 'It needs a zero trim at line pressure, which is what the equalizer-open condition is for. A small shift with line pressure and temperature is normal; trim it and close the equalizer. A large negative reading with the equalizer open is a leg that is not full or a plugged equalizer.',
+      },
+      {
+        q: 'Can a differential transmitter be used as a plain pressure transmitter?',
+        a: 'Yes, with the low side open to atmosphere, it reads gauge pressure at the high side. The range limits and the static rating still apply, and a vented low side must be protected from water and insects.',
+      },
+      {
+        q: 'What causes the filter head loss reading to jump at the start of backwash?',
+        a: 'The flow reversal changes which tap is at the higher pressure, and a transmitter ranged for positive differential reads below zero or pins. Range it bidirectionally, or accept that the reading is meaningless during backwash and mask it in the controller.',
+      },
+    ],
+    related: [
+      '/controls/instrumentation/pressure/pressure-transmitters',
+      '/controls/instrumentation/pressure/impulse-lines',
+      '/controls/instrumentation/flow/differential-pressure-flow',
+      '/controls/instrumentation/level/differential-pressure-level',
+      '/controls/instrumentation/pressure/pressure-calibration',
+      '/controls/instrumentation/pressure/pressure-installation',
+    ],
+  },
+  {
+    path: '/controls/instrumentation/pressure/pressure-installation',
+    kind: 'reference',
+    title: 'Pressure Transmitter Installation',
+    summary:
+      'Where and how to install a pressure transmitter so it reads the process and not its own plumbing: tap location, mounting above or below the tap, isolation and bleed valves, line slope, pulsation, elevation, freeze protection, seals, vibration, and sun.',
+    answer:
+      'A pressure transmitter reads correctly when the tap is on the side of a liquid line where neither air nor sediment collects, away from turbulence, with an isolation valve at the tap and a bleed at the transmitter, an impulse line that slopes so air returns to the process, the transmitter mounted below the tap on liquid service so the line stays full, the elevation difference between the tap and the sensor corrected in the zero, pulsation from pumps damped, the line and the transmitter protected from freezing, a diaphragm seal where the liquid would plug or attack the line, and the transmitter mounted where vibration and sun do not reach it. Most calibration complaints on pressure transmitters are installation faults, and most are visible from the floor.',
+    keyPoints: [
+      'Tap on the side of a liquid line; the top collects air and the bottom collects solids.',
+      'Transmitter below the tap on liquid service with the line sloping up to the tap, so air goes back to the process.',
+      'Isolation at the tap, bleed at the transmitter: the two valves that make calibration and replacement possible.',
+      'Elevation between the tap and the sensor is a fixed offset; correct it in the zero and write it on the loop sheet.',
+      'Pulsation is damped by a snubber or damping, not by a filter that hides a real pressure swing.',
+      'Freeze, plug, and chemical attack are prevented by seals, heat trace, and fill fluids chosen at design.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['Instrumentation', 'Design', 'Water', 'Commissioning', 'Engineering'],
+    blocks: [
+      { t: 'h2', text: 'The tap' },
+      {
+        t: 'table',
+        head: ['Service', 'Tap position', 'Transmitter position', 'Reason'],
+        rows: [
+          ['Liquid, clean', 'Side of the pipe, 3 or 9 o clock', 'Below the tap', 'Air stays out of the line, solids stay out of the tap, line stays full'],
+          ['Liquid with solids', 'Side of the pipe, slightly above center', 'Below the tap, or a seal at the tap', 'Solids settle away from the tap; seals for sludge'],
+          ['Gas or air', 'Top of the pipe', 'Above the tap', 'Condensate drains back to the process'],
+          ['Steam', 'Side', 'Below, with a condensate pot or pigtail', 'Water leg protects the sensor from heat'],
+          ['Tank level', 'Bottom of the tank, above the sediment zone', 'At or below the tap', 'Head measurement; elevation correction'],
+        ],
+      },
+      {
+        t: 'p',
+        text: 'Position along the pipe matters less than for flow, but a tap directly on a pump discharge nozzle, inside an elbow, or just downstream of a throttling valve reads turbulence and velocity effects rather than static pressure. A few diameters of straight pipe from those features is enough. The tap itself is flush with the inside of the pipe, deburred, and not protruding into the flow.',
+      },
+      { t: 'h2', text: 'Valves and lines' },
+      {
+        t: 'ul',
+        items: [
+          'Isolation valve at the tap, a root valve, so the transmitter can be removed with the process running.',
+          'A bleed or vent valve at the transmitter, or a two-valve manifold that provides both, so the line can be vented of air and the transmitter zeroed at atmosphere.',
+          'Impulse line short, of adequate diameter to avoid plugging, and sloped at least an inch per foot: upward toward the tap on liquid service so air rises to the process, downward toward the tap on gas service so liquid drains to it.',
+          'No loops or traps that hold air or liquid where it is not wanted.',
+          'A gauge tee at the transmitter so a test gauge can be fitted for a check without disconnecting anything.',
+          'A calibration port or a manifold that allows a pump to be connected with the process isolated.',
+        ],
+      },
+      { t: 'h2', text: 'Elevation' },
+      {
+        t: 'p',
+        text: 'A transmitter mounted below its tap on liquid service sees the process pressure plus the head of liquid in the impulse line; above the tap, minus that head. The offset is constant and equals the vertical distance times the liquid density, about 0.433 psi per foot for water. It is removed by zeroing the transmitter with the isolation valve closed and the line full, or by entering the offset as a zero correction. Write the elevation on the loop sheet, because a transmitter later moved to a new bracket takes its old zero with it.',
+      },
+      {
+        t: 'formula',
+        expr: 'Offset = h × SG × 0.433 psi per foot',
+        where: [
+          'h = vertical distance from the tap to the sensor in feet, positive when the sensor is below the tap',
+          'SG = specific gravity of the liquid in the impulse line',
+        ],
+      },
+      { t: 'h2', text: 'Pulsation and vibration' },
+      {
+        t: 'p',
+        text: 'Positive displacement pumps and some centrifugal pumps produce a pressure that oscillates at the stroke or vane frequency. The transmitter follows it and the reading is a blur. A snubber, a small orifice or a porous element in the line, or a pulsation dampener at the tap smooths the pressure at the sensor. Transmitter damping does the same electronically and is fine where the swing is small; it should not be used to hide a swing large enough to matter to the pump. Mechanical vibration from the pump or the pipe is handled by mounting the transmitter on a bracket or a stand rather than directly on the tap, connected by a short flexible line.',
+      },
+      { t: 'h2', text: 'Environment' },
+      {
+        t: 'ul',
+        items: [
+          'Freezing: an impulse line full of water freezes and either breaks or holds a false pressure. Heat trace and insulate, or use a diaphragm seal with a fill fluid rated for the temperature, or mount the transmitter directly at the tap inside a heated enclosure.',
+          'Sun: a transmitter in direct sun sees temperature swings that shift the zero and shorten the life of the electronics and the display. A sunshade is cheap.',
+          'Flooding: in a vault, above the flood line, with the conduit sealed and a drain for the conduit.',
+          'Corrosion: wetted parts compatible with the liquid; seals for hypochlorite, ferric, and other chemicals; the manufacturer material table decides.',
+          'Access: readable display, reachable terminals, a place to stand. A transmitter that needs a ladder is a transmitter that is not checked.',
+        ],
+      },
+      { t: 'h2', text: 'Diaphragm seals' },
+      {
+        t: 'p',
+        text: 'A seal puts a diaphragm at the tap and fills the space between it and the sensor with a fluid, so the process never enters the line. It is the answer for sludge that plugs, chemicals that attack, liquids that freeze or solidify, and taps far from where the transmitter can be mounted. The cost is temperature sensitivity of the fill fluid and a slower response; both are managed by short capillaries, matched lengths on differential applications, and shading. A seal that has lost its fill fluid reads slow and low; the seal, not the transmitter, is what gets replaced.',
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Installation faults that look like calibration',
+        text: 'A steady offset that appeared after the transmitter was remounted is elevation. A reading that falls slowly and recovers when the bleed is opened is air in the line. A reading that lags the gauge is a plugging line or a partly closed root valve. A zero that changes between morning and afternoon is sun on the transmitter or the seal capillary. None of these is fixed by calibrating; all of them are fixed by looking at the installation.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Can the transmitter mount directly on the tap without an impulse line?',
+        a: 'Yes, and it is the simplest installation on clean water where the tap position is accessible, with a root valve and a bleed. Add a bracket if the pipe vibrates and a sunshade if it is outdoors. Direct mounting removes the elevation offset and most of the line problems.',
+      },
+      {
+        q: 'Why does the reading drop for a few seconds when a pump starts?',
+        a: 'It may be real: a suction pressure or a discharge pressure transient at start. If the swing is larger and longer than the process explains, air in the impulse line compresses and expands with the pressure and exaggerates the transient; bleed the line.',
+      },
+      {
+        q: 'How long can an impulse line be?',
+        a: 'As short as the installation allows. Every foot adds a chance of plugging, freezing, and trapped air, and slows the response. A few feet is normal; tens of feet is a reason to consider a seal with a capillary or remote mounting of a transmitter at the tap with the readout elsewhere.',
+      },
+      {
+        q: 'The transmitter is rated for the ambient temperature. Does it still need shade?',
+        a: 'The rating is for survival and stated accuracy under conditions that a sunlit surface routinely exceeds; a dark enclosure in the sun can be 40 degrees above ambient. A sunshade keeps the transmitter within its accurate range and extends the life of the display and the electronics.',
+      },
+    ],
+    related: [
+      '/controls/instrumentation/pressure/pressure-transmitters',
+      '/controls/instrumentation/pressure/impulse-lines',
+      '/controls/instrumentation/pressure/pressure-calibration',
+      '/controls/instrumentation/pressure/differential-pressure',
+      '/how-to/instrumentation-how-to/calibrate-a-pressure-transmitter',
+      '/controls/instrumentation/signals/surge-protection',
+    ],
+  },
+  {
+    path: '/controls/instrumentation/pressure/pressure-calibration',
+    kind: 'reference',
+    title: 'Pressure Calibration',
+    summary:
+      'What calibrating a pressure transmitter means: as-found and as-left, the five-point test and hysteresis, tolerance and the reference standard, sensor trim versus output trim versus reranging on a smart transmitter, gauge versus absolute, and intervals.',
+    answer:
+      'Calibrating a pressure transmitter means comparing its output with a reference standard at several points across its range, recording the as-found error, adjusting if the error exceeds the tolerance, and recording the as-left error. On a smart transmitter the adjustment is a sensor trim that corrects the digital measurement against the reference, or an output trim that corrects the 4-20 mA against a reference ammeter; reranging, which changes the pressure at 4 and 20 mA, is configuration and calibrates nothing. A five-point test rising and falling reveals zero, span, linearity, and hysteresis errors, the reference should be at least four times more accurate than the tolerance, and the interval between calibrations is set from the drift history and any regulatory requirement.',
+    keyPoints: [
+      'As-found before touching anything; as-left after. The as-found record is what tells you the drift and the interval.',
+      'Five points up and five down: zero and span errors, linearity, and hysteresis each have their own signature.',
+      'Sensor trim corrects the measurement; output trim corrects the milliamps; reranging corrects nothing.',
+      'The reference standard is four times better than the tolerance, and it has its own certificate.',
+      'Tolerance comes from the loop requirement, not from the transmitter specification.',
+      'Elevation and static pressure effects are installation offsets, corrected by a zero at the installed condition.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['Instrumentation', 'Commissioning', 'Documentation', 'Standards', 'Water'],
+    blocks: [
+      { t: 'h2', text: 'What calibration is' },
+      {
+        t: 'p',
+        text: 'Calibration is a comparison. A known pressure from a reference standard is applied to the transmitter, and the transmitter output is read and compared with what it should be. The difference is the error, expressed as a percentage of span. If the error at every point is within the tolerance, the transmitter passes and nothing is adjusted. If it is not, the transmitter is adjusted and tested again. The records of both tests are the calibration. A transmitter that was adjusted without an as-found record has lost the information that mattered most: how far it had drifted and therefore how often it needs to be checked.',
+      },
+      {
+        t: 'formula',
+        expr: 'Error (% of span) = (Reading − Reference) / Span × 100',
+        where: [
+          'Reading = the transmitter output converted to pressure units, or the mA reading converted through the range',
+          'Reference = the pressure applied by the standard',
+          'Span = the upper range value minus the lower range value',
+        ],
+      },
+      { t: 'h2', text: 'The five-point test' },
+      {
+        t: 'p',
+        text: 'Apply 0, 25, 50, 75, and 100 percent of span rising, then 75, 50, 25, and 0 falling, and record the output at each. The pattern of errors identifies the fault. Every point off by the same amount is a zero error. Errors that grow in proportion to the pressure are a span error. Errors that are largest in the middle and small at the ends are nonlinearity, which trimming cannot remove and which usually means the sensor is damaged. Different readings at the same pressure rising and falling are hysteresis, also a sensor condition. A single-point check at zero, which is what most field zeroing amounts to, finds only the first of these.',
+      },
+      {
+        t: 'table',
+        head: ['Pattern', 'Meaning', 'Action'],
+        rows: [
+          ['Same error at every point', 'Zero shift', 'Zero trim, or check the installation for an elevation or static pressure effect'],
+          ['Error proportional to pressure', 'Span shift', 'Span trim against the reference at the upper point'],
+          ['Error largest mid-range', 'Nonlinearity', 'Sensor damage or overrange history; replace if beyond tolerance'],
+          ['Rising and falling differ', 'Hysteresis', 'Sensor condition; replace if beyond tolerance'],
+          ['Output correct in the display, wrong in mA', 'Output stage error', 'Output trim against a reference ammeter'],
+          ['Random, unrepeatable', 'Noise, a leak in the test setup, an unstable reference', 'Fix the test before judging the transmitter'],
+        ],
+      },
+      { t: 'h2', text: 'Trims on a smart transmitter' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Sensor trim', def: 'Corrects the digital pressure value the transmitter computes from its sensor, against the reference pressure. A zero trim at zero pressure, and a full trim at two points. This is the calibration of the measurement.' },
+          { term: 'Output trim', def: 'Corrects the 4-20 mA output against a reference ammeter, independent of pressure. The transmitter is set to output exactly 4 and exactly 20 mA and the digital-to-analog converter is adjusted. This is the calibration of the signal.' },
+          { term: 'Rerange', def: 'Sets the pressures that correspond to 4 and 20 mA, the lower and upper range values. It changes what the transmitter reports, not how accurately it measures. Reranging a transmitter that is out of calibration produces a wrongly calibrated transmitter with a new range.' },
+          { term: 'Zero at installed condition', def: 'A zero trim performed with the transmitter installed, the isolation valve closed, and the line at its normal fill, removing the elevation and static offsets. It is an installation adjustment, distinct from the bench calibration, and recorded separately.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Do not zero out a real pressure',
+        text: 'A zero trim with the process connected sets whatever pressure is present as zero. Isolate the transmitter and vent it to atmosphere, or for a differential transmitter equalize it, before zeroing. A zero performed on a live line is the most common way a transmitter is made wrong by a well-meaning technician.',
+      },
+      { t: 'h2', text: 'Reference standards' },
+      {
+        t: 'p',
+        text: 'The reference has to be better than the transmitter it checks. The usual rule is a test accuracy ratio of four to one: the reference uncertainty is no more than a quarter of the tolerance being applied. A digital pressure calibrator or a pressure module with a hand pump satisfies that for most process transmitters; a deadweight tester is the laboratory standard. The reference has its own calibration certificate traceable to a national standard, and its due date is checked before it is used. A reference gauge of the same grade as the transmitter proves nothing.',
+      },
+      { t: 'h2', text: 'Gauge, absolute, and vacuum' },
+      {
+        t: 'p',
+        text: 'A gauge transmitter measures relative to atmospheric pressure and is zeroed vented to atmosphere. An absolute transmitter measures relative to a vacuum, reads atmospheric pressure when vented, and is zeroed against a reference that knows the barometric pressure or against a vacuum. Confusing the two puts an error equal to atmospheric pressure, about 14.7 psi at sea level, into the calibration. Vacuum ranges are checked with a vacuum pump and a reference that reads negative gauge or absolute correctly.',
+      },
+      { t: 'h2', text: 'Tolerance and interval' },
+      {
+        t: 'p',
+        text: 'The tolerance is set by what the loop needs, not by the transmitter specification. A transmitter capable of 0.1 percent used for a discharge pressure alarm with a tolerance of 1 percent passes easily and needs checking rarely; the same transmitter used for a compliance measurement with a 0.25 percent requirement needs a better reference and a shorter interval. The interval starts at a year for most process transmitters and moves with the evidence: as-found errors well inside tolerance for several cycles justify a longer interval, and any as-found failure shortens it. Regulatory requirements override the evidence where they apply.',
+      },
+      { t: 'h2', text: 'The record' },
+      {
+        t: 'ul',
+        items: [
+          'Tag, model, serial, range, and the tolerance applied.',
+          'Reference standard used, its serial, and its certificate due date.',
+          'As-found readings at each point, rising and falling, and the computed errors.',
+          'Adjustments made, and which trim.',
+          'As-left readings and errors.',
+          'Pass or fail, the technician, the date, and the next due date.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'The transmitter reads correctly on the display but the controller shows a different value. Is it out of calibration?',
+        a: 'Not the sensor. The difference is in the output stage, the loop, or the controller scaling. Check the mA output against the reference ammeter, then the controller input against the mA, then the scaling. Output trim fixes the first; the others are wiring or configuration.',
+      },
+      {
+        q: 'Can I calibrate with the transmitter installed?',
+        a: 'Yes, with the root valve closed and a pump connected at the bleed or a calibration port, provided the reference and the process are isolated from each other. Many transmitters are calibrated in place this way. Zero at atmosphere first, then apply the test points. Remember the elevation offset if the test pressure enters at a different height from the tap.',
+      },
+      {
+        q: 'The as-found error is within tolerance. Should I trim it anyway?',
+        a: 'No. Adjusting a transmitter that passes adds nothing and loses the drift record, and each adjustment has its own small uncertainty. Record the as-found values as the as-left values and move on. Adjust when the error is out of tolerance or approaching it.',
+      },
+      {
+        q: 'How is a calibration different from a loop check?',
+        a: 'Calibration proves the transmitter measures pressure correctly against a standard. A loop check proves the signal from the transmitter reaches the controller and the HMI correctly and the alarms and controls respond. Both are needed; a calibrated transmitter wired to the wrong input has passed one and failed the other.',
+      },
+    ],
+    related: [
+      '/how-to/instrumentation-how-to/calibrate-a-pressure-transmitter',
+      '/controls/instrumentation/calibration/calibration-procedures',
+      '/controls/instrumentation/calibration/calibration-documentation',
+      '/controls/instrumentation/calibration/loop-checks',
+      '/controls/instrumentation/pressure/pressure-transmitters',
+      '/controls/instrumentation/pressure/pressure-installation',
+    ],
+  },
 ];

@@ -581,9 +581,46 @@
   }
   .cc-notice {
     width: min(640px, 100%);
-    background: #fff;
+    max-height: calc(100dvh - 40px);
+    overflow-y: auto;
+    color: #fff;
+    background: linear-gradient(160deg, hsl(213 74% 11%) 0%, hsl(var(--navy)) 48%, hsl(var(--navy-2)) 100%);
+    border: 1px solid hsl(0 0% 100% / 0.14);
     border-radius: var(--radius);
-    box-shadow: 0 24px 60px hsl(var(--navy) / 0.4);
+    box-shadow: 0 24px 60px hsl(var(--navy) / 0.55);
+  }
+  /* The disclaimer text inside the notice. Scrolling it to the end is what
+     unlocks the acknowledgement, so it must be a real scroll region. */
+  .cc-notice-scroll {
+    max-height: min(46vh, 400px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 1rem 1.1rem;
+    border: 1px solid hsl(0 0% 100% / 0.22);
+    border-radius: var(--radius);
+    background: hsl(0 0% 100% / 0.06);
+    color: hsl(0 0% 100% / 0.92);
+    font-size: 0.875rem;
+    line-height: 1.65;
+  }
+  .cc-notice-scroll:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+  }
+  .cc-notice-scroll p + p,
+  .cc-notice-scroll h3 {
+    margin-top: 0.85rem;
+  }
+  .cc-notice-scroll h3 {
+    font-family: var(--app-font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: hsl(0 0% 100% / 0.75);
+  }
+  .cc-notice-scroll h3 + p {
+    margin-top: 0.35rem;
   }
 
   /* ---------------------------------------------------------------- *

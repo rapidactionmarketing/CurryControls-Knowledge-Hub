@@ -33,13 +33,24 @@ export const OWNERSHIP_NOTICE = {
   heading: 'ABOUT CURRYCONTROLS.COM',
   /** The modal's title, as it read on the original site. */
   title: 'Before you continue',
+  /** Opening line, shown above the ownership statement. */
+  intro:
+    'Welcome to CurryControls.com, an independent knowledge hub for controls and automation. Please read the following before you continue.',
   paragraphs: [
     'CurryControls.com is currently owned and maintained by Eric Sullivan.',
     'Eric Sullivan is not affiliated with Curry Controls Company. Eric previously worked with Curry Controls Company and left the company in 2021. He is currently employed by General Control Systems, Inc.',
     'General Control Systems, Inc. is a separate company and is not affiliated with Curry Controls Company.',
   ],
+  disclaimerLinkLabel: 'Read the information disclaimer',
+  acknowledgeLabel:
+    'I have read the information disclaimer and understand that everything on this site is used at my own risk.',
   buttonLabel: 'ACCEPT & CONTINUE',
-  footnote: 'This notice is informational. It is not an agreement or waiver.',
+  /**
+   * The original footnote also said the notice was not an agreement or
+   * waiver. With a required acknowledgement of the disclaimer that clause
+   * would contradict the checkbox beside it, so it is dropped.
+   */
+  footnote: 'This notice is informational.',
   storageKey: 'curryNoticeAccepted',
 } as const;
 

@@ -1092,4 +1092,473 @@ export const INSTRUMENTATION_ENTRIES: Entry[] = [
       '/controls/instrumentation/signals/4-20-ma-signals',
     ],
   },
+  {
+    path: '/controls/instrumentation/signals/hart',
+    kind: 'reference',
+    title: 'HART',
+    summary:
+      'Digital data riding on the 4-20 mA loop: how HART signaling works, what a handheld or a HART-enabled input can read, multidrop and burst modes, and the wiring conditions that make HART fail while the current loop keeps working.',
+    answer:
+      'HART, the Highway Addressable Remote Transducer protocol, superimposes a small frequency-shift-keyed digital signal on a standard 4-20 mA loop, using 1200 Hz and 2200 Hz tones that average to zero so the analog value is undisturbed. It lets a handheld communicator or a HART-capable input card read the device identity, secondary variables, diagnostics, and configuration while the loop keeps carrying the primary variable as current.',
+    keyPoints: [
+      'The analog 4-20 mA signal is unchanged; HART adds a small audio-frequency signal on top of it.',
+      'A loop needs roughly 250 ohms of resistance for HART to work. Most input cards provide it; a bare milliammeter does not.',
+      'HART gives identity, secondary variables, diagnostics, and configuration through a handheld or a HART-capable input card.',
+      'Multidrop puts several devices on one pair at a fixed 4 mA each, trading the analog signal for the digital.',
+      'Capacitance, filtering, and some isolators pass 4-20 mA and block HART.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['Instrumentation', 'Signals', '4-20 mA', 'Communications'],
+    blocks: [
+      { t: 'h2', text: 'What HART is' },
+      {
+        t: 'p',
+        text: 'HART is a digital protocol designed in the 1980s to run over the wiring that already existed for 4-20 mA instruments. It uses frequency-shift keying based on the Bell 202 modem standard: a 1200 Hz tone represents a 1 and a 2200 Hz tone a 0, superimposed on the loop current at an amplitude of about half a milliamp. The tones average to zero over any interval an analog input cares about, so the primary variable in the current is not disturbed. The data rate is 1200 bits per second, which sounds slow and is entirely adequate for what HART carries.',
+      },
+      {
+        t: 'p',
+        text: 'What it carries is everything about the device that the current cannot: the tag name, manufacturer, model, and serial number; the primary variable as a number with units, which is the same value the current represents; secondary, tertiary, and quaternary variables such as sensor temperature or a second measurement; device status and diagnostics; and read and write access to the configuration, including range, damping, units, and calibration trims.',
+      },
+      { t: 'h2', text: 'How it is used' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Handheld communicator', def: 'A field communicator clipped across the loop at any point, in the field or at the panel, to configure, range, trim, and diagnose the transmitter. This is the most common use, and for many plants the only one.' },
+          { term: 'HART-capable analog input', def: 'An input card or a HART multiplexer that reads the digital data continuously while measuring the current. The controller then has the secondary variables and the device status as tags, and an asset management package can read the configuration of every device from the control room.' },
+          { term: 'Loop-powered indicators and isolators', def: 'Devices in the loop that display the HART primary variable in engineering units without needing their own calibration, or that repeat the current and pass the HART signal through.' },
+          { term: 'Multidrop', def: 'Several devices on one pair, fifteen in older revisions and more under HART 7, each at a fixed 4 mA and addressed digitally. The analog signal is given up, so multidrop is for slow measurements where update rate does not matter. Rare in water and wastewater.' },
+          { term: 'Burst mode', def: 'A device configured to transmit its variables continuously without being polled, which speeds up reading by a host that supports it.' },
+        ],
+      },
+      { t: 'h2', text: 'The wiring conditions' },
+      {
+        t: 'p',
+        text: 'HART is a voltage signal developed across the loop resistance by the modulated current. It needs that resistance to exist, and it needs the path to pass audio frequencies.',
+      },
+      {
+        t: 'table',
+        head: ['Condition', 'Requirement', 'What goes wrong'],
+        rows: [
+          ['Loop resistance', 'At least about 250 ohms total (the specification minimum is 230), and no more than about 1100 ohms', 'Below the minimum the HART voltage is too small to be detected. Most input cards have a 250 ohm sense resistor and satisfy this; a transmitter on a bench with only a power supply and a milliammeter does not.'],
+          ['Power supply', 'Enough voltage for the transmitter after the loop drop, and a supply that does not filter out the tones', 'A supply with heavy output capacitance can shunt the HART signal. Size the supply for the transmitter lift-off voltage plus the drop across the loop resistance at 22 mA.'],
+          ['Cable', 'Twisted shielded pair, with the shield grounded at one end', 'Long unshielded runs pick up noise at audio frequencies; capacitance on very long runs attenuates the signal.'],
+          ['Filtering and isolation', 'Any isolator, barrier, surge device, or filter in the loop must be HART-compatible', 'Devices designed only to pass DC will pass the current and remove the HART signal. The loop reads correctly and the handheld cannot connect.'],
+          ['Analog input filtering', 'Input filtering on the card must not respond to the tones', 'Usually fine; some old cards show a slight flicker when HART is active.'],
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'The 250 ohm resistor',
+        text: 'When a handheld will not connect on the bench, the loop almost always has no resistance in it. Put a 250 ohm resistor in series and clip the communicator across the resistor. In a panel, clip across the input terminals of the analog card, where the sense resistor already provides it.',
+      },
+      { t: 'h2', text: 'What HART changes about maintenance' },
+      {
+        t: 'p',
+        text: 'Before HART, ranging a transmitter meant potentiometers and a calibrator. With HART, range, damping, and units are set from the communicator, and a sensor trim corrects the measurement against a reference. That convenience has a hazard: a HART change is invisible to the control system unless the input card reads HART. A transmitter re-ranged in the field without the controller scaling being changed reads wrong in a way that looks plausible, and the loop check that would catch it is skipped because the change was small.',
+      },
+      {
+        t: 'p',
+        text: 'HART diagnostics are the other change. A transmitter that knows its sensor is failing, its electronics temperature is too high, or its configuration was changed can say so. If the input card reads HART, that status is a tag the controller can alarm on. If it does not, the information is available to whoever next connects a handheld, which may be years.',
+      },
+      { t: 'h2', text: 'HART and the controller' },
+      {
+        t: 'p',
+        text: 'A HART-capable input card exposes more than the primary variable. Typical uses at a water plant are a second measurement from one device, such as sensor temperature from a pH loop or static pressure from a differential pressure flow transmitter; device status for alarming a failing instrument before it fails; and identification so that the asset database can be built from what is actually installed. Read HART variables at a slow rate, on the order of once a second per device, because the protocol is slow and polling many devices on a multiplexer takes time. The control loop runs on the current, not on the HART value.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Does HART affect the accuracy of the 4-20 mA signal?',
+        a: 'No, when the input is designed for it. The tones average to zero over a few milliseconds and the input filtering removes them. On an old or very fast input, a small flicker of a few counts can appear while HART is communicating; it disappears when the handheld is disconnected.',
+      },
+      {
+        q: 'Can I use HART on a loop with a safety barrier?',
+        a: 'If the barrier is rated for HART. Many are; some passive barriers with capacitive filtering attenuate the signal. Check the barrier data sheet for HART compatibility and the loop resistance including the barrier.',
+      },
+      {
+        q: 'What is the difference between HART revisions?',
+        a: 'HART 5 and 6 are the installed base; HART 7 added extended addressing, more device variables, and time stamping, and is what current devices support. Handhelds and hosts are backward compatible. WirelessHART carries the same commands over a mesh radio network and is a different physical layer entirely.',
+      },
+      {
+        q: 'Is HART a replacement for a fieldbus?',
+        a: 'It fills the same need at lower complexity: identity, diagnostics, and configuration over existing wiring. It does not replace the analog signal for control, and it does not provide the multi-variable speed of a true digital fieldbus. For a utility, HART on 4-20 mA is usually the right amount of digital.',
+      },
+    ],
+    related: [
+      '/controls/instrumentation/signals/4-20-ma-signals',
+      '/controls/plc-systems/analog-control/4-20-ma',
+      '/how-to/instrumentation-how-to/test-a-4-20-ma-loop',
+      '/controls/instrumentation/pressure/pressure-transmitters',
+      '/controls/instrumentation/signals/ground-loops',
+    ],
+  },
+  {
+    path: '/controls/instrumentation/flow/differential-pressure-flow',
+    kind: 'reference',
+    title: 'Differential Pressure Flow Measurement',
+    summary:
+      'Orifice plates, venturis, and flow nozzles: the square-root relationship, why turndown is limited, where the square root is taken, impulse line rules, and when a DP element is still the right choice against a mag meter.',
+    answer:
+      'Differential pressure flow measurement places a restriction such as an orifice plate or a venturi in the pipe and measures the pressure drop across it. Flow is proportional to the square root of that differential, so the transmitter or the controller must take the square root, and the useful turndown is limited to about 4:1 or 5:1 before the low-end signal disappears into noise. It is robust, well understood, and inexpensive in large sizes, but the mag meter has replaced it for most conductive liquids.',
+    keyPoints: [
+      'Flow varies with the square root of differential pressure. Half the flow is a quarter of the DP.',
+      'Turndown is about 4:1 for an orifice, better for a venturi with a good transmitter. Beyond that, the reading is noise.',
+      'Take the square root once, in the transmitter or the controller, never in both.',
+      'Impulse lines cause more DP flow problems than the element or the transmitter.',
+      'Still the right choice for steam, gas, large pipes, and non-conductive liquids. A mag meter wins on most water.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['Instrumentation', 'Flow', 'Analog', 'Fundamentals'],
+    blocks: [
+      { t: 'h2', text: 'How it works' },
+      {
+        t: 'p',
+        text: 'Put a restriction in a pipe and the fluid speeds up to get through it. Speeding up costs pressure, so the pressure just downstream of the restriction is lower than just upstream. Bernoulli relates the two: the pressure difference is proportional to the square of the velocity, which means velocity, and therefore volumetric flow, is proportional to the square root of the differential pressure.',
+      },
+      {
+        t: 'formula',
+        expr: 'Q = K × √(ΔP / ρ)',
+        where: [
+          'Q = volumetric flow',
+          'K = a constant for the element, pipe size, and units, from the flow calculation or the element data sheet',
+          'ΔP = differential pressure across the element',
+          'ρ = fluid density',
+        ],
+      },
+      {
+        t: 'p',
+        text: 'The square root is the defining feature of the method and the source of most of its limits. At 100 percent flow the differential is 100 percent of range. At 50 percent flow it is 25 percent of range. At 25 percent flow it is about 6 percent, and at 10 percent flow it is 1 percent of range, which is inside the noise and drift of the transmitter. That is why DP flow turndown is quoted around 4:1 for an orifice plate: below a quarter of full-scale flow the measurement is unreliable.',
+      },
+      { t: 'h2', text: 'The primary elements' },
+      {
+        t: 'table',
+        head: ['Element', 'Permanent pressure loss', 'Straight run needed', 'Where it is used'],
+        rows: [
+          ['Orifice plate', 'High, roughly 50 to 90 percent of the differential depending on the bore ratio', 'Long: 10 to 40 diameters upstream depending on the fitting, about 5 downstream', 'Steam, gas, clean liquids, anywhere cost and replaceability matter more than pumping energy'],
+          ['Venturi', 'Low, roughly 10 to 20 percent of the differential', 'Shorter than an orifice', 'Large water lines, raw water and effluent, where pumping cost matters and the meter stays for decades'],
+          ['Flow nozzle', 'Between the two', 'Similar to an orifice', 'High velocity steam and gas; erosive service where a plate would wear'],
+          ['Averaging pitot tube', 'Very low', 'Similar to an orifice', 'Large ducts and pipes where an insertion element is the only practical option; low differentials'],
+          ['Wedge and cone', 'Moderate', 'Short', 'Dirty liquids, slurries, and installations without straight run'],
+        ],
+      },
+      { t: 'h2', text: 'The transmitter and the square root' },
+      {
+        t: 'p',
+        text: 'The DP transmitter measures the differential, typically in inches of water column, and outputs 4-20 mA. The square root has to be taken somewhere. Transmitters can output a signal already proportional to flow, and controllers can take the square root of a linear DP signal. Do one or the other. A signal square-rooted twice reads right at zero and full scale and wrong everywhere between, and the error is subtle enough to survive commissioning.',
+      },
+      {
+        t: 'p',
+        text: 'Whichever device takes the square root, a low-flow cutoff is set below it. Near zero differential the square root function amplifies noise enormously: 0.1 percent of DP range is 3 percent of flow range. The cutoff forces flow to zero below a small differential, typically around 1 percent of DP range, and the totalizer stops counting noise.',
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'Range the transmitter for the differential, not the flow',
+        text: 'The DP range comes from the element sizing calculation: the differential at the design maximum flow. A transmitter ranged wider than that loses turndown; ranged narrower it clips. When a transmitter is replaced, the range is copied from the sizing sheet, not guessed from the old nameplate.',
+      },
+      { t: 'h2', text: 'Impulse lines' },
+      {
+        t: 'p',
+        text: 'The two pressure taps connect to the transmitter through impulse lines, and those lines are where most DP flow measurements fail. The rules are few and they matter.',
+      },
+      {
+        t: 'ul',
+        items: [
+          'Both lines must be full of the same fluid at the same temperature, so that their static heads cancel. A bubble in one line on liquid service, or condensate in one line on gas service, is a differential that has nothing to do with flow.',
+          'On liquid service, taps on the side of the pipe or below the centerline, with lines sloping continuously down to the transmitter, so gas rises back to the pipe. On gas service, taps on top, lines sloping up, so liquid drains back.',
+          'Lines are short, of equal length, and routed together. A line in the sun and one in the shade have different densities.',
+          'A three-valve or five-valve manifold at the transmitter, so it can be zeroed with the equalizing valve open and both lines blocked, and vented or drained.',
+          'On dirty water and wastewater, diaphragm seals or purged lines replace open impulse lines, or the element is chosen so that no impulse lines are needed.',
+        ],
+      },
+      { t: 'h2', text: 'Installation and straight run' },
+      {
+        t: 'p',
+        text: 'The element assumes a fully developed, symmetrical velocity profile. Elbows, valves, and pumps upstream distort it, and the distortion changes the differential for a given flow. The standards give required straight pipe lengths for each upstream fitting: for an orifice plate the requirement can reach 40 pipe diameters after a partially open valve and is rarely less than 10. Flow conditioners shorten the requirement. When the straight run is not available, the meter reads wrong by an amount that cannot be calibrated out because it depends on flow.',
+      },
+      { t: 'h2', text: 'Against the mag meter' },
+      {
+        t: 'p',
+        text: 'For a conductive liquid, which includes all water and wastewater, the electromagnetic flowmeter has no pressure loss, no moving parts, full-bore turndown of 20:1 or more, a linear output, and no impulse lines. It has replaced the orifice plate for nearly all utility water flow. The DP element remains the right choice where the mag meter does not work: steam, gases, hydrocarbons, and non-conductive liquids. It also remains on large existing venturis, which are accurate, need no power, and last longer than the transmitters bolted to them.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Why does my DP flowmeter read flow when the pump is off?',
+        a: 'The impulse lines are not balanced: a bubble, a difference in temperature, or a line that has partially drained gives a standing differential. Open the equalizing valve and check the zero. If the zero is right with the manifold equalized and wrong when it is in service, the lines are the problem.',
+      },
+      {
+        q: 'Can I extend the turndown with two transmitters?',
+        a: 'Yes. A high-range and a low-range transmitter on the same taps, with the controller switching between them, gives 10:1 or better. Smart transmitters with very good low-end performance achieve some of this alone; a venturi with a modern transmitter can do 8:1 or 10:1.',
+      },
+      {
+        q: 'The plate was replaced and the flow reads differently. Why?',
+        a: 'The bore diameter, the plate thickness, the edge sharpness, and the orientation all matter. A plate installed backwards, with the bevel upstream, reads low by several percent. A plate with a rounded edge from erosion or a different bore from the sizing sheet changes the coefficient. Compare the new plate to the sizing sheet, not to the old plate.',
+      },
+      {
+        q: 'Do I need to measure temperature and pressure too?',
+        a: 'For liquids at steady temperature, no. For gases and steam, density changes with pressure and temperature, and the flow calculation must be compensated with both measurements, either in a multivariable transmitter or in the controller.',
+      },
+    ],
+    related: [
+      '/controls/instrumentation/flow/magnetic-flowmeters',
+      '/controls/instrumentation/pressure/pressure-transmitters',
+      '/controls/plc-systems/analog-control/scaling',
+      '/controls/plc-systems/analog-control/filtering',
+      '/controls/instrumentation/signals/4-20-ma-signals',
+    ],
+  },
+  {
+    path: '/controls/instrumentation/flow/open-channel-flow',
+    kind: 'reference',
+    title: 'Open Channel Flow Measurement',
+    summary:
+      'Flumes and weirs with a level sensor: how the head-discharge relationship works, Parshall flume and weir equations, where to put the sensor, submergence, and the errors that make a permit-reporting flow meter wrong.',
+    answer:
+      'Open channel flow is measured by placing a primary device, a flume or a weir, in the channel and measuring the liquid level upstream of it. The primary device has a known head-discharge relationship, so the level, called the head, converts to flow by an equation or a table. The level is measured by an ultrasonic, radar, or submerged pressure sensor at a specific point defined by the device, and the conversion is done in the flow meter or the controller.',
+    keyPoints: [
+      'Flow comes from level. The primary device makes the relationship known; the sensor measures the head.',
+      'The head must be measured at the point the device defines, not wherever is convenient.',
+      'A Parshall flume passes solids and tolerates some submergence; a weir is more accurate and traps solids.',
+      'Submergence, approach turbulence, and a wrong zero are the three common errors.',
+      'For a permit flow, calibrate the head measurement against a physical gauge and keep the records.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 11,
+    tags: ['Instrumentation', 'Flow', 'Level', 'Wastewater'],
+    blocks: [
+      { t: 'h2', text: 'The principle' },
+      {
+        t: 'p',
+        text: 'In a closed pipe, flow is velocity times area, and the area is known. In an open channel the depth changes with the flow, so both are unknown. The solution is a primary device: a structure of known shape placed in the channel that forces the flow through a control section where depth and flow have a fixed, calculable relationship. Measure the depth upstream of that section, called the head, and the relationship gives the flow.',
+      },
+      {
+        t: 'p',
+        text: 'Everything about open channel measurement follows from that. The primary device must be built to the standard dimensions so that the published relationship applies. The head must be measured where the standard says. The channel must deliver water to the device the way the standard assumes. When those three are true the measurement is good to a few percent, which is why flumes and weirs are the accepted method for permit flow at treatment plants.',
+      },
+      { t: 'h2', text: 'Flumes' },
+      {
+        t: 'p',
+        text: 'A flume is a narrowing of the channel with a drop in the floor that accelerates the flow to critical depth. The Parshall flume is the standard in North American water and wastewater, available in throat widths from one inch to fifty feet, with published equations for each size.',
+      },
+      {
+        t: 'formula',
+        expr: 'Q = C × Hₐⁿ',
+        where: [
+          'Q = flow, in cubic feet per second',
+          'Hₐ = head measured at the specified point in the converging section, in feet',
+          'C and n = constants for the throat width. For a 6 inch Parshall flume, Q = 2.06 × Hₐ^1.58. For throat widths of 1 to 8 feet, Q = 4 × W × Hₐ^(1.522 × W^0.026) with W in feet',
+        ],
+      },
+      {
+        t: 'p',
+        text: 'The head is measured at a point two-thirds of the converging section length upstream from the throat, on the sidewall, where the standard puts the staff gauge. A sensor over the throat or over the approach channel reads a different level and a wrong flow. On a prefabricated flume the measuring point is marked; on a cast-in-place flume it is in the drawings, and it is worth checking against the standard dimensions.',
+      },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Free flow', def: 'Downstream water is low enough that it does not affect the head. The single upstream measurement is valid. Parshall flumes stay in free flow up to a submergence ratio, downstream depth over upstream head, of about 50 to 60 percent for the small sizes and 70 to 80 percent for larger ones.' },
+          { term: 'Submerged flow', def: 'Downstream backs up into the throat. The single measurement reads high. A correction requires a second level measurement in the throat, which is possible but rarely done well. Keep the flume in free flow by design.' },
+          { term: 'Palmer-Bowlus and other flumes', def: 'Flumes designed to sit in a round pipe or a manhole, with a flat throat, used where a Parshall would not fit. Lower accuracy, easier installation, and their own equations.' },
+        ],
+      },
+      { t: 'h2', text: 'Weirs' },
+      {
+        t: 'p',
+        text: 'A weir is a plate across the channel with a notch of known shape. Water pools behind it and spills over the notch, and the head above the notch bottom gives the flow. Weirs are more accurate than flumes when installed correctly and are simpler to build, but they trap solids and grease behind the plate, need a larger drop in the channel, and must have air under the falling water.',
+      },
+      {
+        t: 'table',
+        head: ['Weir', 'Equation (Q in cfs, H and L in feet)', 'Notes'],
+        rows: [
+          ['V-notch, 90°', 'Q = 2.49 × H^2.48', 'Best at low flows; the standard for small streams and plant effluent under a few cfs'],
+          ['Rectangular, contracted', 'Q = 3.33 × (L − 0.2H) × H^1.5', 'L is the notch width; the contraction term accounts for the sides'],
+          ['Rectangular, suppressed', 'Q = 3.33 × L × H^1.5', 'The notch spans the full channel width; the nappe must be ventilated'],
+          ['Cipolletti, trapezoidal', 'Q = 3.367 × L × H^1.5', 'Sides slope 1 horizontal to 4 vertical to offset the contraction'],
+        ],
+      },
+      {
+        t: 'p',
+        text: 'The head on a weir is measured upstream at a distance of at least four times the maximum head, where the water surface is level, not at the plate where the surface is already dropping toward the crest. The zero is the elevation of the notch bottom or crest, and it is set by measurement, not by assumption.',
+      },
+      { t: 'h2', text: 'Measuring the head' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Ultrasonic', def: 'The traditional choice: a transducer above the channel measuring the distance to the surface. Affected by temperature gradients, foam, and turbulence; needs its dead band above the highest water level; a sunshade helps.' },
+          { term: 'Radar', def: 'The same geometry, less affected by temperature and vapor, and now the default for new installations.' },
+          { term: 'Submerged pressure', def: 'A transducer in a stilling well or on the channel floor. Simple and unaffected by the air above, but it fouls and needs regular cleaning in wastewater.' },
+          { term: 'Bubbler', def: 'A tube to the channel floor with a small air flow; the back pressure equals the head. Nothing electrical in the water, tolerant of grease and solids, and common at older plants.' },
+          { term: 'Float in a stilling well', def: 'The reference method for calibration and the mechanism in older chart recorders. A stilling well connected to the channel at the measuring point damps waves.' },
+        ],
+      },
+      {
+        t: 'p',
+        text: 'Whatever the sensor, the zero is the elevation of the flume floor at the measuring point or the weir crest, and the sensor is set to read zero head at that elevation. Check it against a staff gauge or a tape at commissioning and on a schedule. Every inch of zero error on a small flume is a flow error of several percent that is invisible in the trend.',
+      },
+      { t: 'h2', text: 'Where it goes wrong' },
+      {
+        t: 'table',
+        head: ['Problem', 'Effect', 'Check'],
+        rows: [
+          ['Sensor at the wrong point', 'Systematic error at all flows', 'Measure the sensor location against the standard dimensions'],
+          ['Zero set wrong', 'Large error at low flow, smaller at high flow', 'Staff gauge reading against the meter at several flows'],
+          ['Submergence', 'Reads high; worse as downstream level rises', 'Compare downstream depth to the head; look for a level water surface through the throat'],
+          ['Solids or grease behind a weir', 'Raises the apparent head; reads high', 'Inspect and clean; consider a flume'],
+          ['Approach turbulence', 'Noisy head, unstable reading', 'Straight, uniform approach channel of at least ten channel widths; baffles upstream if needed'],
+          ['Foam or floating debris', 'Ultrasonic and radar read the surface of the foam', 'Sunshade, foam control, or a submerged sensor'],
+          ['Flume built to the wrong dimensions', 'Unknown coefficient', 'Field-measure the throat and converging section against the standard'],
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Which is better for a wastewater plant, a flume or a weir?',
+        a: 'A Parshall flume for raw wastewater and anywhere solids are present, because it is self-cleaning and tolerates some submergence. A V-notch or rectangular weir for clean effluent at low flow, where its accuracy is better and nothing collects behind it.',
+      },
+      {
+        q: 'Can I calculate flow in the PLC instead of a flow meter?',
+        a: 'Yes. Read the head from a level transmitter, apply the flume or weir equation with a low-head cutoff, and totalize. The dedicated open channel flow meter does the same thing with the equations built in and a certified totalizer, which matters for permit reporting.',
+      },
+      {
+        q: 'How accurate is open channel flow?',
+        a: 'A properly built and installed Parshall flume with a well-calibrated head measurement is within about 3 to 5 percent. A weir can reach 2 percent. In practice, errors in the head measurement and in the installation dominate, and a flume that has never been checked can be off by 10 percent or more.',
+      },
+      {
+        q: 'How do I verify the flow meter for a permit?',
+        a: 'Verify the head: compare the meter reading with a staff gauge at the measuring point at several flows, and record it. Then verify the conversion with a known head against the published table. A dye dilution or velocity-area test is the independent check where the primary device itself is in doubt.',
+      },
+    ],
+    related: [
+      '/controls/instrumentation/level/radar-level',
+      '/controls/instrumentation/level/ultrasonic-level',
+      '/controls/instrumentation/level/hydrostatic-level',
+      '/controls/instrumentation/flow/magnetic-flowmeters',
+      '/controls/plc-systems/analog-control/scaling',
+    ],
+  },
+  {
+    path: '/controls/instrumentation/analytical/chlorine',
+    kind: 'reference',
+    title: 'Chlorine Residual Analyzers',
+    summary:
+      'Amperometric and colorimetric residual analyzers: what each measures, free versus total chlorine, pH and flow dependence, sample line design, calibration against a DPD grab sample, and using the signal for feed control.',
+    answer:
+      'Chlorine residual analyzers continuously measure free or total chlorine in a sample stream, by an amperometric cell that produces a current proportional to chlorine, or by a colorimetric reaction that reproduces the DPD laboratory test. Amperometric analyzers are fast, continuous, and sensitive to pH, temperature, and sample flow; colorimetric analyzers are slower and use reagents but match the reference method directly. Either is only as good as its sample line and its calibration against a grab sample.',
+    keyPoints: [
+      'Free chlorine and total chlorine are different measurements. Know which one the permit and the process need.',
+      'Amperometric cells depend on pH, temperature, and sample flow. Compensate or control all three.',
+      'Colorimetric analyzers reproduce the DPD reference test and are the easiest to defend for reporting.',
+      'The sample line is part of the analyzer: short, fast, flushed, and representative.',
+      'Calibrate to a DPD grab sample taken at the analyzer, not to the value the analyzer used to read.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 11,
+    tags: ['Instrumentation', 'Water', 'Wastewater', 'Analog'],
+    blocks: [
+      { t: 'h2', text: 'What is being measured' },
+      {
+        t: 'p',
+        text: 'Chlorine added to water exists in several forms. Free chlorine is hypochlorous acid and hypochlorite ion, the forms that disinfect quickly. Combined chlorine is chlorine bound to ammonia as chloramines, which disinfects slowly and persists. Total chlorine is the sum. A drinking water system that chlorinates measures free chlorine; one that chloraminates measures total, and often monochloramine and free ammonia as well. A wastewater plant that chlorinates effluent containing ammonia forms chloramines and measures total chlorine, and if it dechlorinates, it measures the residual after dechlorination, which is near zero and is the hardest measurement of all.',
+      },
+      {
+        t: 'p',
+        text: 'The ratio of hypochlorous acid to hypochlorite depends on pH: at pH 7.5 they are roughly equal, at pH 6.5 hypochlorous acid dominates, and by pH 8.5 most of the free chlorine is hypochlorite. Disinfection effectiveness and, for some analyzers, the reading itself follow that ratio.',
+      },
+      { t: 'h2', text: 'Analyzer types' },
+      {
+        t: 'table',
+        head: ['Type', 'How it works', 'Strengths', 'Limits'],
+        rows: [
+          ['Amperometric, bare electrode', 'Two or three electrodes in the flowing sample; chlorine is reduced at the cathode and the current is proportional to concentration', 'Continuous, fast, no reagents', 'Responds to hypochlorous acid, so the free chlorine reading depends on pH; needs constant sample flow; electrodes foul and need cleaning or a mechanical cleaning cell; some designs add a buffer reagent to remove the pH dependence'],
+          ['Amperometric, membrane', 'The electrodes sit behind a membrane in an electrolyte; chlorine diffuses through', 'Less fouling, lower flow dependence, no reagents', 'Membrane and electrolyte are consumables; temperature compensation is essential; pH dependence remains for free chlorine unless the design is specific to it'],
+          ['Colorimetric, DPD', 'Buffer and DPD reagent are added to a sample aliquot; the pink color is measured optically', 'Directly reproduces the reference method; independent of pH and flow; measures free or total by reagent choice', 'A reading every one to three minutes, not continuous; reagents to buy and replace; a small fluidic system to keep clean'],
+          ['Older amperometric titration and iodometric cells', 'Reagent-based electrochemical variants', 'Established at existing plants', 'Higher maintenance; being replaced'],
+        ],
+      },
+      { t: 'h2', text: 'The sample line' },
+      {
+        t: 'p',
+        text: 'An analyzer measures what reaches it, and a poor sample system produces a good measurement of the wrong water. The sample line rules apply to every type.',
+      },
+      {
+        t: 'ul',
+        items: [
+          'Take the sample from a representative point: after mixing is complete, at the location the residual is supposed to describe, such as the point of entry to distribution or the contact tank outlet.',
+          'Keep it short and fast. Chlorine reacts with the tubing wall, biofilm, and anything in the water; a sample that spends ten minutes in a long line arrives with a lower residual than the pipe has. Aim for a lag of under a minute, with tubing velocity high enough to scour.',
+          'Use opaque tubing. Sunlight through clear tubing grows algae and consumes chlorine.',
+          'Provide a constant flow to an amperometric cell, with a flow regulator or a constant-head overflow, and alarm loss of sample flow. A cell with no flow reads low and the feed controller responds by overdosing.',
+          'Filter grit where necessary but not so finely that the filter itself consumes chlorine, and flush the line on a schedule.',
+          'Measure the sample flow and the sample temperature as signals where the analyzer offers them, and use them in the validation logic.',
+        ],
+      },
+      { t: 'h2', text: 'Calibration' },
+      {
+        t: 'p',
+        text: 'Analyzers are calibrated against the DPD reference test on a grab sample drawn at the analyzer sample point at the moment the analyzer reading is recorded. The DPD test itself has an uncertainty of a few hundredths of a milligram per liter at low residuals and worse if the reagent is old or the colorimeter is dirty, so a single comparison is not a calibration; a pattern of comparisons is.',
+      },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Verify the reference', text: 'Fresh DPD reagent, a clean cell in the bench colorimeter, and a check standard if the utility has one.' },
+          { title: 'Draw the grab at the analyzer', text: 'From the analyzer sample line or the same tap, at the same time as the analyzer reading is noted. A sample from a different point in the plant is not a calibration sample.' },
+          { title: 'Compare, and decide whether to adjust', text: 'Small differences within the combined uncertainty are logged and not adjusted. Chasing every difference makes the analyzer follow the noise of the bench test.' },
+          { title: 'Adjust the slope', text: 'When a consistent offset appears over several comparisons, adjust the analyzer calibration factor to the grab. Zero is checked separately on chlorine-free water.' },
+          { title: 'Record it', text: 'Date, analyzer reading, grab result, reagent lot, and the adjustment made. For a compliance analyzer, this record is what an inspector reads.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'Bench test frequency',
+        text: 'Regulations and the utility permit set the minimum comparison frequency for a compliance analyzer, and daily is common. Beyond compliance, the comparison record is the only way to know when an analyzer is drifting, and the trend of analyzer minus grab is a more useful maintenance indicator than the analyzer reading itself.',
+      },
+      { t: 'h2', text: 'Using the signal for control' },
+      {
+        t: 'p',
+        text: 'Residual control feeds chlorine to hold a residual setpoint at the analyzer. It is a slow loop with a large dead time: the sample travels from the injection point to the sample tap and through the sample line before the analyzer sees a change. Compound loop control, which combines flow-paced feedforward with residual feedback trim, handles this far better than residual feedback alone. The feedforward sets the dose from the flow; the residual controller adjusts it slowly. The validation logic must hold the last good dose or fall back to flow pacing alone when the analyzer signal is bad, out of range, or the sample flow is lost, and alarm.',
+      },
+      {
+        t: 'p',
+        text: 'Never let an analyzer that has lost its sample drive the feed. The reading falls toward zero, the controller raises the dose, and the plant sends high chlorine to distribution or to the river. Loss of sample flow is a hardwired interlock to the residual controller, not a suggestion.',
+      },
+      { t: 'h2', text: 'Low-level measurement after dechlorination' },
+      {
+        t: 'p',
+        text: 'A wastewater plant that dechlorinates with sulfur dioxide or bisulfite must show near-zero residual in the effluent, often below the detection limit of the analyzer. The measurement is at the edge of what amperometric cells can do, and colorimetric analyzers with a low range are common here. Some plants control on sulfite residual instead, holding a small excess of dechlorination chemical, and use the chlorine analyzer as a limit alarm. Zero calibration on genuinely chlorine-free water, a clean sample system, and a realistic understanding of the detection limit matter more than any other factor in this measurement.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Why does my amperometric analyzer read lower than the grab sample?',
+        a: 'In order of likelihood: sample flow to the cell is low or unsteady; the electrodes are fouled; the sample pH has risen and the cell does not compensate for it; the cell temperature compensation is off; or the sample line is consuming chlorine before the cell. Check flow first, then clean the cell, then compare pH.',
+      },
+      {
+        q: 'Free or total: which should the analyzer measure?',
+        a: 'Whichever the process and the permit require, and it is worth confirming both. A chlorinating drinking water plant measures free. A chloraminating one measures total, and usually monochloramine. Chlorinated wastewater effluent measures total. Measuring free chlorine in a chloraminated system gives a small, meaningless number.',
+      },
+      {
+        q: 'How long does a membrane cell last?',
+        a: 'Membrane and electrolyte are typically replaced every few months, more often in warm or dirty water, and the electrode itself lasts years. Follow the manufacturer interval, and shorten it if the calibration drifts before the interval is reached.',
+      },
+      {
+        q: 'Can I trust a colorimetric analyzer for compliance?',
+        a: 'It runs the same chemistry as the reference method, which is the strongest argument for it, and many utilities use it for the compliance point. It still needs the grab comparison on the required schedule, reagent replacement on time, and a clean optical path.',
+      },
+    ],
+    related: [
+      '/controls/instrumentation/signals/4-20-ma-signals',
+      '/controls/plc-systems/analog-control/signal-validation',
+      '/controls/plc-systems/analog-control/pid',
+      '/controls/plc-systems/analog-control/filtering',
+      '/controls/scada-hmi/alarm-management/alarm-priority',
+    ],
+  },
 ];

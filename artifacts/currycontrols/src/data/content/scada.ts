@@ -923,4 +923,477 @@ export const SCADA_ENTRIES: Entry[] = [
       '/controls/plc-systems/programming/alarms',
     ],
   },
+  {
+    path: '/controls/scada-hmi/alarm-management/alarm-priority',
+    kind: 'reference',
+    title: 'Alarm Priority',
+    summary:
+      'How to assign alarm priorities that operators trust: a consequence-and-time matrix, three or four levels, the target distribution from ISA-18.2 and EEMUA 191, and the mistakes that make every alarm high.',
+    answer:
+      'Alarm priority tells the operator which alarm to act on first. It is assigned from two things: the severity of the consequence if no action is taken, and the time available to act. A small matrix of those two produces three or four priorities. ISA-18.2 and EEMUA 191 recommend a distribution of roughly 80 percent low, 15 percent medium, and 5 percent high, so that a high-priority alarm is rare and always means something.',
+    keyPoints: [
+      'Priority is about the consequence of not acting and the time to act, not about how important the equipment feels.',
+      'Three priorities, or four with a critical level, is all an operator can use.',
+      'Aim for about 80/15/5 low/medium/high across the configured alarms.',
+      'Priority is set once, in rationalization, with the consequence written down.',
+      'If everything is high, nothing is.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['Alarms', 'SCADA', 'ISA', 'Design'],
+    blocks: [
+      { t: 'h2', text: 'What priority is for' },
+      {
+        t: 'p',
+        text: 'When two alarms arrive at once, the operator needs to know which to act on first. That is the only job of alarm priority. It is not a measure of how expensive the equipment is, how loudly a supervisor argued for it, or how embarrassing the failure would be. It is a ranking of urgency, and it only works if it is assigned consistently across every alarm in the system by a method that can be explained.',
+      },
+      {
+        t: 'p',
+        text: 'Priority also drives presentation. The alarm summary sorts by it, the HMI color and sound depend on it, and in a utility with paging or callout, priority is often one of the inputs that decides whether an alarm wakes someone at 2 a.m. or waits for the morning shift. Getting priority wrong in either direction has consequences: a low priority on a chlorine leak is obviously wrong, but a high priority on a communication hiccup trains operators to ignore high priority alarms.',
+      },
+      { t: 'h2', text: 'The two questions' },
+      {
+        t: 'p',
+        text: 'ISA-18.2 defines priority as a function of the severity of consequence and the time available for response. Both are judged assuming the operator does nothing: what happens, how bad is it, and how long until it happens.',
+      },
+      {
+        t: 'table',
+        caption: 'A priority matrix',
+        head: ['Time to respond', 'Minor consequence', 'Major consequence', 'Severe consequence'],
+        rows: [
+          ['More than 30 minutes', 'Low', 'Low', 'Medium'],
+          ['5 to 30 minutes', 'Low', 'Medium', 'High'],
+          ['Less than 5 minutes', 'Medium', 'High', 'High'],
+        ],
+      },
+      {
+        t: 'p',
+        text: 'The matrix itself is chosen by the utility, and the words minor, major, and severe are defined in the alarm philosophy against categories that matter to the site: personnel safety, public health, environmental release, regulatory violation, equipment damage, and cost. A minor consequence might be an equipment repair under a set amount or a brief loss of a non-critical measurement. A severe one is an injury, a sanitary sewer overflow, a treatment violation, or a loss of the ability to supply water. Once the definitions exist, two people rationalizing the same alarm arrive at the same priority, which is the test.',
+      },
+      { t: 'h2', text: 'How many levels' },
+      {
+        t: 'p',
+        text: 'Three is the common answer: low, medium, high. Some sites add a fourth, critical or emergency, reserved for a handful of alarms with an immediate safety consequence: a gas detector, a fire alarm, an emergency stop. Beyond four, operators cannot keep the distinctions straight, and the extra levels get used as a way to avoid deciding.',
+      },
+      {
+        t: 'p',
+        text: 'Diagnostic and maintenance notifications that do not require operator action are not alarms at all under ISA-18.2, and should not occupy a priority. Route them to a maintenance list or an event log. A lot of the pressure to add priority levels comes from trying to fit things that are not alarms into the alarm system.',
+      },
+      { t: 'h2', text: 'Distribution' },
+      {
+        t: 'p',
+        text: 'The published guidance from EEMUA 191, carried into ISA-18.2, is a target distribution of about 80 percent low, 15 percent medium, and 5 percent high priority across the configured alarms, with under 1 percent in a critical level where one exists. The numbers are not magic. They express the idea that a high-priority alarm should be uncommon enough that it commands attention every time.',
+      },
+      {
+        t: 'p',
+        text: 'A system where 40 percent of alarms are high has not been rationalized; it has been configured by whoever was most worried at the time. The fix is not to demote alarms arbitrarily until the numbers fit but to run each one through the matrix. The distribution then falls out, and if it is still top-heavy the consequence definitions probably need tightening.',
+      },
+      {
+        t: 'table',
+        head: ['Priority', 'Target share', 'Operator expectation', 'Example at a water utility'],
+        rows: [
+          ['Critical (optional)', 'Under 1%', 'Drop everything; immediate action, possibly evacuate', 'Chlorine gas detection, fire, emergency stop actuated'],
+          ['High', 'About 5%', 'Act now, ahead of anything else on the screen', 'Lift station high level, disinfection residual out of range at the point of entry, plant loss of power'],
+          ['Medium', 'About 15%', 'Act within minutes, after any high', 'Pump failed to start with the standby available, tank level approaching low, communication lost to a remote site'],
+          ['Low', 'About 80%', 'Act when convenient within the shift', 'Filter run time due for backwash, analyzer calibration due, a single flow meter reading suspect'],
+        ],
+      },
+      { t: 'h2', text: 'Common mistakes' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Priority by equipment', def: 'Everything on the high-service pumps is high because the pumps are important. The pumps are important; the alarm about a bearing temperature rising slowly is not urgent.' },
+          { term: 'Priority by who asked', def: 'A supervisor wants to be sure the alarm is noticed, so it is set high. Priority is the answer to the matrix, and the way to be sure an alarm is noticed is to have few high alarms.' },
+          { term: 'Priority to control notification', def: 'An alarm is set high so it pages someone. If the notification system needs a separate criterion, give it one. Coupling the two forces the wrong priority on alarms that need a page but are not urgent, and the reverse.' },
+          { term: 'Same priority for the pre-alarm and the alarm', def: 'High level and high-high level on a tank are two alarms with different times to respond. The first is medium, the second is high. Giving both high makes the first one noise.' },
+          { term: 'Priority never revisited', def: 'A priority assigned at commissioning under commissioning conditions stays for twenty years. Rationalization is periodic, and the alarm history shows which priorities are wrong.' },
+        ],
+      },
+      { t: 'h2', text: 'Priority in presentation' },
+      {
+        t: 'p',
+        text: 'Once assigned, priority should be visible the same way everywhere. ISA-101 and the high-performance HMI practice give each priority a distinct color and, where used, a distinct sound, and reserve those colors for alarms only. The alarm summary sorts by priority and then by time. The alarm indication on a process display uses the priority color and shape. A pager or callout system uses the priority as one input to its escalation rules. When priority looks different on different screens, the operator has to translate, and translation under stress fails.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Should communication failure alarms be high priority?',
+        a: 'Usually medium. Losing communication to a lift station means losing visibility, which needs attention within minutes, but the station keeps pumping on its own controls and the consequence of a short outage is small. It becomes high if the site cannot run without SCADA, which is a design problem to fix rather than a priority to raise.',
+      },
+      {
+        q: 'Can the same alarm have different priorities at different times?',
+        a: 'ISA-18.2 allows state-based priority, where the priority depends on the operating mode. It is useful in batch and process plants and rarely needed in water and wastewater. If the same alarm seems to need two priorities, it is often two alarms, or the time to respond has been misjudged.',
+      },
+      {
+        q: 'What priority do I give an alarm I cannot classify?',
+        a: 'Ask what happens if nobody responds for an hour. If the honest answer is nothing much, it is low, or it is not an alarm and belongs in the event log. Inability to name a consequence is itself the answer.',
+      },
+      {
+        q: 'How do I fix a system where most alarms are already high?',
+        a: 'Start with the alarm history. The most frequent alarms are the first candidates, because they are the ones operators have learned to ignore. Rationalize those, then work through the rest by area. Reducing the high priority count to the target takes months at most sites and is worth it every time.',
+      },
+    ],
+    related: [
+      '/controls/scada-hmi/alarm-management/isa-18-2',
+      '/controls/scada-hmi/alarm-management/alarm-philosophy',
+      '/controls/scada-hmi/alarm-management/rationalization',
+      '/controls/scada-hmi/alarm-management/alarm-floods',
+      '/controls/scada-hmi/hmi-design/isa-101',
+    ],
+  },
+  {
+    path: '/controls/scada-hmi/alarm-management/rationalization',
+    kind: 'reference',
+    title: 'Alarm Rationalization',
+    summary:
+      'The meeting where every alarm earns its place: who attends, what is decided for each alarm, how to document it in a master alarm database, and how to run it at a utility that cannot spare a week.',
+    answer:
+      'Alarm rationalization is the systematic review of every configured alarm against the alarm philosophy. For each one, a small team decides whether it is a real alarm, what its cause and consequence are, what the operator is expected to do, what its setpoint and priority should be, and records the result in a master alarm database. It is how a system gets from thousands of nuisance alarms to a set operators trust.',
+    keyPoints: [
+      'Every alarm must have a defined operator action. If there is nothing to do, it is not an alarm.',
+      'The team is an operator, a process or controls engineer, and a facilitator. Two hours at a time, not two weeks.',
+      'Record cause, consequence, action, time to respond, setpoint, priority, and classification for every alarm.',
+      'The master alarm database is the record. SCADA configuration must match it, not the other way around.',
+      'Start with the ten most frequent alarms. That is where the noise is.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['Alarms', 'SCADA', 'ISA', 'Documentation'],
+    blocks: [
+      { t: 'h2', text: 'What rationalization is' },
+      {
+        t: 'p',
+        text: 'Rationalization is the stage in the ISA-18.2 lifecycle where the alarm philosophy is applied to actual alarms, one at a time. It answers, for every configured alarm, whether the alarm should exist and, if so, what it means and what it demands. Without it, an alarm system is whatever accumulated: the defaults every tag came with, the alarms added after each incident, the ones a contractor thought were sensible in 2009.',
+      },
+      {
+        t: 'p',
+        text: 'The output is a master alarm database, a record of every alarm and the decisions made about it. That record is what makes the alarm system maintainable. When someone asks why a setpoint is where it is, or whether an alarm can be removed, the answer is written down.',
+      },
+      { t: 'h2', text: 'The questions asked of each alarm' },
+      {
+        t: 'table',
+        head: ['Question', 'What is recorded', 'Why it matters'],
+        rows: [
+          ['Is it an alarm?', 'Whether it meets the philosophy definition: an abnormal condition requiring operator action', 'Anything with no operator action is an event or a maintenance notification and leaves the alarm system.'],
+          ['What causes it?', 'The likely process or equipment causes', 'Guides the operator response and shows whether the alarm duplicates another.'],
+          ['What is the consequence?', 'What happens if no one acts, in the philosophy categories', 'Drives the priority and justifies the alarm.'],
+          ['What must the operator do?', 'The specific corrective action', 'The single most important entry. An alarm the operator can do nothing about is not an alarm.'],
+          ['How long do they have?', 'Time available to respond before the consequence', 'Drives the priority together with the consequence.'],
+          ['What is the setpoint?', 'The value and the basis for it: a limit, a permit, a curve, an operating envelope', 'A setpoint with a basis survives; one without is changed whenever it annoys.'],
+          ['What priority?', 'From the matrix in the philosophy', 'Consistency across the system.'],
+          ['What class?', 'Safety, environmental, regulatory, or general; determines testing and change control', 'A regulatory alarm cannot be changed by an operator at a keyboard.'],
+          ['Deadband, on-delay, off-delay?', 'Values that prevent chattering', 'Most nuisance alarms are cured here.'],
+          ['Suppression or shelving rules?', 'When the alarm is expected and should not annunciate', 'A pump-stopped alarm on a pump that was commanded to stop is designed suppression.'],
+        ],
+      },
+      { t: 'h2', text: 'Who is in the room' },
+      {
+        t: 'p',
+        text: 'Rationalization is a small-group activity. The essential people are an experienced operator who knows what the alarm looks like in practice and what they actually do about it, an engineer who knows the process and the control system, and a facilitator who keeps the pace and writes things down. A maintenance representative is valuable for equipment alarms. Managers are welcome to set the philosophy and to approve the result; they slow the sessions down if they attend them.',
+      },
+      {
+        t: 'p',
+        text: 'Sessions run about two hours. Longer than that, decisions get worse. A practiced team gets through 20 to 40 alarms an hour once the philosophy is settled, more where alarms are similar, such as the same set on each of thirty lift stations, which can be rationalized as a template and then checked for exceptions.',
+      },
+      { t: 'h2', text: 'Running it at a small utility' },
+      {
+        t: 'p',
+        text: 'A utility with two operators and no engineer on staff cannot follow the full program as written for a refinery. It can still rationalize. The shortcut that works is to start with the alarm history.',
+      },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Pull the last three months of alarms', text: 'Count occurrences per alarm tag. Ten tags usually account for half the total. Those ten are the first session.' },
+          { title: 'Fix the bad actors', text: 'Most are chattering on a noisy signal, standing because a piece of equipment is out of service, or duplicating another alarm. Deadband, delays, and suppression rules cure most; a few are deleted.' },
+          { title: 'Rationalize the high-priority alarms', text: 'Every alarm currently marked high gets the full set of questions. This is where the priority distribution is fixed.' },
+          { title: 'Template the repeated sites', text: 'Rationalize one lift station completely, then apply the result to the others and review only the differences.' },
+          { title: 'Work through the rest by area', text: 'One process area per session, on a schedule. It takes months, and the alarm system improves every session.' },
+          { title: 'Keep the database current', text: 'Every new alarm goes through the questions before it is configured. Every change to a setpoint or a priority updates the record. The database is the configuration authority.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'The operator action test',
+        text: 'For every alarm, ask the operator to say out loud what they would do when it comes in. If the answer is to acknowledge it, or to call someone without knowing why, the alarm either needs a defined response or does not belong. This one question removes more alarms than any other.',
+      },
+      { t: 'h2', text: 'The master alarm database' },
+      {
+        t: 'p',
+        text: 'The database can be a spreadsheet, a table in the SCADA system, or a commercial alarm management package. What matters is that it holds one row per alarm with the answers above, that it is under change control, and that it is periodically compared with what is actually configured in SCADA. Drift between the two is normal and is found by an audit, not by an incident. Commercial tools automate the comparison and push approved settings to the SCADA system; a spreadsheet and a quarterly check achieve the same thing at small scale.',
+      },
+      { t: 'h2', text: 'After rationalization' },
+      {
+        t: 'p',
+        text: 'Rationalization is not the end of the lifecycle. The rationalized alarms are configured, operators are trained on the changes, and the system is monitored: alarm rate per operator per hour, the ten most frequent alarms, standing alarms, the priority distribution. Those metrics identify the alarms that need to go back through the questions. ISA-18.2 gives the targets, and the alarm floods page covers what to look for when the rate spikes.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'How long does rationalization take?',
+        a: 'Rough planning numbers are 20 to 40 alarms per hour of session time once the philosophy is settled, with templated sites going much faster. A plant with 2,000 configured alarms is a few hundred hours spread over several months. A utility with a SCADA system built from defaults often finds that a third of the alarms are removed outright.',
+      },
+      {
+        q: 'Do we need an alarm philosophy first?',
+        a: 'Yes, at least a short one: the definition of an alarm, the consequence categories, the priority matrix, and the rules for classification. Rationalizing without it produces inconsistent decisions, and the first sessions become arguments about principles instead of alarms. A philosophy for a utility can be ten pages.',
+      },
+      {
+        q: 'What do we do with alarms the operator cannot act on but management wants?',
+        a: 'Route them somewhere other than the operator alarm list: a maintenance notification queue, an email report, an event log. The information is kept; the operator is not interrupted by it. If management insists it be an operator alarm, the operator action must be defined, and the action cannot be to call management.',
+      },
+      {
+        q: 'Should we buy software for this?',
+        a: 'Alarm management software helps with the analysis, the database, and enforcement, and pays for itself at a plant with thousands of alarms. At a small utility, a spreadsheet, the SCADA alarm history export, and a disciplined process do the same job. Buy the software when the spreadsheet stops being maintainable.',
+      },
+    ],
+    related: [
+      '/controls/scada-hmi/alarm-management/isa-18-2',
+      '/controls/scada-hmi/alarm-management/alarm-philosophy',
+      '/controls/scada-hmi/alarm-management/alarm-priority',
+      '/controls/scada-hmi/alarm-management/alarm-floods',
+      '/controls/scada-hmi/alarm-management/notification',
+    ],
+  },
+  {
+    path: '/controls/scada-hmi/alarm-management/alarm-floods',
+    kind: 'reference',
+    title: 'Alarm Floods',
+    summary:
+      'What an alarm flood is, why it happens at exactly the wrong moment, the ISA-18.2 rate targets, and the design measures that keep a power failure or a communication loss from burying the one alarm that matters.',
+    answer:
+      'An alarm flood is a period when alarms arrive faster than an operator can read them. ISA-18.2 defines it as more than ten alarms in ten minutes for one operator and sets a target of under one percent of time in flood. Floods follow upsets such as a power failure or a communication loss, when a single cause triggers hundreds of consequential alarms. They are prevented by state-based suppression, first-out logic, quality gating, and rationalization of the alarms that make up the flood.',
+    keyPoints: [
+      'Ten alarms in ten minutes per operator is the ISA-18.2 flood threshold. Target under one percent of time in flood.',
+      'Floods are caused by one event with many symptoms. Suppress the symptoms, alarm the event.',
+      'A communication loss must produce one alarm, not one per tag.',
+      'Loss of power at a site is one alarm. The forty things that stopped are consequences.',
+      'Analyze floods from the history. The same few causes account for most of them.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['Alarms', 'SCADA', 'ISA', 'Design'],
+    blocks: [
+      { t: 'h2', text: 'What a flood is' },
+      {
+        t: 'p',
+        text: 'A flood is a burst of alarms that exceeds what an operator can process. ISA-18.2 draws the line at more than ten alarms in any ten-minute period for a single operator position, and sets a performance target that the system be in flood less than one percent of the time. Its companion metric is the average rate: about one alarm per ten minutes is very likely acceptable, two per ten minutes is the most that is manageable, and more than that in steady operation means the alarm system is not doing its job.',
+      },
+      {
+        t: 'p',
+        text: 'The problem with a flood is not the count. It is that the one alarm that matters is somewhere in the two hundred that arrived with it. Every major incident investigation that touches alarm systems finds the same thing: the alarm that would have told the operator what was happening was on the screen, and the operator did not see it because it was one line among many.',
+      },
+      { t: 'h2', text: 'Why floods happen' },
+      {
+        t: 'p',
+        text: 'Floods are caused by one event with many symptoms. The alarm system was configured tag by tag, so each symptom got its own alarm, and when the event occurs they all fire together.',
+      },
+      {
+        t: 'table',
+        head: ['Triggering event', 'What floods', 'The alarm that should exist'],
+        rows: [
+          ['Communication loss to a remote site', 'Every tag at the site goes bad quality, and each may alarm; every derived alarm at the site fires', 'One alarm: site communication failed'],
+          ['Loss of power at a plant or site', 'Every motor stops, every drive faults, every analyzer alarms, every level starts moving', 'One alarm: site power lost, with the consequential alarms suppressed while it stands'],
+          ['SCADA server failover', 'Every tag re-initializes; alarms that depend on quality or on a stale value fire', 'One event: failover occurred, and no alarms from initialization'],
+          ['A pump trips', 'Pump fault, pump failed to run, low flow, low pressure, high level downstream, low level upstream, and every alarm that depends on flow', 'The pump fault, and the process alarms the operator must still act on, with a short delay so the first-out is clear'],
+          ['A planned shutdown or maintenance', 'Every alarm that expects the equipment to be running', 'None; the alarms are suppressed by the equipment state or shelved by the operator'],
+          ['Instrument failure on a shared signal', 'Every alarm derived from the measurement fires and clears as the signal swings', 'One alarm: signal failed, with derived alarms inhibited on bad quality'],
+        ],
+      },
+      { t: 'h2', text: 'Design measures' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'State-based suppression', def: 'An alarm is inhibited when the process state makes it expected. A low flow alarm on a pump that is commanded off is suppressed by the pump state. A low pressure alarm on a system in maintenance mode is suppressed by the mode. This is designed suppression, documented in rationalization, not an operator hiding an alarm.' },
+          { term: 'Quality gating', def: 'An alarm derived from a measurement is inhibited when the measurement has bad quality, and the bad quality itself is alarmed once. A tag that goes bad on communication loss must not also generate high, low, and rate alarms on whatever value it froze at.' },
+          { term: 'Consequential alarm suppression', def: 'When a defined parent event is active, such as site power lost, its defined child alarms are suppressed and shown in a separate list. The operator sees the cause and can drill into the consequences if they want them.' },
+          { term: 'First-out', def: 'When several related alarms occur within a short window, the first is flagged as the initiating event. Common on motor and drive protection, where the first trip explains the rest.' },
+          { term: 'Delays and deadbands', def: 'A few seconds of on-delay on alarms that respond to the same disturbance lets the initiating alarm arrive first and prevents transient alarms during a switchover.' },
+          { term: 'Communication alarm design', def: 'One alarm per communication path, generated by the driver or the poll status, with all tag-level alarms on that path inhibited on loss. This is the single most effective flood prevention at a utility with many remote sites.' },
+          { term: 'Eclipsing', def: 'A high-high alarm eclipses the high alarm on the same tag, so the operator sees one line, not two.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Suppression must be visible',
+        text: 'Every suppressed alarm is listed somewhere the operator can see it, with the reason. A suppression that is invisible is a disabled alarm, and disabled alarms are how a real condition goes unnoticed for months. ISA-18.2 requires that suppressed alarms be identifiable and that suppression be a designed, documented function.',
+      },
+      { t: 'h2', text: 'Analyzing floods' },
+      {
+        t: 'p',
+        text: 'The alarm history identifies floods after the fact, and the analysis is straightforward: find every ten-minute window with more than ten alarms, list the alarms in each, and find the initiating event. At most sites a handful of event types account for nearly all floods, and each has a design fix from the list above. Commercial alarm management software does this analysis automatically; a spreadsheet on the history export does it well enough.',
+      },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Export the alarm history', text: 'Three to six months, with tag, priority, timestamp, and state.' },
+          { title: 'Find the flood windows', text: 'Rolling ten-minute counts per operator position. Mark every window over ten.' },
+          { title: 'Group by cause', text: 'For each flood, identify the first alarm and the event behind it. Floods cluster into a few causes.' },
+          { title: 'Count the contributors', text: 'Within each cause, which alarms appear every time? Those are the consequential alarms to suppress or remove.' },
+          { title: 'Fix the top cause first', text: 'Implement the suppression or the single parent alarm, then re-measure. Repeat.' },
+        ],
+      },
+      { t: 'h2', text: 'During a flood' },
+      {
+        t: 'p',
+        text: 'Design reduces floods; it does not eliminate them. The alarm summary should let the operator filter by priority so that in a flood they see only high alarms, and it should offer a view grouped by area or by parent event. Operators are trained that in a flood the first action is to filter, the second is to find the cause, and acknowledging everything to clear the screen is never the answer, because it discards the information the flood contains.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Is ten alarms in ten minutes really the limit?',
+        a: 'It is the ISA-18.2 definition of a flood, derived from what an operator can reasonably read and understand. Operators can physically acknowledge far more, which is exactly the problem: acknowledgment rate is not comprehension rate. The number is per operator position, so a control room with two operators has two thresholds.',
+      },
+      {
+        q: 'Our SCADA system generates an alarm for every tag when a site goes offline. How do we fix it?',
+        a: 'Generate a single communication alarm from the poll status of that site and configure the tag alarms to be inhibited on bad quality. Most SCADA platforms have both features; some need the inhibit built in the alarm expression. It is one afternoon of configuration per platform and removes the most common flood at a utility.',
+      },
+      {
+        q: 'Is suppression the same as shelving?',
+        a: 'No. Suppression is designed into the system based on process state and documented in rationalization. Shelving is an operator temporarily removing a nuisance alarm from view for a set time, after which it returns. Both are legitimate and both are visible; disabling an alarm silently is neither.',
+      },
+      {
+        q: 'What about a flood of alarms from a real emergency?',
+        a: 'A real emergency produces real alarms, and some floods are unavoidable. The design goal is that the operator can still find the cause: high priority filtering, first-out flags, and consequential suppression all work during a real event as well as a nuisance one. The rationalized alarm list also matters here: if only five percent of alarms are high, filtering to high shows a short list.',
+      },
+    ],
+    related: [
+      '/controls/scada-hmi/alarm-management/isa-18-2',
+      '/controls/scada-hmi/alarm-management/alarm-philosophy',
+      '/controls/scada-hmi/alarm-management/alarm-priority',
+      '/controls/scada-hmi/alarm-management/rationalization',
+      '/troubleshooting/scada-troubleshooting/tag-shows-bad-quality',
+      '/controls/scada-hmi/scada-fundamentals/redundancy',
+    ],
+  },
+  {
+    path: '/controls/scada-hmi/alarm-management/notification',
+    kind: 'reference',
+    title: 'Alarm Notification and Callout',
+    summary:
+      'Getting the alarm to the person on call when no one is watching the screen: notification paths, escalation, acknowledgment from the field, which alarms qualify, and the failure modes that leave a station in high level with nobody paged.',
+    answer:
+      'Alarm notification sends selected alarms to people who are not at the SCADA screen, by voice call, text message, app, or radio, following an on-call schedule with escalation if no one acknowledges. It should be driven by a separate notification rule set rather than by priority alone, tested on a schedule, and monitored for its own health, because a silent notification server is indistinguishable from a quiet night.',
+    keyPoints: [
+      'Notification is its own rule set: which alarms, to whom, by what path, with what escalation.',
+      'Voice and text through a dialer or a notification service; email is not a notification path for urgent alarms.',
+      'Escalate on no acknowledgment. The schedule is data, and operators must be able to change it.',
+      'Monitor the notifier. A heartbeat test every shift is the minimum.',
+      'Two independent paths for the critical sites: the notifier and an autodialer at the site.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['Alarms', 'SCADA', 'Telemetry', 'Design'],
+    blocks: [
+      { t: 'h2', text: 'Why utilities depend on it' },
+      {
+        t: 'p',
+        text: 'Most water and wastewater systems are not staffed around the clock. The plant may have an operator on the day shift and nobody at night; the lift stations and tanks never have anyone. The alarm system works only if the alarm gets to a person who can act, which means the notification layer is not an accessory to the alarm system at a utility. It is the alarm system for most hours of the week.',
+      },
+      {
+        t: 'p',
+        text: 'That makes the notification path a piece of critical infrastructure with its own design questions: what gets sent, to whom, how, how it is confirmed, what happens when nobody answers, and how the utility knows the whole chain still works.',
+      },
+      { t: 'h2', text: 'What gets sent' },
+      {
+        t: 'p',
+        text: 'Not every alarm should page anyone. The temptation is to tie notification to priority, so every high alarm calls out, and that is a reasonable start. But the two are not the same. A high-priority alarm at a staffed plant during the day needs no call; a medium alarm at a remote site at 3 a.m. may. The notification rule set is a separate set of decisions recorded during rationalization: for each alarm, whether it notifies, under what conditions, and to which group.',
+      },
+      {
+        t: 'table',
+        head: ['Rule', 'Example', 'Note'],
+        rows: [
+          ['By priority and time', 'High alarms always notify; medium alarms notify only when the plant is unstaffed', 'Requires a staffed or unstaffed state the operators set, or a schedule'],
+          ['By site', 'Every alarm from an unstaffed remote site notifies the collection system on-call group', 'Simple and common; relies on the alarms at those sites being rationalized so the group is not flooded'],
+          ['By class', 'Regulatory and safety alarms notify a supervisor in addition to the operator', 'Supports permit obligations and reporting timelines'],
+          ['By consequence type', 'Alarms that can lead to an overflow notify with a shorter escalation interval', 'Matches the response time computed for the high-level float'],
+          ['Never', 'Low priority and maintenance notifications go to a morning report', 'Keeps the on-call phone quiet enough that a call means something'],
+        ],
+      },
+      { t: 'h2', text: 'Paths' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Voice call', def: 'A dialer or a notification service calls the phone, reads the alarm, and takes an acknowledgment by keypress. It wakes people up, which is the point. It works on any phone.' },
+          { term: 'Text message', def: 'Fast and cheap, with the alarm text visible later. Delivery is not guaranteed and a sleeping person may not hear it. Good as the first attempt with voice as the escalation, or in parallel.' },
+          { term: 'Mobile application', def: 'Push notification with acknowledgment, often with a view of the alarm summary and trends. Depends on a data connection and on the application being installed and permitted to interrupt.' },
+          { term: 'Email', def: 'Useful for reports and low-priority information. Not a notification path for anything urgent, because nobody is woken by email and delivery timing is uncontrolled.' },
+          { term: 'Radio and pager', def: 'Still in use where cellular coverage is poor. Paging networks have shrunk; check coverage before relying on one.' },
+          { term: 'Site autodialer', def: 'A dialer at the remote site, on its own line or cellular modem, triggered by hardwired inputs such as the high-level float and power failure. Independent of SCADA, so it is the second path when the SCADA radio or the server is what failed.' },
+        ],
+      },
+      { t: 'h2', text: 'Escalation and acknowledgment' },
+      {
+        t: 'p',
+        text: 'A notification that no one acknowledges must go somewhere else. The usual structure is a call list per group: primary on-call, then secondary, then a supervisor, with a set interval between attempts. Acknowledgment from the field, by keypress on a voice call, by reply to a text, or in the application, stops the escalation and is logged. Acknowledging the notification is not the same as acknowledging the alarm in SCADA, and the two should be kept distinct: the operator acknowledged that they know, and the alarm remains until the condition clears.',
+      },
+      {
+        t: 'p',
+        text: 'Escalation intervals come from the response time of the consequence. An overflow with ten minutes of storage cannot wait five minutes per call attempt through three people. For those alarms the notifier calls the primary and secondary together, or the interval is short and the list is long.',
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'The schedule is data, so make it editable',
+        text: 'The on-call schedule changes weekly and shifts get swapped at short notice. If changing it requires an engineer, it will be wrong, and the notifier will call someone on vacation while the actual on-call operator sleeps. Operators and supervisors should be able to change the schedule themselves, and the notifier should show who is on call now on the main SCADA screen.',
+      },
+      { t: 'h2', text: 'Monitoring the notifier' },
+      {
+        t: 'p',
+        text: 'A notification server that has quietly stopped looks exactly like a quiet night. The failure is discovered when a station overflows and nobody was called. The notifier therefore needs to be watched as carefully as any other critical system.',
+      },
+      {
+        t: 'ul',
+        items: [
+          'A heartbeat test: a scheduled test notification every shift or every day that an operator must acknowledge, with an alarm if it is not delivered or not acknowledged.',
+          'Health of the notifier itself as a SCADA alarm: service running, modem or service connection up, license valid, queue empty.',
+          'A watchdog between SCADA and the notifier, in both directions, so a stalled link is alarmed by whichever side is still alive.',
+          'Redundancy for the critical sites: a site autodialer on independent power and an independent line, tested on the same schedule as the high-level float.',
+          'A log of every notification and its outcome, reviewed after every callout and monthly for patterns.',
+        ],
+      },
+      { t: 'h2', text: 'Configuration mistakes' },
+      {
+        t: 'table',
+        head: ['Mistake', 'What happens', 'Fix'],
+        rows: [
+          ['Every alarm notifies', 'The on-call phone rings all night; operators turn it off or ignore it', 'Rationalize; notify by rule, not by default'],
+          ['Notification tied only to priority', 'Alarms that need a call at night do not get one; alarms that do not need a call do', 'Separate notification rules with a staffed-state condition'],
+          ['Single path through the SCADA server', 'A server, network, or radio failure silences every site at once', 'Autodialers at critical sites; notifier health alarms'],
+          ['Escalation to voicemail', 'The call is counted as delivered when voicemail picks up', 'Require a keypress acknowledgment; configure the dialer to treat voicemail as no answer'],
+          ['Schedule maintained by one person', 'Wrong person called on any week that person is away', 'Operator-editable schedule shown on the HMI'],
+          ['No test', 'Notifier failure discovered by an incident', 'Daily heartbeat with acknowledgment'],
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Should the notifier be part of the SCADA platform or a separate product?',
+        a: 'Either works. Built-in notification is convenient and reads the alarm database directly. A separate product is easier to make independent of the SCADA server, and some are built for this with their own hardware and lines. The independence argument favors separate for the critical path, but a built-in notifier with a well-tested site autodialer as the second path is a common and reasonable design.',
+      },
+      {
+        q: 'How many people should be on the escalation list?',
+        a: 'At least three: primary, secondary, and a supervisor, so that one missed call and one unavailable person still leave someone. For alarms with very short response times, call the first two at once.',
+      },
+      {
+        q: 'Can operators acknowledge alarms from their phone?',
+        a: 'Most applications allow it. Whether they should depends on the alarm class. Acknowledging the notification is always appropriate; acknowledging the SCADA alarm remotely is appropriate if the operator has enough information on the phone to make the decision the acknowledgment implies. Regulatory and safety alarms often require acknowledgment at the console.',
+      },
+      {
+        q: 'What about cellular coverage at the on-call person\'s home?',
+        a: 'Check it, for every person on the list. A voice call to a landline is still the most reliable path for someone who lives outside coverage, and the notifier should allow a different path per person.',
+      },
+    ],
+    related: [
+      '/controls/scada-hmi/alarm-management/alarm-priority',
+      '/controls/scada-hmi/alarm-management/rationalization',
+      '/controls/scada-hmi/alarm-management/alarm-philosophy',
+      '/water-wastewater/wastewater-systems/lift-stations/high-level',
+      '/controls/scada-hmi/scada-fundamentals/redundancy',
+    ],
+  },
 ];

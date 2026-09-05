@@ -14,6 +14,15 @@ import { ContactPage } from '@/pages/contact';
 import { ArticlesPage, isArticleCategory } from '@/pages/articles';
 import { ProjectDetailPage, ProjectsPage } from '@/pages/projects';
 import { AboutEricPage, AboutSitePage } from '@/pages/about';
+import { AnalyticsPage } from '@/pages/analytics';
+import { GlossaryIndexPage, GlossaryTermPage, isGlossarySlug } from '@/pages/glossary';
+import { FaqHubPage, SiteMapPage, TopicPage, TopicsIndexPage, isTagSlug } from '@/pages/discovery';
+import {
+  AccessibilityPage,
+  EditorialStandardsPage,
+  PrivacyPage,
+  TermsPage,
+} from '@/pages/policies';
 import NotFound from '@/pages/not-found';
 
 const PROJECTS_BASE = '/tools-projects/eric-sullivans-personal-projects';
@@ -33,6 +42,27 @@ export function Routes() {
   if (path === '/') return <HomePage />;
   if (path === '/contact') return <ContactPage />;
   if (path === '/search') return <SearchPage />;
+  if (path === '/analytics') return <AnalyticsPage />;
+
+  // Reference and discovery pages, deliberately at the site root: short URLs
+  // and two clicks from anywhere via the footer.
+  if (path === '/glossary') return <GlossaryIndexPage />;
+  if (path.startsWith('/glossary/')) {
+    const slug = path.slice('/glossary/'.length);
+    if (isGlossarySlug(slug)) return <GlossaryTermPage slug={slug} />;
+  }
+  if (path === '/sitemap') return <SiteMapPage />;
+  if (path === '/faq') return <FaqHubPage />;
+  if (path === '/topics') return <TopicsIndexPage />;
+  if (path.startsWith('/topics/')) {
+    const slug = path.slice('/topics/'.length);
+    if (isTagSlug(slug)) return <TopicPage slug={slug} />;
+  }
+
+  if (path === '/privacy') return <PrivacyPage />;
+  if (path === '/terms') return <TermsPage />;
+  if (path === '/accessibility') return <AccessibilityPage />;
+  if (path === '/editorial-standards') return <EditorialStandardsPage />;
 
   if (path === '/about/site') return <AboutSitePage />;
   if (path === '/about/eric-sullivan') return <AboutEricPage />;

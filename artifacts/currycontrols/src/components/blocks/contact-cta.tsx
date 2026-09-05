@@ -19,7 +19,12 @@ export function ContactCta({ variant = 'full' }: { variant?: 'full' | 'inline' }
         <p className="text-[0.9rem] text-[hsl(var(--ink-2))]">
           Have a controls question? Contact {CONTACT.person} directly.
         </p>
-        <a href={CONTACT.phoneHref} className="cc-btn cc-btn-outline" data-testid="link-phone-cta-inline">
+        <a
+          href={CONTACT.phoneHref}
+          data-phone-placement="inline-cta"
+          className="cc-btn cc-btn-outline"
+          data-testid="link-phone-cta-inline"
+        >
           <Phone size={14} aria-hidden="true" />
           {CONTACT.phoneDisplay}
         </a>
@@ -46,7 +51,12 @@ export function ContactCta({ variant = 'full' }: { variant?: 'full' | 'inline' }
         </div>
 
         <div className="flex flex-col gap-3">
-          <a href={CONTACT.phoneHref} className="cc-btn cc-btn-primary" data-testid="link-phone-cta">
+          <a
+            href={CONTACT.phoneHref}
+            data-phone-placement="page-cta"
+            className="cc-btn cc-btn-primary"
+            data-testid="link-phone-cta"
+          >
             <Phone size={15} aria-hidden="true" />
             <span>
               Call Eric · <span className="cc-mono font-bold">{CONTACT.phoneDisplay}</span>

@@ -6,6 +6,7 @@ import { CONTACT, SITE } from '@/data/site';
 import { ENTRIES } from '@/data/content';
 import { NAV_SECTIONS } from '@/data/navigation';
 import { PROJECTS } from '@/data/projects';
+import { GLOSSARY } from '@/data/glossary';
 
 /**
  * Server entry used by the prerender build step.
@@ -38,6 +39,12 @@ export const seoData = {
   CONTACT,
   NAV_SECTIONS,
   PROJECTS,
+  GLOSSARY: GLOSSARY.map((term) => ({
+    slug: term.slug,
+    term: term.term,
+    short: term.short,
+    category: term.category,
+  })),
   ENTRIES: ENTRIES.map((entry) => ({
     path: entry.path,
     title: entry.title,

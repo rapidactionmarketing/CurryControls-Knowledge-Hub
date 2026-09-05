@@ -113,7 +113,11 @@ export function AboutSitePage() {
             <div className="cc-card mt-4 p-5">
               <p className="cc-eyebrow">Contact</p>
               <p className="mt-2 font-semibold text-[hsl(var(--navy))]">{CONTACT.person}</p>
-              <a href={CONTACT.phoneHref} className="mt-2 inline-flex items-center gap-2 text-[hsl(var(--navy))]">
+              <a
+                href={CONTACT.phoneHref}
+                data-phone-placement="about-site"
+                className="mt-2 inline-flex items-center gap-2 text-[hsl(var(--navy))]"
+              >
                 <Phone size={15} aria-hidden="true" />
                 <span className="cc-mono font-bold">{CONTACT.phoneDisplay}</span>
               </a>
@@ -176,7 +180,7 @@ export function AboutEricPage() {
             The fastest way to reach Eric about anything on this site, a controls topic, or one of his
             personal projects is a direct call.
           </p>
-          <a href={CONTACT.phoneHref} className="cc-btn cc-btn-primary !mt-4">
+          <a href={CONTACT.phoneHref} data-phone-placement="about-eric" className="cc-btn cc-btn-primary !mt-4">
             <Phone size={15} aria-hidden="true" />
             <span>
               Call Eric · <span className="cc-mono font-bold">{CONTACT.phoneDisplay}</span>

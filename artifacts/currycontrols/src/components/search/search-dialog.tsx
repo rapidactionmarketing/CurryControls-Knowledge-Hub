@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'wouter';
 import { CornerDownLeft, ExternalLink, Search as SearchIcon, X } from 'lucide-react';
+import { CONTACT } from '@/data/site';
+import { trackSearch, trackSearchResultOpen } from '@/lib/analytics';
 import {
   POPULAR_SEARCHES,
   SEARCH_PLACEHOLDER,
@@ -39,6 +41,17 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
     setActive(0);
   }, [query]);
 
+  // Record the settled query rather than every keystroke, so the dashboard
+  // shows what people meant to look for.
+  useEffect(() => {
+    const term = query.trim();
+    if (!open || term.length < 3) return;
+    const id = setTimeout(() => {
+      trackSearch(term, results.length, window.location.pathname);
+    }, 900);
+    return () => clearTimeout(id);
+  }, [query, results.length, open]);
+
   useEffect(() => {
     if (!open) setQuery('');
   }, [open]);
@@ -53,6 +66,7 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
   if (!open) return null;
 
   const go = (result: SearchResult) => {
+    trackSearchResultOpen(result.path, window.location.pathname);
     onClose();
     if (result.external) window.open(result.external, '_blank', 'noopener,noreferrer');
     else setLocation(result.path);
@@ -138,7 +152,7 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
           ) : results.length === 0 ? (
             <div className="px-4 py-8 text-center text-[0.9rem] text-[hsl(var(--ink-2))]">
               No results for “{query}”. Try a broader term, or{' '}
-              <a href={`tel:8636988266`} className="cc-link">
+              <a href={CONTACT.phoneHref} data-phone-placement="search-no-results" className="cc-link">
                 call Eric at 863-698-8266
               </a>
               .

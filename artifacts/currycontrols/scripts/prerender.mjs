@@ -47,7 +47,12 @@ function headFor(head, path) {
     `<meta property="og:type" content="${head.type ?? 'website'}" />`,
     `<meta property="og:site_name" content="${escape(SITE.name)}" />`,
     `<meta property="og:locale" content="${SITE.locale}" />`,
-    `<meta name="twitter:card" content="summary" />`,
+    `<meta property="og:image" content="${SITE.url}/og-image.png" />`,
+    `<meta property="og:image:width" content="1200" />`,
+    `<meta property="og:image:height" content="630" />`,
+    `<meta property="og:image:alt" content="CurryControls.com, Controls and Automation Knowledge Hub" />`,
+    `<meta name="twitter:card" content="summary_large_image" />`,
+    `<meta name="twitter:image" content="${SITE.url}/og-image.png" />`,
     `<meta name="twitter:title" content="${escape(title)}" />`,
     `<meta name="twitter:description" content="${escape(head.description)}" />`,
     head.type === 'article' && head.publishedTime
@@ -83,6 +88,7 @@ for (const path of PRERENDER_PATHS) {
       .replace(/[ \t]*<link rel="canonical"[^>]*>\n?/, '')
       .replace(/[ \t]*<meta property="og:[^>]*>\n?/g, '')
       .replace(/[ \t]*<meta name="twitter:[^>]*>\n?/g, '')
+      .replace(/[ \t]*<link rel="canonical"[^>]*>\n?/g, '')
       .replace('</head>', `  ${headFor(head, path)}\n  </head>`)
       .replace('<div id="root"></div>', `<div id="root">${html}</div>`);
 

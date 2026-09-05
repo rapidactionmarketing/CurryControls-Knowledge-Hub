@@ -14,7 +14,8 @@ const appRoot = resolve(here, '..');
 const outDir = resolve(appRoot, 'dist/public');
 
 const { seoData } = await import(resolve(appRoot, 'dist/server/entry-server.js'));
-const { ROUTES, SITE, CONTACT, ENTRIES, NAV_SECTIONS, PROJECTS } = seoData;
+const { ROUTES, SITE, CONTACT, ENTRIES, NAV_SECTIONS, PROJECTS, GLOSSARY } = seoData;
+const glossaryCount = GLOSSARY.length;
 
 mkdirSync(outDir, { recursive: true });
 
@@ -105,6 +106,11 @@ const entryLines = ENTRIES.map(
   (entry) => `- [${entry.title}](${SITE.url}${entry.path}): ${entry.summary}`,
 ).join('\n');
 
+const glossaryLines = GLOSSARY.map(
+  (term) =>
+    `- [${term.term}](${SITE.url}/glossary/${term.slug}): ${term.short}`,
+).join('\n');
+
 const projectLines = PROJECTS.map(
   (project) =>
     `- [${project.name}](${SITE.url}/tools-projects/eric-sullivans-personal-projects/${project.slug}): ${project.summary} Status: ${project.status}. A personal project of ${CONTACT.person}.`,
@@ -140,18 +146,85 @@ ${sectionLines}
 
 ${entryLines}
 
+## Glossary terms
+
+${glossaryLines}
+
 ## Personal projects
 
 ${projectLines}
+
+## Reference
+
+- [Glossary](${SITE.url}/glossary): ${glossaryCount} plain-language definitions of controls and automation terms, one page each.
+- [Questions and answers](${SITE.url}/faq): Every question the knowledge base answers, in one place.
+- [Topics](${SITE.url}/topics): The knowledge base browsed by subject, across the taxonomy.
 
 ## Site utilities
 
 - [Contact ${CONTACT.person}](${SITE.url}/contact): Phone ${CONTACT.phoneDisplay} and a message form.
 - [About ${SITE.name}](${SITE.url}/about/site): Ownership, affiliation, and what this site is.
-- [Sitemap](${SITE.url}/sitemap.xml): Full list of indexable pages.
+- [Editorial standards](${SITE.url}/editorial-standards): How this content is written, reviewed, and corrected.
+- [Privacy](${SITE.url}/privacy): What the site collects. First-party, cookieless, no third-party trackers.
+- [Sitemap, for people](${SITE.url}/sitemap): Every page on the site in one list.
+- [Sitemap, XML](${SITE.url}/sitemap.xml): Full list of indexable pages.
+- [Feed](${SITE.url}/feed.xml): New and revised guides.
+`,
+);
+
+/* ----------------------------------- RSS -------------------------------- */
+/* A feed gives readers and aggregators a way to follow new material, and it   */
+/* is one more discovery surface that does not depend on a search engine.      */
+
+const escapeXml = (value) =>
+  String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+
+const KIND_LABEL = {
+  reference: 'Reference',
+  article: 'Article',
+  howto: 'How-To',
+  troubleshooting: 'Troubleshooting',
+};
+
+const feedItems = [...ENTRIES]
+  .sort((a, b) => b.updated.localeCompare(a.updated))
+  .slice(0, 50)
+  .map((entry) => {
+    const url = `${SITE.url}${entry.path}`;
+    return `    <item>
+      <title>${escapeXml(entry.title)}</title>
+      <link>${url}</link>
+      <guid isPermaLink="true">${url}</guid>
+      <description>${escapeXml(entry.summary)}</description>
+      <category>${escapeXml(KIND_LABEL[entry.kind] ?? 'Reference')}</category>
+      <pubDate>${new Date(`${entry.updated}T00:00:00Z`).toUTCString()}</pubDate>
+    </item>`;
+  })
+  .join('\n');
+
+writeFileSync(
+  resolve(outDir, 'feed.xml'),
+  `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>${escapeXml(SITE.name)} — ${escapeXml(SITE.tagline)}</title>
+    <link>${SITE.url}/</link>
+    <atom:link href="${SITE.url}/feed.xml" rel="self" type="application/rss+xml" />
+    <description>${escapeXml(SITE.description)}</description>
+    <language>en-us</language>
+    <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
+    <ttl>1440</ttl>
+${feedItems}
+  </channel>
+</rss>
 `,
 );
 
 console.log(
-  `[build-seo] sitemap.xml (${ROUTES.length} urls), robots.txt, llms.txt written to dist/public`,
+  `[build-seo] sitemap.xml (${ROUTES.length} urls), robots.txt, llms.txt, feed.xml written to dist/public`,
 );

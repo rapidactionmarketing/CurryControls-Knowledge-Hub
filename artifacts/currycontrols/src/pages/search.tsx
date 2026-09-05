@@ -12,6 +12,7 @@ import {
   type SearchScope,
 } from '@/lib/search';
 import { graph, personSchema, websiteSchema } from '@/lib/structured-data';
+import { trackSearch } from '@/lib/analytics';
 
 /** Full search results page, reachable directly and shareable as a URL. */
 export function SearchPage() {
@@ -26,6 +27,13 @@ export function SearchPage() {
 
   const results = useMemo(() => (query.trim() ? search(query, scope, 60) : []), [query, scope]);
   const counts = useMemo(() => (query.trim() ? scopeCounts(query) : null), [query]);
+
+  useEffect(() => {
+    const term = query.trim();
+    if (term.length < 3) return;
+    const id = setTimeout(() => trackSearch(term, results.length, '/search'), 900);
+    return () => clearTimeout(id);
+  }, [query, results.length]);
 
   return (
     <>

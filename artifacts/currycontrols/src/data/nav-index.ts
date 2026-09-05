@@ -123,3 +123,20 @@ export function describe(entry: NavEntry): string {
 }
 
 export const SECTION_PATHS = NAV_SECTIONS.map((s) => `/${s.slug}`);
+
+/**
+ * Previous and next in depth-first reading order, within the same section.
+ *
+ * Gives every page a sequential path through the taxonomy. Readers get a way
+ * to work through a subject in order, and crawlers get a chain that reaches
+ * deep pages without relying on the menu alone.
+ */
+export function getAdjacent(entry: NavEntry): { previous?: NavEntry; next?: NavEntry } {
+  const within = NAV_ENTRIES.filter((e) => e.section === entry.section && e.depth > 0);
+  const index = within.findIndex((e) => e.path === entry.path);
+  if (index === -1) return {};
+  return {
+    ...(index > 0 ? { previous: within[index - 1] } : {}),
+    ...(index < within.length - 1 ? { next: within[index + 1] } : {}),
+  };
+}

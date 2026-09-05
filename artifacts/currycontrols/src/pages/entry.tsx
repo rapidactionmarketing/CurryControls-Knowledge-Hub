@@ -7,6 +7,7 @@ import { ContactCta } from '@/components/blocks/contact-cta';
 import { DisclaimerBox } from '@/components/blocks/disclaimer';
 import { FaqSection } from '@/components/blocks/faq-section';
 import { RelatedContent } from '@/components/blocks/related-content';
+import { SequentialNav } from '@/components/blocks/sequential-nav';
 import { formatDate } from '@/components/blocks/cards';
 import { KIND_LABEL, type Entry } from '@/data/content';
 import { getBreadcrumbs, type NavEntry } from '@/data/nav-index';
@@ -155,6 +156,8 @@ export function EntryPage({ entry, nav }: { entry: Entry; nav: NavEntry }) {
             {entry.faqs && <FaqSection faqs={entry.faqs} />}
 
             <RelatedContent current={nav} explicit={entry.related} />
+
+            <SequentialNav current={nav} />
 
             <div className="mt-10">
               <ContactCta />

@@ -195,6 +195,67 @@ export function projectSchema(project: Project): JsonLd {
   };
 }
 
+const GLOSSARY_ID = `${SITE.url}/glossary#termset`;
+
+/** The glossary as a whole. */
+export function definedTermSetSchema(count: number): JsonLd {
+  return {
+    '@type': 'DefinedTermSet',
+    '@id': GLOSSARY_ID,
+    name: 'Controls and Automation Glossary',
+    description: `Plain-language definitions of ${count} terms used in industrial control systems, instrumentation, SCADA, control panels, industrial networking, and water and wastewater automation.`,
+    url: absoluteUrl('/glossary'),
+    hasDefinedTerm: undefined,
+    inLanguage: 'en-US',
+    publisher: { '@id': PERSON_ID },
+  };
+}
+
+/** One glossary entry. */
+export function definedTermSchema(term: {
+  slug: string;
+  term: string;
+  expansion?: string;
+  short: string;
+  category: string;
+}): JsonLd {
+  return {
+    '@type': 'DefinedTerm',
+    '@id': `${SITE.url}/glossary/${term.slug}#term`,
+    name: term.term,
+    ...(term.expansion ? { alternateName: term.expansion } : {}),
+    description: term.short,
+    termCode: term.slug,
+    url: absoluteUrl(`/glossary/${term.slug}`),
+    inDefinedTermSet: { '@id': GLOSSARY_ID },
+  };
+}
+
+/** A plain list page, used by the HTML sitemap and the topics hubs. */
+export function itemListSchema(
+  name: string,
+  path: string,
+  items: { name: string; path: string }[],
+): JsonLd {
+  return {
+    '@type': 'CollectionPage',
+    name,
+    url: absoluteUrl(path),
+    isPartOf: { '@id': SITE_ID },
+    inLanguage: 'en-US',
+    mainEntity: {
+      '@type': 'ItemList',
+      numberOfItems: items.length,
+      itemListElement: items.map((item, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        name: item.name,
+        url: absoluteUrl(item.path),
+      })),
+    },
+  };
+}
+
 export function contactPageSchema(): JsonLd {
   return {
     '@type': 'ContactPage',

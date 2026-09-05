@@ -33,7 +33,7 @@ export default function NotFound() {
             <Link href="/search" className="cc-btn cc-btn-outline">
               Search the knowledge base
             </Link>
-            <a href={CONTACT.phoneHref} className="cc-btn cc-btn-outline">
+            <a href={CONTACT.phoneHref} data-phone-placement="not-found" className="cc-btn cc-btn-outline">
               <Phone size={14} aria-hidden="true" />
               {CONTACT.phoneDisplay}
             </a>

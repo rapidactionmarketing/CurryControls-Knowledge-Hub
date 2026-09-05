@@ -94,6 +94,7 @@ export function MobileNav({ open, onClose }: { open: boolean; onClose: () => voi
 
         <a
           href={CONTACT.phoneHref}
+          data-phone-placement="mobile-nav"
           className="flex items-center gap-3 bg-[hsl(var(--navy))] px-4 py-3 text-white"
           data-testid="link-phone-mobile-nav"
         >

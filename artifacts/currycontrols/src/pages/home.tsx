@@ -102,6 +102,7 @@ export function HomePage() {
               </Link>
               <a
                 href={CONTACT.phoneHref}
+                data-phone-placement="hero"
                 className="cc-btn border border-white/30 text-white hover:border-white/70"
                 data-testid="link-phone-hero"
               >

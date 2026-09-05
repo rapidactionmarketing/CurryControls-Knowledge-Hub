@@ -4,6 +4,7 @@ import { Seo } from '@/components/seo/seo';
 import { Breadcrumbs } from '@/components/blocks/breadcrumbs';
 import { Disclaimer } from '@/components/blocks/disclaimer';
 import { CONTACT, CONTACT_TOPICS } from '@/data/site';
+import { trackContactSubmit } from '@/lib/analytics';
 import {
   breadcrumbSchema,
   contactPageSchema,
@@ -70,6 +71,7 @@ export function ContactPage() {
       .join('\n');
 
     const subject = form.subject || `CurryControls.com enquiry${form.topic ? ` — ${form.topic}` : ''}`;
+    trackContactSubmit(form.topic, '/contact');
     window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     setSubmitted(true);
   };
@@ -111,7 +113,7 @@ export function ContactPage() {
                   route is a direct call.
                 </p>
                 <div className="mt-5 flex flex-wrap gap-3">
-                  <a href={CONTACT.phoneHref} className="cc-btn cc-btn-primary">
+                  <a href={CONTACT.phoneHref} data-phone-placement="contact-confirmation" className="cc-btn cc-btn-primary">
                     <Phone size={15} aria-hidden="true" />
                     Call {CONTACT.phoneDisplay}
                   </a>
@@ -220,6 +222,7 @@ export function ContactPage() {
               <p className="cc-h3 mt-2">{CONTACT.person}</p>
               <a
                 href={CONTACT.phoneHref}
+                data-phone-placement="contact-page"
                 className="mt-3 flex items-center gap-3 rounded bg-[hsl(var(--navy))] px-4 py-3 text-white"
                 data-testid="link-phone-contact-page"
               >

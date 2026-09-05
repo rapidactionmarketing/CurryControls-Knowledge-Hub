@@ -8,9 +8,18 @@
  */
 
 import { NAV_ENTRIES } from '@/data/nav-index';
-import { ENTRIES, getContent } from '@/data/content';
+import { ALL_TAGS, ENTRIES, getContent } from '@/data/content';
+import { GLOSSARY } from '@/data/glossary';
 import { PROJECTS } from '@/data/projects';
 import { getChildren, getEntry } from '@/data/nav-index';
+
+/** Mirrors tagSlug in pages/discovery, kept here so routes.ts stays UI-free. */
+function tagSlug(tag: string): string {
+  return tag
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
 
 export type RouteRecord = {
   path: string;
@@ -41,6 +50,25 @@ function buildRoutes(): RouteRecord[] {
       changefreq: 'monthly',
     });
   }
+
+  // Reference and discovery pages. The sitemap page in particular is what
+  // puts every deep taxonomy node two clicks from the home page.
+  add({ path: '/glossary', priority: 0.8, changefreq: 'monthly' });
+  for (const term of GLOSSARY) {
+    add({ path: `/glossary/${term.slug}`, priority: 0.6, changefreq: 'monthly' });
+  }
+  add({ path: '/faq', priority: 0.7, changefreq: 'weekly' });
+  add({ path: '/sitemap', priority: 0.5, changefreq: 'weekly' });
+  add({ path: '/topics', priority: 0.6, changefreq: 'weekly' });
+  for (const { tag } of ALL_TAGS) {
+    add({ path: `/topics/${tagSlug(tag)}`, priority: 0.5, changefreq: 'weekly' });
+  }
+
+  // Trust pages. Low priority for ranking, but they must be crawlable.
+  add({ path: '/editorial-standards', priority: 0.4, changefreq: 'monthly' });
+  add({ path: '/accessibility', priority: 0.3, changefreq: 'monthly' });
+  add({ path: '/privacy', priority: 0.3, changefreq: 'monthly' });
+  add({ path: '/terms', priority: 0.3, changefreq: 'monthly' });
 
   add({ path: '/articles', priority: 0.8, changefreq: 'weekly' });
   const articlesRoot = getEntry('/articles');

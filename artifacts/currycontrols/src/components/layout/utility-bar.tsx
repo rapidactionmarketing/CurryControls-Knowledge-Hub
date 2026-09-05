@@ -34,6 +34,7 @@ export function UtilityBar() {
 
           <a
             href={CONTACT.phoneHref}
+            data-phone-placement="utility-bar"
             className="group flex items-center gap-2 rounded px-1 py-1"
             data-testid="link-phone-utility"
             aria-label={`Call Eric Sullivan at ${CONTACT.phoneDisplay}`}

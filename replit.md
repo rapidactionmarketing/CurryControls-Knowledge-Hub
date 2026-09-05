@@ -7,9 +7,13 @@ wastewater industry. Owned and maintained by Eric Sullivan.
 ## Run & Operate
 
 - `pnpm --filter @workspace/currycontrols run dev` — run the site locally
+- `pnpm --filter @workspace/api-server run dev` — run the API server that receives analytics (port 8080)
 - `pnpm --filter @workspace/currycontrols run build` — client build, SSR build, SEO files, prerender
 - `pnpm run typecheck` — full typecheck across all packages
+- `pnpm --filter @workspace/api-spec run codegen` — regenerate the API client and Zod schemas from `lib/api-spec/openapi.yaml`
 - `PORT` and `BASE_PATH` are required by `vite.config.ts` (the Replit artifact sets both)
+- The site needs the API server running for analytics. In dev, Vite proxies `/api` to
+  `http://localhost:8080`; override with `API_ORIGIN`.
 
 The build runs four stages in order. Skipping one leaves the published directory inconsistent:
 
@@ -23,7 +27,8 @@ The build runs four stages in order. Skipping one leaves the published directory
 - pnpm workspaces, Node.js 24, TypeScript 5.9
 - Vite 7, React 19, Tailwind CSS v4, wouter for routing
 - shadcn/ui primitives in `src/components/ui` (mostly unused; the site has its own components)
-- No database and no API server. The site is fully static.
+- Express 5 API server for analytics only. The site itself is fully static and works without it.
+- Postgres via Drizzle when `DATABASE_URL` is set; a local JSONL file store otherwise.
 
 ## Where things live
 
@@ -44,8 +49,17 @@ Everything is under `artifacts/currycontrols`.
 | `src/ssr-shell.tsx` | Route resolution and the page shell, shared by the app and the prerenderer. |
 | `src/pages/hub.tsx` | Generic page for any taxonomy node without a written entry. |
 | `src/pages/entry.tsx` | Template for reference, article, how-to, and troubleshooting entries. |
-| `scripts/build-seo.mjs` | Generates `sitemap.xml`, `robots.txt`, `llms.txt`. |
+| `src/data/glossary.ts` | 125 glossary terms, one page each, with DefinedTerm structured data. |
+| `src/lib/analytics.ts` | Cookieless client collector. Honors Do Not Track and Global Privacy Control. |
+| `src/pages/analytics.tsx` | The dashboard, at `/analytics`. Noindex, not prerendered. |
+| `src/pages/discovery.tsx` | HTML sitemap, topic hubs, and the questions-and-answers hub. |
+| `src/pages/policies.tsx` | Privacy, terms, accessibility, and editorial standards. |
+| `scripts/build-seo.mjs` | Generates `sitemap.xml`, `robots.txt`, `llms.txt`, `feed.xml`. |
 | `scripts/prerender.mjs` | Renders every indexable route to static HTML. |
+| `lib/api-spec/openapi.yaml` | The API contract. Edit here, then run codegen; never edit generated files. |
+| `lib/db/src/schema/analytics.ts` | Drizzle schema for the analytics table. |
+| `artifacts/api-server/src/lib/analytics-store.ts` | Storage layer: Postgres or file, chosen at startup. |
+| `artifacts/api-server/src/lib/analytics-summary.ts` | Aggregation, shared by both backends so numbers match. |
 
 ## Architecture decisions
 
@@ -63,6 +77,18 @@ Everything is under `artifacts/currycontrols`.
 - **Placeholder leaves are `noindex` and excluded from the sitemap.** A taxonomy node with no
   children and no written entry says plainly that the reference is not written yet. Submitting
   hundreds of thin pages for indexing would hurt the site.
+- **Analytics is first-party and identifier-free.** No cookies, no IP address, no third-party
+  script, and a session id the browser discards when the tab closes. Do Not Track and Global
+  Privacy Control switch collection off before anything is sent.
+- **The analytics store is pluggable because no database is provisioned.** Postgres when
+  `DATABASE_URL` exists, a per-day JSONL file otherwise. Both feed the same aggregator, so the
+  dashboard reads identically either way; the dashboard footer says which is active.
+- **The questions hub deliberately omits FAQPage structured data.** Each source page already owns
+  the FAQPage entity for its own questions; duplicating them on the hub would put two competing
+  entities in the graph for the same content.
+- **Search relevance is scaled by record type.** A glossary term titled exactly "4-20 mA" would
+  otherwise beat the full reference titled "4-20 mA Current Loops". The guide leads and the
+  definition sits under it.
 
 ## Product
 
@@ -75,6 +101,14 @@ Everything is under `artifacts/currycontrols`.
 - **Answer-first content.** Each written entry opens with a direct answer and key points, then
   the detail, then FAQs — for a reader scanning and for answer engines quoting.
 - **Contact page** at `/contact` with a topic-tagged message form.
+- **Glossary** at `/glossary`: 125 terms, one page each, for the definitional queries that dominate
+  this subject.
+- **Discovery pages**: an HTML sitemap that puts every deep node two clicks from home, topic hubs
+  that cut across the taxonomy, and a questions-and-answers hub.
+- **Trust pages**: privacy, terms, accessibility, and editorial standards.
+- **Built-in analytics** at `/analytics`: traffic, top pages, phone-click conversions by placement,
+  Core Web Vitals from real visits, and the searches that returned nothing, which is the content
+  backlog in priority order.
 
 ## User preferences
 
@@ -99,6 +133,13 @@ Everything is under `artifacts/currycontrols`.
   so a client-only build leaves stale or missing static HTML and SEO files.
 - The desktop nav fits nine sections in a 1240px container only with the tightened `.cc-navlink`
   sizing and the shortened `menuLabel` values. Adding a tenth section needs a rethink.
+- **Do not write `type: integer` in `openapi.yaml`.** Orval emits `z.int()` for it, which is Zod v4
+  syntax, and the workspace pins Zod 3. Use `type: number`.
+- **Provision Postgres for durable analytics.** The file store writes to instance-local disk, so it
+  is not shared between instances and does not survive one being replaced. Set `DATABASE_URL`,
+  run `pnpm --filter @workspace/db run push`, and restart the API server.
+- **Every phone link needs a `data-phone-placement` attribute.** One delegated listener records
+  phone and outbound clicks; a link without the attribute is recorded as "unlabelled".
 
 ## Pointers
 

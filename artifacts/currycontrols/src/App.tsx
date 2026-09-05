@@ -4,6 +4,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { MobileCallBar } from '@/components/layout/mobile-call-bar';
 import { NoticeGate } from '@/components/layout/notice-gate';
+import { AnalyticsTracker } from '@/components/analytics-tracker';
 import { ScrollToTop, Shell } from '@/ssr-shell';
 
 const queryClient = new QueryClient();
@@ -20,6 +21,7 @@ export default function App({ ssrPath }: { ssrPath?: string }) {
       <TooltipProvider>
         <WouterRouter ssrPath={ssrPath}>
           <ScrollToTop />
+          <AnalyticsTracker />
           <NoticeGate />
           <Shell />
           <MobileCallBar />

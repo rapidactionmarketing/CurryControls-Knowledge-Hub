@@ -19,6 +19,10 @@ export type SeoProps = {
 
 const MANAGED = 'data-cc-seo';
 
+/** Shared social card image. Absolute, because crawlers do not resolve relatives. */
+export const OG_IMAGE = `${SITE.url}/og-image.png`;
+const OG_IMAGE_ALT = 'CurryControls.com, Controls and Automation Knowledge Hub';
+
 /**
  * Head state captured during server rendering.
  *
@@ -103,7 +107,13 @@ export function Seo({
     setMeta('meta[property="og:site_name"]', { property: 'og:site_name', content: SITE.name });
     setMeta('meta[property="og:locale"]', { property: 'og:locale', content: SITE.locale });
 
-    setMeta('meta[name="twitter:card"]', { name: 'twitter:card', content: 'summary' });
+    setMeta('meta[property="og:image"]', { property: 'og:image', content: OG_IMAGE });
+    setMeta('meta[property="og:image:width"]', { property: 'og:image:width', content: '1200' });
+    setMeta('meta[property="og:image:height"]', { property: 'og:image:height', content: '630' });
+    setMeta('meta[property="og:image:alt"]', { property: 'og:image:alt', content: OG_IMAGE_ALT });
+
+    setMeta('meta[name="twitter:card"]', { name: 'twitter:card', content: 'summary_large_image' });
+    setMeta('meta[name="twitter:image"]', { name: 'twitter:image', content: OG_IMAGE });
     setMeta('meta[name="twitter:title"]', { name: 'twitter:title', content: fullTitle });
     setMeta('meta[name="twitter:description"]', {
       name: 'twitter:description',

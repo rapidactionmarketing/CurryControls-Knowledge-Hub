@@ -39,6 +39,7 @@ export function MobileCallBar() {
       <div className="flex items-stretch gap-px">
         <a
           href={CONTACT.phoneHref}
+          data-phone-placement="mobile-sticky-bar"
           className="flex flex-1 items-center justify-center gap-2 py-3 text-white"
           data-testid="link-phone-sticky"
           aria-label={`Call Eric Sullivan at ${CONTACT.phoneDisplay}`}

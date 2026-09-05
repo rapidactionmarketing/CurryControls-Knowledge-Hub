@@ -64,6 +64,7 @@ export function SiteHeader() {
 
             <a
               href={CONTACT.phoneHref}
+              data-phone-placement="header"
               className="cc-btn cc-btn-outline hidden lg:inline-flex"
               data-testid="link-phone-header"
             >

@@ -7,6 +7,7 @@ import { EntryCard } from '@/components/blocks/cards';
 import { ContactCta } from '@/components/blocks/contact-cta';
 import { Disclaimer } from '@/components/blocks/disclaimer';
 import { Icon } from '@/components/icon';
+import { SequentialNav } from '@/components/blocks/sequential-nav';
 import { getContent, hasContent } from '@/data/content';
 import {
   countDescendants,
@@ -170,6 +171,8 @@ export function HubPage({ nav }: { nav: NavEntry }) {
         ) : (
           <LeafPlaceholder nav={nav} />
         )}
+
+        {nav.depth > 0 && <SequentialNav current={nav} />}
 
         <div className="mt-12">
           <ContactCta />

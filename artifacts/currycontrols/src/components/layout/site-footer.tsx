@@ -18,7 +18,18 @@ const RESOURCE_LINKS = [
   { href: '/how-to', label: 'How-To Guides' },
   { href: '/engineering-library', label: 'Engineering Library' },
   { href: '/articles', label: 'Articles' },
+  { href: '/glossary', label: 'Glossary' },
+  { href: '/faq', label: 'Questions & Answers' },
+  { href: '/topics', label: 'Topics' },
   { href: '/search', label: 'Search' },
+];
+
+const SITE_LINKS = [
+  { href: '/sitemap', label: 'Sitemap' },
+  { href: '/editorial-standards', label: 'Editorial Standards' },
+  { href: '/accessibility', label: 'Accessibility' },
+  { href: '/privacy', label: 'Privacy' },
+  { href: '/terms', label: 'Terms of Use' },
 ];
 
 const ABOUT_LINKS = [
@@ -52,6 +63,7 @@ export function SiteFooter() {
               <div className="mt-0.5 text-[0.9rem] font-semibold text-white">{CONTACT.person}</div>
               <a
                 href={CONTACT.phoneHref}
+                data-phone-placement="footer"
                 className="mt-1.5 inline-flex items-center gap-2"
                 data-testid="link-phone-footer"
               >
@@ -94,6 +106,19 @@ export function SiteFooter() {
               <FooterHeading>About</FooterHeading>
               <ul className="space-y-1.5">
                 {ABOUT_LINKS.map((link) => (
+                  <li key={link.href}>
+                    <Link href={link.href} className="text-[0.85rem] text-white/70 hover:text-white">
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="mt-6">
+              <FooterHeading>Site</FooterHeading>
+              <ul className="space-y-1.5">
+                {SITE_LINKS.map((link) => (
                   <li key={link.href}>
                     <Link href={link.href} className="text-[0.85rem] text-white/70 hover:text-white">
                       {link.label}

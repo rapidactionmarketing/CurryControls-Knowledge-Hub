@@ -1151,4 +1151,489 @@ P2_Call := P2_Available AND ((Lead_Call AND Lead_Is_P2) OR Lag_Call);`,
       '/controls/control-panels/pump-panels/hoa',
     ],
   },
+  {
+    path: '/water-wastewater/wastewater-systems/wastewater-pump-control/level-pid',
+    kind: 'reference',
+    title: 'Wet Well Level PID Control',
+    summary:
+      'Holding a wet well level with a variable speed pump instead of bang-bang control: the loop structure, the minimum speed floor, the stop and restart logic at low inflow, tuning for a slow integrating process, and where level PID is the wrong idea.',
+    answer:
+      'Wet well level PID control varies pump speed to hold the level at a setpoint, so the pump runs continuously at a speed that matches inflow instead of cycling between start and stop points. The loop is direct acting, runs slowly, and needs a minimum speed floor from the pump curve, a stop-and-restart rule for inflow below what minimum speed moves, and a hand-off to lead/lag when one pump at full speed cannot keep up. It suits stations on long force mains and downstream plants that want steady flow; it is the wrong choice where a tank gains nothing from it.',
+    keyPoints: [
+      'A wet well is an integrating process: the level keeps moving until pumping equals inflow. That changes the tuning.',
+      'The controller output never goes below the minimum speed that moves water. The floor is from the pump curve, not the drive default.',
+      'Below the minimum-speed flow the station must cycle. Design the stop and restart deliberately.',
+      'Lead/lag still exists. PID controls the speed; staging logic decides how many pumps run.',
+      'Direct acting: level up, speed up. Tune slow, with mostly proportional and a long integral.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 11,
+    tags: ['Wastewater', 'Pumps', 'PID', 'VFD', 'Level'],
+    blocks: [
+      { t: 'h2', text: 'What level PID changes' },
+      {
+        t: 'p',
+        text: 'With constant-speed pumps, a wet well is emptied in bursts: the level rises to lead-on, the pump runs at full capacity until all-off, and the level rises again. The force main sees flow at pump capacity or nothing. With a variable speed pump under level control, the controller holds the level near a setpoint by running the pump at whatever speed matches the inflow, so the discharge is continuous and roughly equal to what is coming in.',
+      },
+      {
+        t: 'p',
+        text: 'That steadiness is the reason to do it. A treatment plant fed by several pumped stations sees a smooth influent instead of a series of slugs, which helps every downstream process from screening to clarification. A long force main runs at a steadier velocity. A small wet well that would otherwise exceed its starts-per-hour rating runs one pump continuously. The cost is a drive per pump, its heat and complexity, and a control problem that is less obvious than it looks.',
+      },
+      { t: 'h2', text: 'Why the tuning is different' },
+      {
+        t: 'p',
+        text: 'Most loops a utility tunes are self-regulating: change the pump speed on a pressure loop and the pressure settles at a new value. A wet well is not. If pumping is slightly less than inflow, the level rises, and keeps rising, without limit. If pumping is slightly more, the level falls until the well is empty. The level only stops moving when pumping exactly equals inflow. That is an integrating process, and it behaves differently under PID control.',
+      },
+      {
+        t: 'ul',
+        items: [
+          'Proportional action does most of the work. A level above setpoint means speed up in proportion; the level itself is the accumulated error.',
+          'Integral action must be weak, with a long reset time. Integral on an integrating process is a double integration, and too much of it produces slow, large oscillations of level that take hours to die out.',
+          'Derivative is rarely useful. The level signal is noisy in a turbulent well and the process is slow.',
+          'The loop can be tuned for a slow response with no harm. A level that drifts a foot above setpoint during a storm is not a problem; a pump speed that hunts up and down every minute is.',
+          'A deadband around setpoint, where the controller holds its output, keeps the speed steady when the level is close enough and the signal is noisy.',
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'A level setpoint is a soft target',
+        text: 'Unlike pressure or chlorine residual, the wet well level does not need to be held precisely. The purpose of the loop is a steady discharge, and a loop tuned tightly to hold level to the inch will chase every wave and defeat that purpose. Tune it loose, let the well do its job as a buffer, and judge it by how smooth the speed trend is.',
+      },
+      { t: 'h2', text: 'The loop structure' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Validate the level', text: 'The transmitter signal passes through range checks and a short filter before the controller sees it. On a bad signal the loop goes to a defined fallback: float-based operation at fixed speed, or manual at the last good speed, with an alarm.' },
+          { title: 'Run the PID', text: 'Direct acting: as level rises above setpoint, output rises. Execution interval of one to five seconds. Output limited between the minimum speed and 100 percent.' },
+          { title: 'Apply the minimum speed floor', text: 'The lowest output the loop may send is the speed at which the pump develops enough head to move water into the force main, from the pump curve at the static head plus margin. Below that the pump churns and the level rises anyway.' },
+          { title: 'Decide on stop and restart', text: 'When the loop has been at minimum speed for a set time and the level is still falling, inflow is below the minimum-speed flow, and the pump stops. It restarts when the level reaches a restart setpoint above the control setpoint, and the loop resumes with its output initialized at minimum speed. This is a cycle, and the restart setpoint sets its volume; check the starts per hour as for any station.' },
+          { title: 'Stage the lag', text: 'When the loop output has been at 100 percent for a set time and the level is above setpoint by a margin, or the level reaches the lag setpoint, the lag pump starts. Two pumps then run at a common speed from the same controller output, or the lead runs at full speed and the loop drives the lag. When the output falls below a stage-down threshold for a set time, the lag stops.' },
+          { title: 'Keep the floats', text: 'The high-level float, the backup start, and the redundant-off float are wired as for any station. Level PID is the primary control; the backup control is unchanged.' },
+        ],
+      },
+      { t: 'h2', text: 'Two pumps under PID' },
+      {
+        t: 'p',
+        text: 'Running two pumps at the same variable speed from one controller output keeps both on the same point of their curves and shares the flow evenly. The transition is the delicate part: when the lag starts, the combined capacity jumps, and if the controller output is not adjusted the level drops fast and the loop overreacts. A common approach reduces the output at the moment the lag starts, to roughly what two pumps need to deliver the same flow one was delivering, then lets the loop trim. Stage-down does the reverse. Both transitions get a minimum time between staging events so the station does not add and remove a pump every few minutes.',
+      },
+      { t: 'h2', text: 'Where level PID is the wrong idea' },
+      {
+        t: 'table',
+        head: ['Situation', 'Why PID does not help', 'What to do instead'],
+        rows: [
+          ['Large wet well, short force main, plant that does not care about slugs', 'Nothing gained from steady flow; the drive adds cost and heat', 'Constant-speed lead/lag with a well-sized band'],
+          ['Mostly static head', 'Pump efficiency falls at reduced speed and the minimum speed is high; the usable speed range is narrow', 'Constant speed, or a soft starter for the starting problem'],
+          ['Inflow usually below the minimum-speed flow', 'The station cycles anyway, now with a drive in the loop', 'Constant speed, or a smaller lead pump'],
+          ['Force main shared with other stations', 'Steady low-velocity flow from one station lets solids settle; the line needs periodic scouring velocity', 'Level PID with a scheduled full-speed run, or constant speed'],
+          ['Grit and rag-heavy influent', 'Low-speed operation clogs impellers faster', 'Periodic full-speed runs in the program, and a minimum speed set higher'],
+        ],
+      },
+      { t: 'h2', text: 'Commissioning checks' },
+      {
+        t: 'ul',
+        items: [
+          'Find the actual minimum speed by test: reduce speed until flow stops, note it, add margin, and set the floor.',
+          'Trend level, speed, and inflow estimate through a full day. The speed should move slowly with the diurnal pattern; if it saws, the loop is too tight.',
+          'Force a low-inflow condition, or wait for one, and confirm the stop and restart logic cycles the pump correctly and the starts per hour are acceptable.',
+          'Simulate a storm by raising the setpoint band, and confirm the lag stages in and out without a level excursion to the floats.',
+          'Fail the level signal and confirm the fallback and the alarm.',
+          'Record the tuning, the minimum speed, and the staging setpoints on the loop sheet.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'What setpoint should I use?',
+        a: 'Low enough that the well has room above it for a storm before the lag and the high-level float, high enough to keep the pump submerged with margin and, on stations with a large well, high enough that the detention time does not go septic. In practice a setpoint in the lower third of the operating band is common, with the restart setpoint above it and the lag setpoint above that.',
+      },
+      {
+        q: 'Why does the level oscillate slowly over an hour?',
+        a: 'Too much integral action on an integrating process. Lengthen the reset time substantially or remove integral entirely; the proportional term alone will hold the level within a band, and the well does not need zero offset.',
+      },
+      {
+        q: 'Should the PID run in the drive?',
+        a: 'It can for a single-pump station, and drive PID controllers work. In a duplex or triplex station with lead/lag and staging, the loop, the floor, the stop and restart, and the staging all belong together in the PLC, where they are visible and consistent.',
+      },
+      {
+        q: 'How does level PID interact with the floats?',
+        a: 'It does not; the floats are a separate layer. The backup-start and high-level floats call the pumps through the backup relay path and are read by the PLC as inputs; if the level transmitter fails, the program falls back to float operation at a fixed speed. The PID loop is the normal mode, not the safety net.',
+      },
+    ],
+    related: [
+      '/water-wastewater/wastewater-systems/lift-stations/wet-well-control',
+      '/water-wastewater/wastewater-systems/lift-stations/lift-station-lead-lag',
+      '/controls/control-panels/pump-panels/vfd',
+      '/controls/plc-systems/analog-control/pid',
+      '/how-to/plc-how-to/create-a-pid-loop',
+      '/troubleshooting/pump-troubleshooting/pump-short-cycles',
+    ],
+  },
+  {
+    path: '/water-wastewater/wastewater-systems/wastewater-pump-control/vfd-pump-control',
+    kind: 'reference',
+    title: 'VFD Pump Control in Wastewater',
+    summary:
+      'The control modes for a variable speed wastewater pump: level control, flow pacing, fixed speed with soft start, and drawdown modes, plus the wastewater-specific rules: minimum speed, ragging at low speed, force main velocity, and the periodic full-speed run.',
+    answer:
+      'A variable frequency drive on a wastewater pump is run in one of a few modes: level PID to hold a wet well, flow control to deliver a set rate, or fixed speed with the drive used only for starting. Whichever mode, wastewater imposes rules a clean-water pump does not: a minimum speed high enough to move water and keep solids in suspension, a periodic full-speed run to scour the force main and clear the impeller, ragging protection built on motor current, and a design that keeps the floats and the backup path independent of the drive.',
+    keyPoints: [
+      'Pick the mode from what the downstream process needs: steady flow, a set rate, or just a gentle start.',
+      'Wastewater minimum speed is set by force main velocity and ragging, not only by the pump curve.',
+      'Schedule a full-speed run. Low speed all day leaves solids in the main and rags on the impeller.',
+      'Use motor current from the drive for clog detection and a de-ragging routine.',
+      'The drive is not the safety layer. Floats and relays still call the pumps when the drive or the PLC cannot.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['Wastewater', 'Pumps', 'VFD', 'Control'],
+    blocks: [
+      { t: 'h2', text: 'The control modes' },
+      {
+        t: 'table',
+        head: ['Mode', 'How it works', 'Where it fits', 'Watch for'],
+        rows: [
+          ['Level PID', 'Speed follows a level controller to hold the wet well at a setpoint', 'Stations feeding a plant or a long force main where steady flow matters', 'Integrating-process tuning; minimum speed; stop and restart at low inflow'],
+          ['Flow control', 'Speed follows a flow controller to deliver a set rate, with level as an override', 'Stations that meter into a plant at a permitted or scheduled rate; equalization', 'The wet well still fills; level must override flow before the floats'],
+          ['Fixed speed, drive for starting', 'The drive ramps to a fixed speed and runs there; level logic starts and stops as for constant speed', 'Stations that need soft start and inrush control but not speed control', 'The fixed speed is set from the curve, often below 60 Hz to trim an oversized pump'],
+          ['Drawdown or pump-down', 'Full speed until the well is pumped to all-off, then stop; drive used for ramping and protection', 'Stations with grit or rags where full velocity every cycle is wanted', 'Same starts-per-hour arithmetic as constant speed'],
+          ['Speed by inflow', 'Speed set from an inflow estimate, with level trim', 'Large stations with a good inflow measurement', 'Needs an inflow signal or a drawdown calculation'],
+        ],
+      },
+      {
+        t: 'p',
+        text: 'A single station may combine them: level PID as the normal mode, a scheduled full-speed run each day, and a flow limit that caps the discharge into a plant during wet weather. The control narrative names the modes and the transitions between them.',
+      },
+      { t: 'h2', text: 'Minimum speed in wastewater' },
+      {
+        t: 'p',
+        text: 'On a clean-water pump the minimum speed is the point where the pump develops enough head to open the check valve. On a wastewater pump it is usually higher, for two reasons that have nothing to do with the pump curve.',
+      },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Force main velocity', def: 'Solids settle in a force main below about 2 feet per second, and a line that has settled needs 3 to 5 feet per second to scour. A pump running at a speed that gives 1.5 feet per second all day fills the main with grit until the head rises and the pump loses capacity. The minimum speed is chosen so that the velocity stays above the settling velocity, and where that is not possible at low inflow, the periodic full-speed run does the scouring.' },
+          { term: 'Ragging', def: 'Rags wrap an impeller more easily at low speed, where the vane velocity is lower and the flow through the volute is gentle. Stations with a wipes problem run a higher minimum speed and use de-ragging routines.' },
+        ],
+      },
+      {
+        t: 'p',
+        text: 'The practical floor is often 60 to 75 percent of full speed on a wastewater pump, against the 40 to 50 percent that a clean-water pump on the same curve might allow. That narrows the usable speed range and, at low inflow, means the station cycles; the level PID page covers the stop and restart logic.',
+      },
+      { t: 'h2', text: 'The full-speed run' },
+      {
+        t: 'p',
+        text: 'A wastewater station on a drive should run at full speed on a schedule: once or twice a day, or on every cycle at low inflow, for long enough to turn over the force main volume. The run scours the line, clears grease from the wet well walls at the drawdown level, and gives the impeller a chance to shed rags. It is also the moment to take a drawdown measurement for the capacity trend. The program schedules it, or triggers it on a level cycle, and it is recorded so that a missed run is visible.',
+      },
+      { t: 'h2', text: 'Clog detection and de-ragging' },
+      {
+        t: 'p',
+        text: 'A drive reports motor current, torque, and power continuously, and those are the earliest signs of a clog. A pump moving rags draws more current at a given speed than the same pump moving clean water. The program compares the current, or better the power against speed, with a baseline learned from clean operation, and raises a warning when the ratio climbs. Many drives include a pump-cleaning or de-ragging function: on a trigger, the drive runs the pump briefly in reverse, or cycles forward and reverse at low speed, to unwind material from the impeller. Where the pump manufacturer permits reverse rotation, the routine is triggered on the current signature, on a schedule, or on the start of every cycle at stations that clog often. A routine that runs and does not restore the current baseline is an alarm to pull the pump.',
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Reverse rotation is a pump manufacturer decision',
+        text: 'Not every pump may be run in reverse, and some impellers, seals, and threaded connections are damaged by it. Enable a de-ragging routine only with the pump manufacturer statement that the pump tolerates it, and only with the parameters they specify.',
+      },
+      { t: 'h2', text: 'The drive and the safety layer' },
+      {
+        t: 'p',
+        text: 'A drive adds capability and it adds a failure mode. The design rule does not change: the floats and the relay logic call the pumps when the transmitter, the PLC, or the drive itself cannot. With a drive, that means either a bypass contactor that the float logic can close, or a second pump on its own drive with its own float path, or a hardwired run command to the drive at a preset speed that the float relay can assert without the PLC. Whichever, the backup is tested with the PLC dead, as on the backup control page.',
+      },
+      { t: 'h2', text: 'Settings to record' },
+      {
+        t: 'ul',
+        items: [
+          'Minimum speed and the basis for it: curve, force main velocity, or ragging experience.',
+          'Fixed speed, where used, and the reason it is below 60 Hz.',
+          'Acceleration and deceleration ramps, chosen for the check valve and the force main.',
+          'The full-speed run schedule and duration.',
+          'The current or power baseline for clog detection and the warning threshold.',
+          'De-ragging parameters and the manufacturer authorization.',
+          'The staging setpoints and timers where more than one pump runs.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Can I run a wastewater pump at 30 Hz to save energy?',
+        a: 'Rarely. At 30 Hz a typical wastewater pump makes a quarter of its rated head and will not open the check valve against the static head of most force mains; where it does, the velocity is too low to carry solids. Set the minimum from the curve and the velocity, and expect it to be much higher than the drive default.',
+      },
+      {
+        q: 'Why does the pump clog more since the drive was installed?',
+        a: 'Low-speed operation. The impeller runs at a speed where rags wrap easily and the force main velocity lets solids settle. Raise the minimum speed, add a daily full-speed run, and use the drive current to trigger a de-ragging routine or a pull before the well reaches high level.',
+      },
+      {
+        q: 'Should the drive ramp be slow to prevent water hammer?',
+        a: 'A deceleration ramp of 10 to 30 seconds lets the check valve close gently and the force main column slow down without a surge. Too slow a ramp keeps the pump running below the speed that moves water. Set it for the check valve and the line, and confirm the pump stops moving water only near the end of the ramp.',
+      },
+      {
+        q: 'Do I need a flow meter for VFD pump control?',
+        a: 'Not for level control, and not for fixed speed. Flow control needs a flow measurement or a calculation from speed and the pump curve. A flow meter on the discharge is worth having at any station large enough for a drive, because it gives the capacity trend and the inflow estimate, but it is not a prerequisite.',
+      },
+    ],
+    related: [
+      '/water-wastewater/wastewater-systems/wastewater-pump-control/level-pid',
+      '/controls/control-panels/pump-panels/vfd',
+      '/water-wastewater/wastewater-systems/lift-stations/backup-control',
+      '/troubleshooting/pump-troubleshooting/pump-runs-but-no-flow',
+      '/water-wastewater/wastewater-systems/lift-stations/lift-station-lead-lag',
+      '/controls/control-panels/pump-panels/soft-starters',
+    ],
+  },
+  {
+    path: '/water-wastewater/wastewater-systems/lift-stations/triplex-lift-stations',
+    kind: 'reference',
+    title: 'Triplex Lift Station Controls',
+    summary:
+      'What changes when a station has three pumps: the lead, lag, and standby roles, rotation with three positions, the diminishing return of the third pump on the system curve, availability logic, and the power and panel arrangements that three pumps require.',
+    answer:
+      'A triplex lift station has three pumps in one wet well, assigned lead, lag, and standby roles that rotate. Two pumps meet the design peak flow and the third is redundancy, or all three are needed at peak and the station accepts reduced capacity with one out. The control sequence adds a third stage to lead/lag, a three-position rotation, and availability logic that reassigns roles when a pump is out of service. The third pump adds less capacity than the second because all three share one force main, and the electrical service, the generator, and the panel are sized for the starting of three motors in sequence.',
+    keyPoints: [
+      'Roles, not pumps: lead, lag, and standby rotate through all three.',
+      'Decide at design whether the third pump is redundancy or capacity. The control sequence differs.',
+      'Three pumps on one force main deliver far less than three times one pump.',
+      'Availability logic assigns roles among the pumps that can run, and alarms when redundancy is lost.',
+      'Starting sequence, generator sizing, and panel layout all scale with the third motor.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['Wastewater', 'Lift Stations', 'Pumps', 'Control'],
+    blocks: [
+      { t: 'h2', text: 'Why three pumps' },
+      {
+        t: 'p',
+        text: 'A duplex station has one pump sized for peak flow and one spare. When peak flow exceeds what one pump can move, or when the utility wants a spare while two pumps run, the station gets a third. Two philosophies exist and they produce different control sequences. In the first, two pumps carry the design peak and the third is standby: the station never needs all three, and losing one changes nothing about capacity. In the second, all three are needed at peak, and losing one means the station is short at the worst moment. The second is cheaper and is common at stations that grew into their flow; the control narrative should say which the station is, because the alarm priorities and the operator response depend on it.',
+      },
+      { t: 'h2', text: 'Roles and rotation' },
+      {
+        t: 'p',
+        text: 'With three pumps the sequence has three roles. The lead starts first at lead-on. The lag starts at lag-on if level keeps rising. The standby, or second lag, starts at a third setpoint above that, or on a run-time or rate-of-rise call as for a duplex station. Rotation advances all three roles one position at each all-off event, so that over three cycles each pump has been lead, lag, and standby once.',
+      },
+      {
+        t: 'table',
+        head: ['Cycle', 'Lead', 'Lag', 'Standby'],
+        rows: [
+          ['1', 'P1', 'P2', 'P3'],
+          ['2', 'P2', 'P3', 'P1'],
+          ['3', 'P3', 'P1', 'P2'],
+          ['4', 'P1', 'P2', 'P3'],
+        ],
+      },
+      {
+        t: 'p',
+        text: 'In dry weather the standby pump never runs under this scheme, because the third setpoint is never reached. That is the reason run-hour balancing is more attractive on a triplex station: choosing the lead by lowest run hours pulls the third pump into rotation as lead every third cycle, and the standby role is only idle for the cycle it holds it. A weekly exercise run of whichever pump has not run is the simpler alternative.',
+      },
+      { t: 'h2', text: 'Availability' },
+      {
+        t: 'p',
+        text: 'The availability rule from a duplex station generalizes. Build the ordered list of pumps that are in AUTO, not faulted, not locked out, and not failed to prove. Assign lead, lag, and standby down that list from the current rotation point. With two available, the station runs as a duplex and the loss of redundancy is alarmed. With one available, that pump is lead every cycle, and the alarm is higher priority because a second failure is an overflow. A pump that fails to prove while holding a role is dropped and the roles below it move up immediately, not at the next cycle.',
+      },
+      {
+        t: 'code',
+        lang: 'text',
+        caption: 'Role assignment with availability, in structured text',
+        code: `(* Roles from availability and rotation. Rotation advances 0,1,2 at each all-off. *)
+Avail_Count := 0;
+FOR i := 1 TO 3 DO
+    IF Pump[i].Available THEN
+        Avail_Count := Avail_Count + 1;
+        Avail_List[Avail_Count] := i;
+    END_IF;
+END_FOR;
+
+(* Rotate the available list by the rotation pointer, then assign roles in order. *)
+FOR r := 1 TO Avail_Count DO
+    idx := ((r - 1 + Rotation) MOD Avail_Count) + 1;
+    Role[Avail_List[idx]] := r;       (* 1 = lead, 2 = lag, 3 = standby *)
+END_FOR;
+
+Redundancy_Lost := Avail_Count < 3;
+Station_Critical := Avail_Count < 2;`,
+      },
+      { t: 'h2', text: 'The third pump on the system curve' },
+      {
+        t: 'p',
+        text: 'Three pumps discharging into one force main each see the head that the combined flow produces. The friction loss rises with the square of flow, so each added pump slides further up its curve and delivers less. A representative station might see 1,000 gpm with one pump, 1,600 with two, and 1,950 with three: the third pump adds about a third of what the first one did. On a long force main it can be less. That has two consequences. The station wet weather capacity comes from the system curve, not from three nameplates, and the third stage setpoint should be placed with the understanding that it buys less time than the second did. Where the third pump was bought for capacity rather than redundancy, the system curve is the check on whether it delivers it.',
+      },
+      { t: 'h2', text: 'Electrical and panel' },
+      {
+        t: 'ul',
+        items: [
+          'Starting: the three motors start in sequence with a delay between them, never together. On a generator the delay lets the set recover voltage and frequency between starts, and the generator is sized for two motors running when the third starts across the line, or for the reduced inrush of soft starters or drives.',
+          'Service: the service and the main are sized for all three running, since on the day it matters they will be.',
+          'Panel: three starters or drives, three HOAs, three sets of seal-leak and thermal monitoring, and a controller with the I/O for all of it, in an enclosure whose heat calculation includes three drives if drives are used.',
+          'Backup: the float backup path calls pumps through relay logic as for a duplex station, usually calling two on the backup-start float and the third on the high-level float, subject to the redundant-off float.',
+          'Force main: air release at high points and a check valve per pump; a common discharge header with isolation valves so any pump can be removed with the other two in service.',
+        ],
+      },
+      { t: 'h2', text: 'What to trend and alarm' },
+      {
+        t: 'table',
+        head: ['Signal', 'Why', 'Alarm'],
+        rows: [
+          ['Run hours per pump', 'Proves rotation and shows the standby is exercised', 'Imbalance beyond a set ratio'],
+          ['Starts per hour per pump', 'Cycle sizing with three stages', 'Above the motor rating'],
+          ['Available pump count', 'The redundancy state', 'Under 3 medium, under 2 high'],
+          ['Third-stage calls per day', 'A rising count means the station is losing capacity or inflow is growing', 'Above a baseline'],
+          ['Level with all three run statuses', 'Every sequence problem shows here', 'Standard level alarms plus the floats'],
+          ['Motor current per pump', 'Clog and wear detection', 'Deviation from the baseline at a given speed'],
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Should all three pumps be identical?',
+        a: 'Yes, for rotation, spares, and predictable parallel operation. A station with two large pumps and one small jockey is a different design: the jockey is always lead and the large pumps alternate as lag and standby, and the rotation logic handles only two of them.',
+      },
+      {
+        q: 'How far apart should the three level setpoints be?',
+        a: 'Lead-on above all-off by the cycle volume, lag-on far enough above lead-on that daily peaks never reach it, and the third stage far enough above lag-on that it is reached only in wet weather, with the high-level float above that. In a shallow well the three setpoints get crowded, which is a reason to use run-time and rate-of-rise calls for the second and third stages instead of level alone.',
+      },
+      {
+        q: 'Why does the third pump rarely run even in storms?',
+        a: 'Either the third stage setpoint is above where the well ever reaches, which may be fine if two pumps handle the peak, or the third pump adds so little on the system curve that the level stops rising before it is called. Check the system curve and the trend from the last event; if the pump was bought for capacity, it may not be delivering it.',
+      },
+      {
+        q: 'Is a triplex station better than a duplex with bigger pumps?',
+        a: 'A triplex gives finer staging and true redundancy at peak; a duplex with larger pumps is simpler and cheaper. The choice depends on the flow range, the force main, and the consequence of being short at peak. A duplex sized for peak with variable speed pumps often covers the same range with less equipment.',
+      },
+    ],
+    related: [
+      '/water-wastewater/wastewater-systems/lift-stations/duplex-lift-stations',
+      '/water-wastewater/wastewater-systems/lift-stations/lift-station-lead-lag',
+      '/water-wastewater/wastewater-systems/lift-stations/lift-station-alternation',
+      '/water-wastewater/wastewater-systems/lift-stations/backup-control',
+      '/controls/control-panels/pump-panels/soft-starters',
+    ],
+  },
+  {
+    path: '/water-wastewater/wastewater-systems/lift-stations/generator-operation',
+    kind: 'reference',
+    title: 'Lift Station Generator Operation',
+    summary:
+      'Standby power at a lift station: what the transfer switch does, how the controls ride through the transfer, staggered pump restarts, what SCADA should see, load testing, and the portable generator connection.',
+    answer:
+      'A lift station generator starts on utility failure, the automatic transfer switch moves the load to it after a short delay, and the pumps restart in a staggered sequence sized for what the generator can carry. The controls ride through the transfer on a UPS or by a defined restart, the generator status and transfer position are alarmed to SCADA, the set is exercised on a schedule under load, and stations without a permanent generator have a manual transfer switch and a receptacle for a portable set.',
+    keyPoints: [
+      'The transfer switch, not the generator, decides when the station is on standby power. Alarm both.',
+      'Stagger pump starts on the generator. Two motors starting together can stall a set sized for the running load.',
+      'The PLC rides through the outage on a UPS or restarts cleanly. Either is designed, never assumed.',
+      'Exercise under load, not just a no-load run. A generator that starts is not a generator that pumps.',
+      'Stations without a generator need a manual transfer switch, a receptacle, and a documented time to overflow.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['Wastewater', 'Lift Stations', 'Power', 'Control'],
+    blocks: [
+      { t: 'h2', text: 'The sequence' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Utility fails', text: 'The transfer switch senses loss of voltage on the utility source, waits a short delay to ride through momentary dips, typically one to three seconds, then signals the generator to start.' },
+          { title: 'Generator starts', text: 'The set cranks, runs up, and reaches rated voltage and frequency. Ten to fifteen seconds is typical for a diesel set; the transfer switch waits until the generator source is within limits.' },
+          { title: 'Transfer to generator', text: 'The switch opens the utility contacts and closes the generator contacts. Where the switch is open-transition, the station is dark for a fraction of a second. Where it is closed-transition, which is rare at lift stations, the sources are briefly paralleled.' },
+          { title: 'Loads return', text: 'Control power is restored, the PLC boots or resumes, and the pump sequence restarts. The pumps that were running before the outage are called again, staggered.' },
+          { title: 'Utility returns', text: 'The switch senses utility voltage, waits a return delay of several minutes so a brief return does not cause a transfer back and forth, then retransfers. The generator runs unloaded for a cooldown period and stops.' },
+        ],
+      },
+      {
+        t: 'p',
+        text: 'Every step has a timer, and every timer is a setting on the transfer switch or the generator controller that should be recorded. A retransfer delay that is too short causes repeated transfers during a flickering utility restoration; a start delay that is too long lets the well rise before the pumps come back.',
+      },
+      { t: 'h2', text: 'Starting pumps on a generator' },
+      {
+        t: 'p',
+        text: 'A generator has a limited ability to supply the inrush current of a motor start. A set sized for the station running load will stall, or trip on underfrequency, if two motors start together or a large motor starts across the line without margin. The controls therefore stagger the restarts.',
+      },
+      {
+        t: 'ul',
+        items: [
+          'After transfer, the PLC delays the first pump start a few seconds to let the generator settle, then starts the lead, waits for it to reach speed and for the generator to recover, and only then allows the lag if the level calls for it.',
+          'The delay between starts on generator power is longer than on utility power, and the program knows which source it is on from the transfer switch position input.',
+          'Soft starters and drives reduce the inrush and let a smaller generator start a larger pump; the generator manufacturer sizing tool accounts for the starting method.',
+          'Loads that are not needed during an outage, such as heaters and receptacles, can be shed by the PLC or by the transfer switch load management when on generator.',
+          'On a generator with limited capacity, the program may hold the station to one pump and accept a higher level until utility returns. That decision is in the control narrative and is alarmed.',
+        ],
+      },
+      { t: 'h2', text: 'The controls during the transfer' },
+      {
+        t: 'p',
+        text: 'Between the utility failing and the generator carrying the load, the station has no power for ten to twenty seconds. What the PLC and the instruments do during that gap is a design choice.',
+      },
+      {
+        t: 'table',
+        head: ['Approach', 'Behavior', 'Note'],
+        rows: [
+          ['UPS on control power', 'The PLC, the radio, and the level transmitter ride through; the program sees the transfer switch change state and manages the pump restarts; SCADA sees the whole event', 'The usual choice for a station with a permanent generator; the UPS needs to be sized for the transfer time plus margin, and its battery is a maintenance item'],
+          ['Clean restart', 'The PLC boots when power returns, initializes from retentive memory, and restarts the sequence; the transfer is invisible to it except by the power-cycle event', 'Acceptable where the program handles a restart deliberately: alternation state retained, timers reset, outputs off until the sequence decides'],
+          ['Float backup during the gap', 'Irrelevant during the gap, since there is no power; matters if the PLC does not come back', 'The float relay path is on control power and works as soon as the generator carries the load'],
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'Test the restart',
+        text: 'Kill the utility at the station during commissioning and at every annual test, with the well at a normal level, and watch the whole sequence: start delay, transfer, PLC recovery, staggered pump restarts, SCADA alarms, retransfer, and cooldown. A generator that has only been exercised at no load has never been proven to run the station.',
+      },
+      { t: 'h2', text: 'What SCADA should see' },
+      {
+        t: 'ul',
+        items: [
+          'Utility power available, from the transfer switch or a voltage monitor.',
+          'Transfer switch position: normal or emergency. This is the alarm that says the station is on standby power.',
+          'Generator running, from the set controller.',
+          'Generator fault or fail to start, from the set controller, as a high priority alarm because the station is now on the utility clock with no backup.',
+          'Fuel level, for diesel sets, with a low alarm that gives time for delivery.',
+          'Battery charger and starting battery voltage, because a dead starting battery is the most common reason a generator does not start.',
+          'Not in auto: the generator controller or the transfer switch left in a manual or off position after service.',
+        ],
+      },
+      {
+        t: 'p',
+        text: 'Many generator controllers speak Modbus and provide all of this on one connection; the hardwired minimum is transfer position, generator running, and generator fault.',
+      },
+      { t: 'h2', text: 'Exercise and maintenance' },
+      {
+        t: 'p',
+        text: 'Standby generators are run on a schedule so that they start when needed. A weekly or monthly no-load exercise proves starting, and a periodic exercise under load, either by transferring the station to the generator or by a load bank, proves the set can carry the pumps. Diesel sets exercised only at no load suffer wet stacking, where unburned fuel accumulates in the exhaust. The transfer switch usually provides the exercise timer, and the PLC can log the run and alarm a missed or failed exercise. Fuel age, battery condition, coolant heaters, and the transfer switch contacts are the maintenance items that decide whether the set works on the day.',
+      },
+      { t: 'h2', text: 'Stations without a permanent generator' },
+      {
+        t: 'p',
+        text: 'Small stations often have no generator and rely on a portable set brought by the crew. The design then includes a manual transfer switch that isolates the utility and connects a generator receptacle, sized and labeled for the set the utility owns, and a documented time to overflow at typical and wet weather inflow, so the utility knows how long it has. The high-level alarm and the power failure alarm at such a station are what start the clock, and both must reach someone through a path that does not depend on station power: a cellular dialer with its own battery, or the SCADA radio on a UPS.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Why did the station overflow with the generator running?',
+        a: 'Usually one of three things: the generator ran but the transfer switch did not transfer, the pumps restarted together and the set stalled or tripped, or the PLC did not restart the sequence after the power cycle. The transfer position, the generator alarms, and the pump run statuses in the SCADA history show which. Each is found by a load test that was not done.',
+      },
+      {
+        q: 'How big should the generator be?',
+        a: 'For the running load of the pumps that must operate during an outage, plus the starting inrush of the largest pump with the others running, plus the station auxiliaries, using the generator manufacturer sizing tool with the actual starting method. A soft starter or a drive on the pumps can reduce the set size substantially. Sizing for all pumps starting together is the mistake that oversizes the set, and sizing for running load only is the mistake that stalls it.',
+      },
+      {
+        q: 'Should the PLC be on a UPS?',
+        a: 'At a station with a permanent generator, yes, sized for the transfer time and the radio, so the utility sees the event as it happens and the program controls the restart. Without a generator, a UPS keeps the alarms and the radio alive long enough to report the outage and the high level, which is the point.',
+      },
+      {
+        q: 'What is the retransfer delay for?',
+        a: 'A utility restoration is often unstable for the first minutes. The delay keeps the station on the generator until the utility has been steady for a set time, commonly five to thirty minutes, so the station is not transferred back and forth. It is set on the transfer switch and recorded.',
+      },
+    ],
+    related: [
+      '/water-wastewater/wastewater-systems/lift-stations/backup-control',
+      '/water-wastewater/wastewater-systems/lift-stations/high-level',
+      '/water-wastewater/wastewater-systems/lift-stations/lift-station-lead-lag',
+      '/controls/control-panels/pump-panels/soft-starters',
+      '/controls/plc-systems/plc-fundamentals/retentive-memory',
+      '/controls/scada-hmi/alarm-management/notification',
+    ],
+  },
 ];

@@ -865,4 +865,454 @@ export const SECURITY_ENTRIES: Entry[] = [
       '/controls/plc-systems/analog-control/signal-validation',
     ],
   },
+  {
+    path: '/cybersecurity/network-segmentation/dmz-design',
+    kind: 'reference',
+    title: 'Industrial DMZ Design',
+    summary:
+      'The buffer zone between the business network and the control system: what goes in it, the no-direct-path rule, push-not-pull data flows, the firewall pair, and the services a utility actually needs to place there.',
+    answer:
+      'An industrial demilitarized zone is a network segment between the enterprise network and the control network in which every service that both sides need to reach is placed, so that no connection ever passes directly from one to the other. Data leaves the control zone by being pushed to a replica in the DMZ, remote access lands on a jump host in the DMZ, and patches and antivirus updates are staged in the DMZ. Two firewalls, or one with strict zone rules, enforce that the DMZ is the only thing either side talks to.',
+    keyPoints: [
+      'No connection crosses from enterprise to control or back. Everything terminates in the DMZ.',
+      'Data is pushed out of the control zone to a DMZ replica; the enterprise reads the replica.',
+      'Remote access lands on a DMZ jump host. The vendor never reaches the control zone directly.',
+      'The DMZ holds servers the utility can rebuild. Nothing in it is needed to run the plant.',
+      'Default deny on both firewalls, with a short, documented rule list per conduit.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['Cybersecurity', 'Networking', 'Design', 'SCADA'],
+    blocks: [
+      { t: 'h2', text: 'Why a DMZ' },
+      {
+        t: 'p',
+        text: 'A utility wants to see plant data on the business network, wants engineers and vendors to reach the control system from outside, and wants patches and antivirus signatures to arrive at the SCADA servers. Each of those is a connection between the enterprise network, which is exposed to email, the web, and every laptop that joins it, and the control network, which runs the plant. Allowing those connections directly means an attacker who gets into the enterprise network is one firewall rule away from the PLCs.',
+      },
+      {
+        t: 'p',
+        text: 'The DMZ breaks that path. It is a third network between the two, holding the services both sides need, with a firewall boundary on each side. The enterprise talks to the DMZ. The control zone talks to the DMZ. Neither talks to the other. An attacker who compromises a DMZ server has reached a server the utility can rebuild in an afternoon, and still has a second firewall between them and the plant.',
+      },
+      { t: 'h2', text: 'What goes in it' },
+      {
+        t: 'table',
+        head: ['Service', 'Purpose', 'Direction of data'],
+        rows: [
+          ['Historian replica or data collector', 'Enterprise users and reporting tools read plant data here', 'Control pushes to the replica; enterprise reads the replica'],
+          ['Remote access jump host', 'Every external session lands here, then opens a second session inward', 'Enterprise or VPN to the jump host; jump host to control on approved conduits'],
+          ['Patch and update staging server', 'Windows updates, antivirus definitions, vendor patches downloaded here and pulled by control-zone servers', 'Enterprise or internet to the staging server; control pulls from it on a schedule'],
+          ['Reporting and dashboard server', 'Web reports for management, compliance reports, alarm summaries', 'Reads the replica; serves enterprise browsers'],
+          ['File transfer server', 'Program backups out, vendor files in, with scanning', 'Both, through the transfer server, never directly'],
+          ['Time server', 'A single NTP source for control, synchronized from outside', 'Control reads time from the DMZ; DMZ reads from a trusted external source'],
+          ['Domain controller replica, where the control zone has its own domain', 'Authentication for DMZ hosts without exposing the control domain', 'Replication from the control domain controller, outbound only'],
+        ],
+      },
+      {
+        t: 'p',
+        text: 'The test for whether something belongs in the DMZ is whether both sides need it. A service only the control zone uses stays in the control zone. A service only the enterprise uses stays there. The DMZ is not a place to put things that did not fit elsewhere.',
+      },
+      { t: 'h2', text: 'The rules' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'No direct path', def: 'No firewall rule permits a connection from any enterprise address to any control address, or the reverse, on any port. Every exception someone requests is met by placing a service in the DMZ instead.' },
+          { term: 'Push out, never pull in', def: 'Data leaves the control zone because a control-zone server initiates a connection outward to the DMZ replica. The DMZ never initiates a connection into the control zone to fetch data. A rule that allows the DMZ to open connections inward is a rule an attacker in the DMZ can use.' },
+          { term: 'Different protocols on each side', def: 'Where practical, the protocol between control and DMZ differs from the protocol between DMZ and enterprise. A historian replicates by its own protocol inward; enterprise users read it by HTTPS or SQL. An attacker cannot ride one protocol end to end.' },
+          { term: 'Default deny', def: 'Both boundaries deny everything not explicitly listed. The rule list for each boundary is short, each rule names its conduit, and the list is reviewed on a schedule.' },
+          { term: 'Hardened and disposable', def: 'DMZ hosts are patched first, run only their service, have host firewalls, and are backed up so they can be rebuilt. Nothing in the DMZ is required for the plant to run.' },
+          { term: 'Logged', def: 'Both firewalls log denied and permitted connections to a log server, and someone reads the denials.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'The jump host is the DMZ service most likely to be attacked',
+        text: 'It is reachable from outside by design and it can reach the control zone by design. Harden it beyond the others: multi-factor authentication, no local internet access, session recording, a minimal tool set, and firewall rules that let it reach only the specific control hosts on the specific ports named in the access procedure.',
+      },
+      { t: 'h2', text: 'Firewall arrangement' },
+      {
+        t: 'p',
+        text: 'The classic arrangement uses two physical firewalls, one between enterprise and DMZ and one between DMZ and control, ideally from different vendors so that a vulnerability in one does not open both. Many utilities use a single firewall with three interfaces and a strict zone policy instead, which is acceptable if the rules are written as if there were two devices and no rule references enterprise and control in the same line. The single-firewall design has one management plane to protect and one device to fail; the two-firewall design costs more and needs two sets of rules maintained. Either is far better than no DMZ.',
+      },
+      { t: 'h2', text: 'A utility-sized DMZ' },
+      {
+        t: 'p',
+        text: 'A small utility does not need a rack of DMZ servers. One well-specified server, or two virtual machines on a small host, can carry the historian replica, the jump host, and the patch staging role, with the firewall rules separating them. What it must not do is skip the DMZ because it is small: the enterprise-to-control direct connection is the same risk at a 5 MGD plant as at a 50 MGD plant, and the incidents in the water sector have been at small utilities more often than large ones.',
+      },
+      { t: 'h2', text: 'Common failures' },
+      {
+        t: 'ul',
+        items: [
+          'A historian configured to pull from the control zone because that was the default in the setup wizard.',
+          'A rule added for a vendor "temporarily" that allows enterprise to control on one port, still present five years later.',
+          'The jump host with a browser, an email client, and internet access, because a vendor wanted to download something.',
+          'A DMZ server joined to the enterprise domain, so an enterprise domain compromise owns the DMZ.',
+          'Operator workstations on the enterprise network with the SCADA client installed, reaching the SCADA server through a permitted rule.',
+          'Antivirus and patch servers in the DMZ with a rule that lets them push into the control zone on a management port, which is a pull-in rule under another name.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Can operators view SCADA from the enterprise network?',
+        a: 'They can view a read-only replica or a web report served from the DMZ. Running the full SCADA client on an enterprise workstation connected to the control-zone server is the direct path the DMZ exists to prevent. Where remote operation is genuinely required, it goes through the jump host with the same controls as vendor access.',
+      },
+      {
+        q: 'Does the DMZ need its own domain?',
+        a: 'It should not be part of the enterprise domain, and it should not expose the control domain directly. Common answers are local accounts on DMZ hosts, a small DMZ domain, or a read-only replica of the control domain controller placed in the DMZ. The wrong answer is joining DMZ hosts to the enterprise domain.',
+      },
+      {
+        q: 'Is a data diode better than a DMZ?',
+        a: 'A diode enforces one-way flow physically and is the strongest form of the push-out rule for data leaving the control zone. It does not provide the inbound services a DMZ does: remote access, patch staging, file transfer. Utilities with a diode still have a DMZ for those, or have decided not to allow them at all.',
+      },
+      {
+        q: 'Where does the cellular telemetry network connect?',
+        a: 'Remote site telemetry over cellular is a conduit into the control zone from a carrier network, and it terminates on a telemetry router or VPN concentrator that belongs to the control zone boundary, not to the DMZ. It is treated as its own conduit with its own rules: only the SCADA protocol, only from the site addresses, only to the master.',
+      },
+    ],
+    related: [
+      '/cybersecurity/network-segmentation/zones-and-conduits',
+      '/cybersecurity/ot-security/purdue-model',
+      '/cybersecurity/remote-access/jump-hosts',
+      '/cybersecurity/remote-access/vendor-remote-access',
+      '/controls/scada-hmi/scada-fundamentals/historians',
+    ],
+  },
+  {
+    path: '/cybersecurity/remote-access/jump-hosts',
+    kind: 'reference',
+    title: 'Jump Hosts',
+    summary:
+      'The one machine every remote session must pass through: what a jump host is, how it is hardened, what it may reach, session recording, the tools it carries, and why a vendor laptop never gets past it.',
+    answer:
+      'A jump host is a hardened server in the industrial DMZ that every remote session terminates on before a second, separately authenticated connection is opened to a control-zone system. It carries the engineering and remote desktop tools needed for the work, records sessions, requires multi-factor authentication, has no path to the internet, and is permitted by the firewall to reach only the specific control hosts named in the access procedure. The remote user works on the jump host; their own machine never touches the control network.',
+    keyPoints: [
+      'Two hops, two authentications: outside to the jump host, jump host to the target.',
+      'The remote machine never connects to the control zone. Only the jump host does.',
+      'Firewall rules from the jump host into control name specific hosts and ports, per session where possible.',
+      'Record every session. The recording is the change record and the evidence.',
+      'A jump host with a browser and internet access is a workstation, not a jump host.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['Cybersecurity', 'Networking', 'SCADA'],
+    blocks: [
+      { t: 'h2', text: 'What it does' },
+      {
+        t: 'p',
+        text: 'Remote access to a control system has two problems. The first is that the machine connecting from outside is unknown: a vendor laptop that has been on other networks, a home computer, a phone. The second is that whatever it connects to becomes reachable by whatever is on that machine. The jump host solves both by being the only thing outside connections can reach, and by being a machine the utility owns, hardens, and watches.',
+      },
+      {
+        t: 'p',
+        text: 'The remote user authenticates to the jump host, with multi-factor authentication, and gets a desktop or a shell on it. From there they open a second connection to the target system, authenticating again with an account on that system. Everything they do happens on the jump host with the tools installed there. Their own machine sends keystrokes and receives screen images and nothing else. Files move only through a controlled transfer path with scanning, never by drag and drop into the session.',
+      },
+      { t: 'h2', text: 'Hardening' },
+      {
+        t: 'table',
+        head: ['Control', 'What it means on the jump host'],
+        rows: [
+          ['Minimal build', 'The operating system with only the roles the jump host needs: remote desktop services or a shell, the engineering tools, the session recorder. No browser, no email client, no office suite.'],
+          ['No internet', 'Firewall rules deny the jump host any path to the internet. Updates arrive through the patch staging server.'],
+          ['Multi-factor authentication', 'Every login to the jump host, without exception, including administrators.'],
+          ['Named accounts', 'One account per person, with the vendor company and the individual identifiable. No shared accounts. Disabled between sessions where the access model calls for it.'],
+          ['Least reach', 'Firewall rules from the jump host into the control zone permit only the hosts and ports required. Where possible, rules are enabled per session and disabled after.'],
+          ['Session recording', 'Video or keystroke recording of every session, stored outside the jump host, retained on a schedule.'],
+          ['Logging', 'Logins, failures, connections opened inward, and file transfers, sent to a log server the jump host cannot alter.'],
+          ['Patched first', 'The jump host is the most exposed control-related system and is patched on the enterprise schedule, not the control schedule.'],
+          ['Clipboard and drive redirection off', 'The remote desktop session does not map the remote drives, clipboard, or printers into the jump host.'],
+          ['Idle timeout and session limits', 'Sessions end after inactivity and after a maximum duration; a forgotten session is a door left open.'],
+        ],
+      },
+      { t: 'h2', text: 'The tools on it' },
+      {
+        t: 'p',
+        text: 'A jump host carries what remote work needs: the PLC programming software for the controller families on site, the SCADA configuration client, a remote desktop client, a terminal emulator, and the vendor tools for drives and analyzers. Each is installed and licensed by the utility, kept current, and configured with the project files fetched from the engineering backup store rather than stored on the jump host permanently. A jump host that accumulates project files becomes the place an attacker would look for them.',
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'One jump host per purpose',
+        text: 'Where the budget allows, separate the vendor jump host from the one utility staff use, and separate both from the one that carries administrative access to servers. Compromise of the vendor host then does not carry the utility administrator credentials with it. A small utility with one jump host achieves some of this with separate accounts and separate firewall rules per group.',
+      },
+      { t: 'h2', text: 'Reaching the target' },
+      {
+        t: 'p',
+        text: 'From the jump host, the second connection uses the protocol the target expects: remote desktop to a SCADA server, the programming protocol to a controller, HTTPS to a device web page. The firewall between the DMZ and the control zone allows the jump host, and only the jump host, to open those connections, and only to the targets listed. A vendor supporting the membrane skid gets a rule to the skid controller; they do not get a rule to the plant PLCs. When the access procedure enables rules per session, the rule for that target is turned on by the utility for the session and turned off after.',
+      },
+      { t: 'h2', text: 'Alternatives and adjuncts' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Privileged access management platforms', def: 'Commercial products that combine the jump host, credential vaulting, session recording, and approval workflow into one system. The jump host concept is inside them; they add credential injection so the remote user never learns the target password.' },
+          { term: 'Browser-based remote access gateways', def: 'Present the target desktop in a browser through a gateway in the DMZ. The gateway is the jump host; the same hardening applies.' },
+          { term: 'VPN directly into the control zone', def: 'What the jump host replaces. A VPN that lands a remote laptop on the control network makes that laptop a control-zone device. A VPN that lands on the DMZ and then requires the jump host is the intended design.' },
+          { term: 'Vendor cloud remote access tools', def: 'A cloud relay that both the site and the vendor connect to outbound. Acceptable only if the site side terminates on a jump host with the same controls; unacceptable if the relay agent runs on a SCADA server or a PLC gateway with direct control-zone reach.' },
+        ],
+      },
+      { t: 'h2', text: 'Operating it' },
+      {
+        t: 'ul',
+        items: [
+          'Review the session log weekly and after every vendor visit. Who connected, when, to what, for how long.',
+          'Review the firewall rules from the jump host quarterly. Remove any rule whose conduit no longer exists.',
+          'Test the recording. A recorder that has silently stopped is discovered when the recording is needed.',
+          'Rebuild the jump host from a known image on a schedule or after any suspected compromise. It holds no data worth keeping.',
+          'Alarm on failed logins above a threshold and on any login outside an approved session window.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Is a jump host necessary if we have a VPN?',
+        a: 'A VPN authenticates the connection and encrypts it; it does not stop the remote machine from being what it is. The jump host is what keeps that machine off the control network. Use the VPN to reach the DMZ and the jump host to go further.',
+      },
+      {
+        q: 'Can the jump host be a virtual machine?',
+        a: 'Yes, and it usually is. A virtual machine on a DMZ host is easy to snapshot, rebuild, and isolate. It must not be on the same hypervisor as control-zone servers unless the hypervisor and its management network are themselves treated as control-zone assets.',
+      },
+      {
+        q: 'How do vendors move files in?',
+        a: 'Through a transfer server in the DMZ with malware scanning, or through a utility-controlled file share the jump host can read. Not by remote desktop drive mapping, and not by email to an operator who copies it onto a SCADA server on a USB stick.',
+      },
+      {
+        q: 'What about emergency access when the jump host is down?',
+        a: 'A second jump host, or a documented break-glass procedure with physical presence at the site. The wrong answer is a standing bypass rule for emergencies, which is a standing bypass rule.',
+      },
+    ],
+    related: [
+      '/cybersecurity/remote-access/vendor-remote-access',
+      '/cybersecurity/network-segmentation/dmz-design',
+      '/cybersecurity/network-segmentation/zones-and-conduits',
+      '/cybersecurity/plc-security/controller-hardening',
+      '/cybersecurity/ot-security/purdue-model',
+    ],
+  },
+  {
+    path: '/cybersecurity/backups/plc-program-backups',
+    kind: 'reference',
+    title: 'PLC Program Backups',
+    summary:
+      'What a complete controller backup contains, how often to take one, where to keep it, why the upload from the running controller is not the master, and the verification that turns a folder of files into a recovery plan.',
+    answer:
+      'A PLC program backup is the complete set of files needed to restore a controller to its current state: the project with comments and documentation, the firmware version, the configuration of every module and communication card, the retentive data and setpoints, and the parameters of attached devices. It is taken after every change and on a schedule, stored in at least two places including one offline, compared with the running controller to detect drift, and proven by an actual restore to a spare controller.',
+    keyPoints: [
+      'The backup is the project file with its comments, not the upload from the controller.',
+      'Firmware version, module configuration, setpoints, and device parameters are part of it.',
+      'Take one after every change, and compare on a schedule to catch changes nobody recorded.',
+      'Two copies, one offline. A backup on the engineering laptop is one theft from gone.',
+      'Restore one to a spare controller once a year. That is the test that matters.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['Cybersecurity', 'PLC', 'Documentation'],
+    blocks: [
+      { t: 'h2', text: 'What a backup is for' },
+      {
+        t: 'p',
+        text: 'A controller fails, is destroyed by lightning, is ransomed, or is quietly modified. In every case the utility needs to put a known-good program back on a controller, quickly, with confidence that it is the right one. The backup is what makes that possible. It is also the reference against which the running controller is compared to find changes that were never recorded, which makes it a security control as much as a maintenance record.',
+      },
+      { t: 'h2', text: 'What a complete backup contains' },
+      {
+        t: 'table',
+        head: ['Item', 'Why it is needed', 'Where it is often missed'],
+        rows: [
+          ['Project file with comments, tag descriptions, and documentation', 'The program someone can read and maintain', 'An upload from the controller without the offline project loses comments on many platforms'],
+          ['Firmware version of the processor and every module', 'A project built for one firmware may not download to another; a replacement controller must be flashed to match', 'Recorded nowhere; discovered when the download fails'],
+          ['Hardware configuration: rack, modules, communication cards, network settings', 'A restore onto a replacement needs the same configuration', 'Usually in the project; IP addresses and switch settings often are not'],
+          ['Retentive data: setpoints, tuning, calibration factors, totalizer values', 'The program without its setpoints runs the plant wrong', 'Not part of the program file on most platforms; needs a separate export'],
+          ['Attached device parameters: drives, analyzers, HMIs, radios', 'A restored controller talking to devices on defaults does not run the plant', 'Each device has its own backup tool and format'],
+          ['The programming software version and any license files', 'A ten-year-old project may need a ten-year-old tool', 'The installer is gone from the vendor site; keep the media'],
+          ['The as-built drawings and the control narrative', 'Context for the program', 'Stored somewhere else, if at all'],
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'The upload is not the master',
+        text: 'On many platforms, uploading from the running controller recovers the logic but not the comments, the tag descriptions, or the program documentation, and on some it recovers only a compiled image. The master is the offline project file that was downloaded, kept in step with what is running. Uploading is what you do to check the controller against the master, or when the master is lost.',
+      },
+      { t: 'h2', text: 'When to take one' },
+      {
+        t: 'ul',
+        items: [
+          'After every change, before the engineer leaves the site. The change record references the backup.',
+          'On a schedule regardless of changes, monthly at most sites, to catch changes made without a record and to prove the process still works.',
+          'Before any firmware update, any hardware replacement, and any vendor visit.',
+          'Before and after commissioning of anything that touches the controller.',
+        ],
+      },
+      { t: 'h2', text: 'Where to keep it' },
+      {
+        t: 'p',
+        text: 'At least two copies in two places, one of which is offline or otherwise unreachable from the network where ransomware would run. A common arrangement is a version-controlled repository on a server in the engineering zone, a copy pushed to the DMZ file server for the enterprise backup system to collect, and a periodic export to removable media stored in a locked cabinet. The engineering laptop is a working copy, never the only copy; laptops are lost, stolen, and reimaged.',
+      },
+      {
+        t: 'p',
+        text: 'Version control, whether a purpose-built tool for controller projects or a general-purpose repository, records who changed what and when, keeps every previous version, and makes the comparison between versions easy. The purpose-built tools also automate the upload-and-compare against the running controller, which is the change detection function.',
+      },
+      { t: 'h2', text: 'Comparison and change detection' },
+      {
+        t: 'p',
+        text: 'A backup that is compared against the running controller on a schedule finds two things: changes that were made and not recorded, and changes that were made by someone who should not have. Both are findings. The comparison uses the platform compare tool or the version control product, and the result is either identical, or a list of differences that each need an explanation. An unexplained difference is treated as an incident until it is explained. The controller mode, its program checksum, and its last-edit timestamp are also readable status values that the SCADA system can alarm on between comparisons.',
+      },
+      { t: 'h2', text: 'Proving it' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Pick a controller and a spare', text: 'A spare processor of the same model, on the bench, with the modules or a simulator.' },
+          { title: 'Flash the firmware', text: 'To the version recorded in the backup. Note how long it took to find the firmware file.' },
+          { title: 'Download the project', text: 'From the backup store, not from a laptop. Note any error and any prompt the person did not expect.' },
+          { title: 'Load the retentive data and the device parameters', text: 'The setpoints, the drive parameters, the HMI project. Note anything that was missing from the backup.' },
+          { title: 'Verify', text: 'Compare the restored controller with the running one. Identical is the goal; every difference is a gap in the backup.' },
+          { title: 'Record and fix', text: 'Time taken, gaps found, gaps closed. Repeat annually and after any change to the process.' },
+        ],
+      },
+      {
+        t: 'p',
+        text: 'A restore test finds the firmware file that was never saved, the license that expired, the software version that no longer installs on a current laptop, and the setpoint export that nobody did. Each of those is cheap to fix on the bench and very expensive to discover during an outage.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'How long should old versions be kept?',
+        a: 'Indefinitely, for controller projects. Storage is cheap and a five-year-old version answers questions about when a behavior changed. Version control keeps them without effort.',
+      },
+      {
+        q: 'Should the backup be encrypted?',
+        a: 'The offline and off-site copies, yes, because they are portable. The working repository is protected by the engineering zone controls and access permissions. Whatever is encrypted, the key is stored where the restore team can get it without the systems that were lost.',
+      },
+      {
+        q: 'What about controllers with no offline project, only the running program?',
+        a: 'Upload it now, save it as the master, and document that comments are missing. Rebuild the documentation over time as people touch it. A program with no backup at all is the highest priority item in the backup program.',
+      },
+      {
+        q: 'Who is allowed to restore a program to a controller?',
+        a: 'The change management process says: a named person, with a change record, with the program verified against the backup store, with operations informed. A restore is a program download, and a program download to a running process is a change with consequences whatever its reason.',
+      },
+    ],
+    related: [
+      '/cybersecurity/plc-security/controller-hardening',
+      '/cybersecurity/remote-access/vendor-remote-access',
+      '/controls/plc-systems/plc-fundamentals/memory',
+      '/controls/plc-systems/plc-fundamentals/retentive-memory',
+      '/troubleshooting/plc-troubleshooting/program-will-not-download',
+      '/engineering-library/control-documentation/control-narratives',
+    ],
+  },
+  {
+    path: '/cybersecurity/passwords-credentials/default-credentials',
+    kind: 'reference',
+    title: 'Default Credentials',
+    summary:
+      'The passwords printed in the manual: where they hide in a control system, why they are the first thing an attacker tries, how to find every one on site, and the procedure for changing them without locking yourself out.',
+    answer:
+      'Default credentials are the factory usernames and passwords that ship on controllers, HMIs, switches, radios, drives, analyzers, and cameras, and they are published in every manual and collected in public lists. They are the most common way into a control system that is reachable at all. Removing them means inventorying every device with a login, changing each default with the new credential recorded in a managed store, verifying the change, and making the check part of commissioning so that new and replaced devices do not reintroduce them.',
+    keyPoints: [
+      'Every device with a web page, a console, or a protocol login shipped with a default. Assume it is still there.',
+      'Public lists index default credentials by vendor and model. An attacker does not need to guess.',
+      'Change them one device at a time, record the new credential in the store first, and verify before leaving.',
+      'Network switches, radios, and embedded web servers are the ones inventories miss.',
+      'Add the check to the commissioning checklist so a replaced device does not arrive with its defaults.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['Cybersecurity', 'Networking', 'Commissioning'],
+    blocks: [
+      { t: 'h2', text: 'Why they matter' },
+      {
+        t: 'p',
+        text: 'An attacker who reaches a device login page has two choices: try to exploit a vulnerability, or type the default. The default works often enough that it is tried first. Public databases list default credentials by vendor and model, scanning tools test for them automatically, and the exposure surveys of internet-reachable control devices find the same defaults year after year. A device on a control network with its default password is not protected by that password; it is protected only by whatever keeps the attacker off the network, and that is one layer where two were intended.',
+      },
+      { t: 'h2', text: 'Where they hide' },
+      {
+        t: 'table',
+        head: ['Device', 'Typical default login', 'Note'],
+        rows: [
+          ['Managed Ethernet switches', 'Web and console management with a well-known admin account', 'Often installed by the electrical contractor and never touched; the management interface is on the control VLAN'],
+          ['Serial and cellular radios', 'Web configuration page', 'Vendor-installed; the same password across the whole fleet'],
+          ['PLC and RTU web servers', 'Diagnostic and configuration pages enabled by default', 'Disable the server if unused; change the password if used'],
+          ['HMI panels', 'Runtime login levels with default passwords, and a maintenance or engineering level', 'The engineering level often has a documented default that lets a user exit the runtime to the operating system'],
+          ['Drives and soft starters', 'Keypad parameter lock codes and network web pages', 'Rarely changed; a lock code of zero is the default on many'],
+          ['Analyzers and smart instruments', 'Configuration menus and web interfaces', 'Also HART and other protocols with write protection off'],
+          ['SCADA software', 'Built-in administrator accounts and default project users', 'The installation guide lists them'],
+          ['Windows and Linux servers', 'Local administrator, service accounts created by installers', 'Vendor installers create accounts with documented passwords'],
+          ['Cameras, UPS cards, environmental monitors, power meters', 'Web management', 'Every one has a network card and a login; most inventories miss them'],
+          ['SNMP community strings', 'Public and private on nearly every network device', 'A read-write community string is a password to the device configuration'],
+        ],
+      },
+      { t: 'h2', text: 'Finding every one' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Start from the asset inventory', text: 'Every device with a network address, and every device with a keypad or console login even without one. If the inventory does not exist, this is the reason to build it.' },
+          { title: 'Add the devices inventories miss', text: 'Walk the panels. Switches, radios, cellular modems, UPS network cards, camera systems, power meters, and anything with an RJ-45 port.' },
+          { title: 'Identify the login surfaces on each', text: 'Web page, console, SSH or Telnet, SNMP, vendor protocol, keypad lock. A single device may have four.' },
+          { title: 'Check each against the default', text: 'Log in with the documented default. If it works, the device is on the list.' },
+          { title: 'Rank the list', text: 'Devices reachable from outside the control zone first, then network infrastructure, then controllers and servers, then the rest.' },
+        ],
+      },
+      { t: 'h2', text: 'Changing them' },
+      {
+        t: 'p',
+        text: 'Changing a password on a device that runs a process is a change, and the risk of locking yourself out is real. The procedure is deliberate.',
+      },
+      {
+        t: 'ol',
+        items: [
+          'Decide the new credential according to the password policy: unique per device, long, recorded in the credential store before it is set on the device.',
+          'Confirm the recovery method for that device: a physical reset, a console port, a master password, a vendor procedure. Know it before changing anything.',
+          'Change the credential, then log out and log back in with the new one. Do not trust the change until the new login has worked.',
+          'Where the device supports named users, create them and disable the default account rather than only changing its password. A disabled account cannot be guessed.',
+          'Change the SNMP community strings, or disable SNMP, on every network device. Treat a read-write community string as an administrator password.',
+          'Record the change: device, date, person, the store entry, and the recovery method. Not the password itself, anywhere but the store.',
+          'Update the anything that used the old credential: a SCADA driver that logs into a device, a monitoring tool that polls it, a backup script.',
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Fleet devices get unique credentials, managed',
+        text: 'Forty radios with the same password are one leaked password from an open fleet. Unique credentials per device are manageable only with a credential store, which is why the store comes before the change. A spreadsheet on a shared drive is not a credential store.',
+      },
+      { t: 'h2', text: 'Keeping them changed' },
+      {
+        t: 'ul',
+        items: [
+          'Add a default credential check to the commissioning checklist for every new and replaced device. A replaced switch arrives with its defaults.',
+          'Include the check in the periodic vulnerability review: scan for known defaults with a tool, on a schedule, from inside the control network.',
+          'Write the requirement into integrator and vendor contracts: no device is handed over with a default credential, and the credentials are delivered to the utility store.',
+          'When a person who knew credentials leaves, rotate what they knew. Named accounts make this a short list; shared credentials make it everything.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'The device only has one account and no way to disable it. What then?',
+        a: 'Change its password, restrict which addresses can reach the device with a firewall or an access list, disable the interface if it is not needed, and record the limitation. Many older devices are in this category, and network restriction is the compensating control.',
+      },
+      {
+        q: 'What if changing the password could break the SCADA connection?',
+        a: 'It might, if the SCADA driver or a monitoring tool logs into the device with that credential. Find those dependencies first from the driver configuration, schedule the change with operations, and update the dependent configuration in the same window with a rollback ready.',
+      },
+      {
+        q: 'Is a lock code on a drive keypad worth setting?',
+        a: 'Yes, where the drive is in a location people other than trained staff can reach, and always on the network web interface. A keypad lock prevents a casual or mistaken parameter change; the network credential prevents a remote one.',
+      },
+      {
+        q: 'How do we handle vendor default accounts in SCADA software?',
+        a: 'Rename or disable the built-in administrator where the product allows, set a long unique password where it does not, and create named accounts for every person. Vendors document their built-in accounts; treat that documentation as a list of what an attacker knows.',
+      },
+    ],
+    related: [
+      '/cybersecurity/plc-security/controller-hardening',
+      '/cybersecurity/remote-access/vendor-remote-access',
+      '/cybersecurity/network-segmentation/zones-and-conduits',
+      '/cybersecurity/water-wastewater-cybersecurity/utility-threat-landscape',
+      '/cybersecurity/ot-security/iec-62443',
+    ],
+  },
 ];

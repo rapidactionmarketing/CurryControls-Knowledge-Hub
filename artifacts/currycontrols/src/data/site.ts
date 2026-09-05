@@ -7,7 +7,7 @@ export const SITE = {
   name: 'CurryControls.com',
   shortName: 'CurryControls',
   tagline: 'Controls & Automation Knowledge Hub',
-  url: 'https://currycontrols.com',
+  url: 'https://www.currycontrols.com',
   description:
     'An independent controls and automation knowledge hub covering PLCs, SCADA, instrumentation, control panels, industrial networking, OT cybersecurity, and water and wastewater control systems.',
   locale: 'en_US',

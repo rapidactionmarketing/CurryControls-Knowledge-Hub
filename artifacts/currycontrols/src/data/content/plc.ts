@@ -970,4 +970,425 @@ two-second answer instead of a site visit.`,
       '/troubleshooting/plc-troubleshooting/outputs-not-energizing',
     ],
   },
+  {
+    path: '/controls/plc-systems/plc-fundamentals/memory',
+    kind: 'reference',
+    title: 'Controller Memory and Addressing',
+    summary:
+      'How a controller organizes its data: data tables and tags, the input and output images, the elementary data types and what they hold, and the naming discipline that keeps a program readable years later.',
+    answer:
+      'Controller data lives in a data table, addressed either by file and word on older platforms or by name on tag-based ones. Every value has a type that fixes its size and range: a BOOL is one bit, an INT sixteen bits, a DINT thirty-two, a REAL a thirty-two bit floating point number. The input and output images are the part of the table that mirrors the modules. Whether the address is N7:12 or Wetwell_Level_ft, the program is only maintainable if the names say what the data is and the types match what it holds.',
+    keyPoints: [
+      'Older platforms address data by file type and element; tag-based platforms address it by name, and the name is the documentation.',
+      'The type sets the range: an INT stops at 32,767, a DINT at about 2.1 billion, and a REAL holds about seven significant digits.',
+      'The input image is a copy of the modules taken at the start of the scan; the program never reads a module directly.',
+      'Structures and arrays let one tag hold everything about a pump, and a user-defined type makes every pump the same.',
+      'A naming convention agreed before programming starts is worth more than any amount of commenting afterward.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['PLC', 'Fundamentals', 'Programming'],
+    blocks: [
+      { t: 'h2', text: 'Two ways to name a memory location' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'File-based addressing', def: 'The older scheme: memory is divided into files by type, and an address names the file and the element, such as an integer file element or a bit within a binary file word. The address is fixed by where the data physically sits, and a symbol or comment attached to it is the only clue to its meaning. Many controllers still in service use it, and their programs are read with the symbol table open in one hand.' },
+          { term: 'Tag-based addressing', def: 'The current scheme: every value has a name chosen by the programmer, a type, and a description, and the controller manages where it sits. The program refers to the name, SCADA refers to the name, and the name carries the meaning. The discipline moves from remembering addresses to choosing names well.' },
+          { term: 'Absolute addressing with symbols', def: 'Some platforms address memory areas directly, inputs, outputs, flags, and data blocks, and layer a symbolic name on top. In practice the symbol is used everywhere and the absolute address appears only in the hardware configuration.' },
+        ],
+      },
+      { t: 'h2', text: 'Data types' },
+      {
+        t: 'table',
+        caption: 'Elementary types and what they hold',
+        head: ['Type', 'Size', 'Range', 'Used for'],
+        rows: [
+          ['BOOL', '1 bit', 'On or off', 'Contacts, coils, states, and alarms'],
+          ['SINT', '8 bits', '-128 to 127', 'Rarely; some device data'],
+          ['INT', '16 bits', '-32,768 to 32,767', 'Raw analog counts, older platforms, Modbus registers'],
+          ['DINT', '32 bits', 'About plus or minus 2.1 billion', 'Counters, totals, timers, the default integer on modern platforms'],
+          ['REAL', '32 bits', 'About seven significant digits, huge range', 'Engineering values, setpoints, calculated values'],
+          ['LREAL', '64 bits', 'About fifteen significant digits', 'Accumulated totals where seven digits is not enough'],
+          ['STRING', 'Varies', 'Text of a set maximum length', 'Messages, identifiers, and recipe names'],
+          ['TIME, DATE', 'Varies', 'Durations and calendar values', 'Scheduling and event timestamps'],
+        ],
+      },
+      {
+        t: 'p',
+        text: 'The type is not a formality. A flow total accumulated in an INT rolls over at 32,767 and reads negative. A total accumulated in a REAL stops incrementing once it reaches about sixteen million, because adding a small flow increment to a large float changes nothing in seven digits. The data type ranges table and the IEEE 754 calculator on this site cover both effects. Choose the type for the largest value and the finest increment the tag will ever see, not for the value on the day it is created.',
+      },
+      { t: 'h2', text: 'The images' },
+      {
+        t: 'p',
+        text: 'The input image is a region of the data table that holds a copy of every input module, refreshed at the start of the scan. The output image holds what the program has decided every output should be, written to the modules at the end of the scan. The program reads and writes the images, never the modules, which is why an input cannot change halfway through a scan and why an output set and then cleared in the same scan never energizes. The scan cycle page covers the consequences.',
+      },
+      { t: 'h2', text: 'Structures, arrays, and user-defined types' },
+      {
+        t: 'p',
+        text: 'A pump has a run command, a run feedback, a fault, an hours total, a start count, a hand-off-auto state, and half a dozen setpoints. As separate tags that is a dozen names per pump and a program that reads like a phone book. As a structure, a user-defined type named Pump with those members, each pump is one tag, every pump has the same members in the same order, and the logic that handles a pump can be written once and applied to each. Arrays do the same for a list of things of one kind, a hundred alarm bits or twelve level setpoints.',
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Define the type before the first pump, not after the fourth',
+        text: 'Retrofitting a structure onto tags that already exist means renaming every reference in the program and in SCADA. Deciding what a pump, a valve, and an analog input look like as types is part of the design, done with the tag list and before the logic.',
+      },
+      { t: 'h2', text: 'Naming' },
+      {
+        t: 'p',
+        text: 'A tag name is read by the programmer, the SCADA developer, the operator who sees it in an alarm, and the technician who finds it in a fault ten years on. It should say what the thing is, using the instrument tag from the P&ID where one exists, with a consistent structure and no abbreviations that only the author understands. Wetwell_Level_ft says more than LT101_PV, and LT101_Level_ft says the most, because it ties the tag to the drawing and states the unit.',
+      },
+      {
+        t: 'ul',
+        items: [
+          'Use the P&ID tag as the root wherever the tag corresponds to an instrument or a piece of equipment.',
+          'State the unit in the name of every engineering value, so that nobody has to guess whether Level is feet or percent.',
+          'Keep one convention for the whole site, written down, and give it to every contractor.',
+          'Fill the description field. It is what SCADA and the alarm summary display, and it is the only place a sentence fits.',
+          'Never reuse a tag for a second purpose because it happened to be free.',
+        ],
+      },
+      { t: 'h2', text: 'Memory that runs out' },
+      {
+        t: 'p',
+        text: 'Program memory and data memory are finite, and both fill. A program that grows by copy and paste, a data table full of unused tags from an earlier version, and arrays sized for a plant twice this size all consume it. The controller reports the memory in use, and a project that is above about three quarters of the capacity is one that will fail to download after the next change. The remedy is housekeeping, or a larger processor, and the time to find out is before the change order, not during it.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'What is the difference between an INT and a DINT?',
+        a: 'Size and range. An INT is sixteen bits and holds about plus or minus 32,000; a DINT is thirty-two bits and holds about plus or minus 2.1 billion. Modern platforms use DINT by default because the INT range is exceeded by an ordinary counter within weeks.',
+      },
+      {
+        q: 'Why did my flow total stop increasing?',
+        a: 'It is a REAL, and it has grown to the point where adding one increment does not change the number within its seven significant digits. Accumulate totals in a DINT with a fixed scale, or in an LREAL, and roll the total into a daily or monthly register.',
+      },
+      {
+        q: 'What is a user-defined type?',
+        a: 'A structure the programmer defines, with named members of various types, that then becomes a type like any other. A UDT for a pump, with its commands, statuses, and setpoints, makes every pump tag identical in shape and lets the pump logic be written once.',
+      },
+      {
+        q: 'Does the program read inputs directly from the modules?',
+        a: 'No. It reads the input image, a copy taken at the start of the scan, and writes the output image, which is sent to the modules at the end. That is what makes the scan deterministic, and it is why an input cannot change in the middle of a scan.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/plc-fundamentals/scan-cycle',
+      '/controls/plc-systems/plc-fundamentals/retentive-memory',
+      '/controls/plc-systems/programming/program-organization',
+      '/tables/plc-data-types',
+      '/calculators/data-type-ranges',
+    ],
+  },
+  {
+    path: '/controls/plc-systems/plc-fundamentals/tasks',
+    kind: 'reference',
+    title: 'Tasks and Execution Priority',
+    summary:
+      'How a controller schedules its work: the continuous task, periodic tasks at a fixed rate, event tasks triggered by something happening, how priority preempts, and where each kind of logic belongs.',
+    answer:
+      'A modern controller does not run one scan; it runs tasks. The continuous task runs the main program over and over as fast as it can. Periodic tasks run at a fixed interval, preempting the continuous task at a set priority, which is where PID loops, fast counting, and anything that must run at a known rate belong. Event tasks run when something happens, an input changes or data arrives. Getting the assignment right is what makes a loop tune the same on a busy day as on a quiet one.',
+    keyPoints: [
+      'The continuous task runs whenever nothing of higher priority needs the processor, so its scan time varies with everything else.',
+      'A periodic task runs on a fixed interval and its logic sees a constant time step, which is what closed-loop control needs.',
+      'A higher priority task interrupts a lower one; a task that overruns its period is a fault waiting to happen.',
+      'Put fast, timing-sensitive logic in short periodic tasks and everything else in the continuous task.',
+      'Each task has its own watchdog, and the tasks together must fit within the processor time available.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 7,
+    tags: ['PLC', 'Fundamentals', 'Programming', 'PID'],
+    blocks: [
+      { t: 'h2', text: 'One scan is not enough' },
+      {
+        t: 'p',
+        text: 'The simple picture of a controller is one program executed top to bottom in a loop. Small controllers still work that way, and it is fine for a lift station. But a program that handles a plant has logic that must run every 10 milliseconds beside logic that would be happy running every second, and running all of it at the rate the fastest piece needs wastes the processor. Tasks are how the controller runs different parts of the program at different rates with different urgency.',
+      },
+      { t: 'h2', text: 'The three kinds' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Continuous', def: 'Runs the programs assigned to it repeatedly, restarting as soon as it finishes, in whatever processor time the other tasks leave. Its scan time is whatever it happens to be, and it changes with communication load and with what the periodic tasks are doing. Most sequencing, interlocking, alarming, and general logic lives here.' },
+          { term: 'Periodic', def: 'Runs at a fixed interval, 10 ms, 100 ms, 1 s, at a set priority. When the interval elapses, the controller suspends whatever lower-priority task is running, executes the periodic task, and resumes. Its logic sees a constant time between executions, which is what a PID instruction, a rate calculation, or a totalizer needs.' },
+          { term: 'Event', def: 'Runs when a trigger occurs: a change of state on a designated input module, a consumed tag arriving from another controller, a motion event, or an instruction in another task. It is how the controller reacts to something within microseconds of it happening rather than at the next scan.' },
+        ],
+      },
+      {
+        t: 'p',
+        text: 'The names and the details vary by platform. One vendor calls them tasks with programs inside them; another has a cyclic main block and cyclic interrupt blocks at fixed intervals; a third has a single scan with a high-speed interrupt routine. The behavior is the same everywhere: some logic runs on a fixed clock with priority, and the rest runs in the gaps.',
+      },
+      { t: 'h2', text: 'Priority and preemption' },
+      {
+        t: 'p',
+        text: 'Each periodic and event task has a priority. A higher priority task interrupts a lower one wherever it is, even in the middle of a rung, runs to completion, and hands the processor back. Two tasks at the same priority take turns. The continuous task has the lowest priority of all. The practical rule is that the fastest task gets the highest priority, so that a 10 ms task is never held up by a 500 ms task that happened to be running.',
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Preemption can split a data update',
+        text: 'A periodic task that interrupts the continuous task halfway through writing a structure sees half of the new values and half of the old. Where two tasks share data, copy it in one instruction at a defined point, or pass it through a single tag written atomically, so that a reader never sees a torn value.',
+      },
+      { t: 'h2', text: 'What goes where' },
+      {
+        t: 'table',
+        caption: 'Assigning logic to tasks',
+        head: ['Logic', 'Task', 'Why'],
+        rows: [
+          ['PID loops', 'Periodic, at the loop update rate', 'The integral and derivative terms assume a constant time step'],
+          ['Flow totalizing and rate calculations', 'Periodic', 'A total accumulated on a variable scan is wrong by the scan variation'],
+          ['High-speed counting or pulse handling', 'Event or fast periodic', 'A pulse shorter than the continuous scan is missed'],
+          ['Sequencing, interlocks, alarms', 'Continuous', 'Tens of milliseconds of variation do not matter'],
+          ['Communication and SCADA handling', 'Continuous or slow periodic', 'Neither fast nor time critical'],
+          ['Safety-related logic', 'Not in the standard controller', 'A safety function belongs in a safety-rated controller or a hardwired circuit'],
+        ],
+      },
+      { t: 'h2', text: 'Overlap and overrun' },
+      {
+        t: 'p',
+        text: 'A periodic task that takes longer to execute than its interval has overrun: the next execution is due before this one has finished. The controller flags it, on most platforms as a task overlap counter, and depending on configuration either skips an execution or faults. An overrun is a design error: the task has too much logic for its interval, or a higher priority task is starving it. The fix is to move logic out of the task, lengthen its interval, or reconsider the priorities, and the task overlap counter is the diagnostic to watch after any change.',
+      },
+      {
+        t: 'p',
+        text: 'All the tasks together have to fit in the processor. If periodic tasks consume most of the available time, the continuous task starves, its scan time stretches to seconds, and the plant slows down without anything faulting. The controller reports the time consumed by each task, and keeping the total well under the capacity is part of the design.',
+      },
+      { t: 'h2', text: 'Watchdogs per task' },
+      {
+        t: 'p',
+        text: 'Each task has its own watchdog, a maximum execution time after which the controller faults. The default is generous for the continuous task and tighter for periodic ones. A watchdog fault names the task, which is the first clue to where a loop or a blocking instruction lives. The watchdog page covers it.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Should I put my PID loop in a periodic task?',
+        a: 'Yes. The integral and derivative calculations assume a constant time between executions. In the continuous task that time varies with load, and the loop behaves differently on a busy scan than a quiet one. A periodic task at the loop update rate gives it the constant step it assumes.',
+      },
+      {
+        q: 'What rate should a periodic task run at?',
+        a: 'As slow as the logic in it allows. A pressure loop might need 50 to 100 ms; a level loop is fine at one second. Faster rates consume processor time and leave less for everything else.',
+      },
+      {
+        q: 'What happens if a periodic task overruns?',
+        a: 'The controller records an overlap, and skips or delays the next execution. It is a design error: too much logic for the interval, or starvation by a higher priority task. Move logic out or lengthen the interval.',
+      },
+      {
+        q: 'Can safety logic go in a fast periodic task?',
+        a: 'Speed is not the issue; integrity is. Logic that protects people belongs in a safety-rated controller or a hardwired circuit, where a single fault cannot defeat it, not in a task of the standard controller, however fast.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/plc-fundamentals/scan-cycle',
+      '/controls/plc-systems/plc-fundamentals/watchdog',
+      '/controls/plc-systems/analog-control/pid',
+      '/controls/plc-systems/programming/program-organization',
+    ],
+  },
+  {
+    path: '/controls/plc-systems/plc-fundamentals/watchdog',
+    kind: 'reference',
+    title: 'The Watchdog Timer',
+    summary:
+      'What the scan watchdog protects against, why it faults the controller instead of pausing it, what makes a scan run long, and why raising the limit is the wrong first response.',
+    answer:
+      'The watchdog is a timer the controller resets every scan. If a scan takes longer than the watchdog limit the timer expires and the controller faults, because a scan that has not finished is a controller that is not controlling. The usual causes are a loop that does not exit, a very large instruction, or a task starved by higher priority work. The right response is to find what made the scan long, not to lengthen the limit until the fault goes away.',
+    keyPoints: [
+      'A scan that overruns leaves outputs unwritten and inputs unread; the watchdog turns that silent condition into a fault.',
+      'The limit is per task, defaults to hundreds of milliseconds, and should be set a little above the worst real scan time.',
+      'Loops that iterate on data, large copies, string handling, and blocking instructions are the usual culprits.',
+      'A watchdog fault names the task, and the maximum scan time diagnostic shows how close normal operation runs.',
+      'A hardware watchdog inside the processor covers the firmware itself; the scan watchdog covers the program.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 6,
+    tags: ['PLC', 'Fundamentals', 'Programming', 'Troubleshooting'],
+    blocks: [
+      { t: 'h2', text: 'Why a slow scan is dangerous' },
+      {
+        t: 'p',
+        text: 'The controller writes outputs at the end of the scan and reads inputs at the start. While a scan is running, the outputs hold whatever the previous scan set them to and the inputs are ignored. A scan that takes a second instead of twenty milliseconds is a controller that has, for that second, stopped responding to the plant while giving every appearance of running. A scan that never finishes is a controller that has stopped entirely with its outputs frozen in mid-state. The watchdog exists so that neither condition can persist silently.',
+      },
+      { t: 'h2', text: 'How it works' },
+      {
+        t: 'p',
+        text: 'The watchdog is a countdown timer set to a configured limit. The controller reloads it at the start of every scan, or every execution of a task on platforms with tasks. If the scan finishes, the timer is reloaded before it expires and nothing happens. If the scan is still running when the timer reaches zero, the controller declares a major fault, stops executing, drives outputs to their configured fault state, and records a watchdog fault against the task. The response is deliberate: a faulted controller with outputs in a known state is safer than a running controller nobody can trust.',
+      },
+      { t: 'h2', text: 'What makes a scan run long' },
+      {
+        t: 'ul',
+        items: [
+          'A loop in logic that does not exit: a backward jump whose exit condition never becomes true, or a FOR loop over an array whose length was set wrong.',
+          'A very large instruction: a copy or a fill over a big array, a search through a long table, or string manipulation on every scan.',
+          'A communication instruction that blocks rather than running in the background, on platforms where that is possible.',
+          'A subroutine called far more often than intended, from inside a loop or from multiple places.',
+          'Starvation: higher priority periodic tasks consuming most of the processor, so the continuous task barely runs and its scan stretches.',
+          'A one-time event, a large data transfer or a program upload, that coincides with a heavy scan and pushes it over the limit once.',
+        ],
+      },
+      { t: 'h2', text: 'Setting the limit' },
+      {
+        t: 'p',
+        text: 'The controller reports the last and the maximum scan time of each task. Set the watchdog somewhat above the observed maximum under real conditions, with communications active and SCADA connected, so that normal variation never trips it and a genuine runaway trips it quickly. A limit of several seconds on a task that normally scans in twenty milliseconds means a runaway runs the plant blind for seconds before the fault. A limit one millisecond above the maximum trips on the first busy day.',
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Raising the watchdog to clear a fault hides the fault',
+        text: 'A watchdog fault means the scan took longer than it should. Doubling the limit makes the fault go away and leaves the slow scan in place, where it delays every output and every alarm on every scan. Find the cause, fix it, and then set the limit from the corrected maximum.',
+      },
+      { t: 'h2', text: 'Finding the cause' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Read the fault.', text: 'It names the task and, on most platforms, records the scan time that tripped it. Note both.' },
+          { title: 'Look at what changed.', text: 'A watchdog fault on a program that ran for years follows a change: an online edit, a new routine, a data array grown, a new SCADA client polling hard.' },
+          { title: 'Check the maximum scan time.', text: 'If the maximum sits close to the limit in normal running, the program is heavy and the fault is a matter of time. If the maximum is far below the limit, something specific ran away.' },
+          { title: 'Search for loops and large instructions.', text: 'Backward jumps, FOR loops, copies, searches, and string operations. Ask of each whether its size is bounded and whether it needs to run every scan.' },
+          { title: 'Check the task load.', text: 'On a multitask controller, look at how much processor time the periodic tasks consume. A continuous task that gets ten percent of the processor scans slowly however small it is.' },
+        ],
+      },
+      { t: 'h2', text: 'The other watchdog' },
+      {
+        t: 'p',
+        text: 'Inside the processor there is a second, hardware watchdog that the firmware itself must service. If the firmware hangs, the hardware watchdog resets or faults the processor. It has no user setting and it is the reason a controller that has crashed completely still ends up in a defined fault state rather than a frozen one. When a processor faults with a hardware or firmware fault code and no program cause can be found, it is that watchdog that fired, and the processor is usually the problem.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'What does a watchdog fault mean?',
+        a: 'A task took longer to execute than its configured limit, and the controller faulted rather than continue with outputs unwritten. The fault names the task. Look for a loop, a large instruction, or starvation by higher priority tasks.',
+      },
+      {
+        q: 'Can I just increase the watchdog time?',
+        a: 'You can, and it will clear the fault, and the slow scan that caused it will still be there delaying every output. Find and fix the cause first. Then set the limit from the corrected maximum scan time with some margin.',
+      },
+      {
+        q: 'What is a reasonable watchdog setting?',
+        a: 'A modest margin above the maximum scan time observed under full load. The default of a few hundred milliseconds on most platforms is reasonable for a continuous task that scans in tens of milliseconds. Periodic tasks get a limit related to their interval.',
+      },
+      {
+        q: 'Why did the watchdog trip once and never again?',
+        a: 'A one-time event, a large data transfer, an upload, or a burst of communication, coincided with a heavy scan. If the maximum scan time in normal running is close to the limit, it will happen again; if not, note it and watch the maximum.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/plc-fundamentals/scan-cycle',
+      '/controls/plc-systems/plc-fundamentals/tasks',
+      '/controls/plc-systems/plc-fundamentals/cpu',
+      '/troubleshooting/plc-troubleshooting/processor-faulted',
+    ],
+  },
+  {
+    path: '/controls/plc-systems/plc-fundamentals/retentive-memory',
+    kind: 'reference',
+    title: 'Retentive Memory',
+    summary:
+      'What survives a power cycle in a controller and what does not, how retention is backed up by battery, capacitor, or nonvolatile storage, what should be retentive, and how retained data gets lost.',
+    answer:
+      'Retentive memory is the data that keeps its value through a power cycle: setpoints, totals, run hours, and the state of anything that must resume where it left off. Whether a given tag is retentive depends on the platform, and what protects the retained data depends on the hardware: a lithium battery, an energy storage capacitor, or nonvolatile memory. The two failures that matter are a backup that has silently died, and a restore from a stale copy that quietly overwrites months of changes.',
+    keyPoints: [
+      'Platforms differ on what is retentive by default; find out for yours rather than assuming.',
+      'A battery lasts a few years and warns before it dies; a capacitor module lasts the life of the controller but holds data only for days; a nonvolatile card holds it indefinitely.',
+      'Setpoints, totalizers, run hours, and alternation state should be retentive; step numbers, commands in progress, and timers usually should not.',
+      'A download loads the tag values saved in the project and overwrites what the controller had; upload first.',
+      'First-scan logic decides what the plant does on power-up, and it should be written, not assumed.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['PLC', 'Fundamentals', 'Programming'],
+    blocks: [
+      { t: 'h2', text: 'What is retained' },
+      {
+        t: 'p',
+        text: 'The controller has the program and it has the data table, and at power-up it needs both. The program is held in nonvolatile memory or restored from a card on every platform. The data is another matter. Some platforms retain the entire data table, so every tag comes back with the value it had. Some retain only areas or files marked retentive, and everything else returns to zero. Some retain timers and counters only if a retentive instruction was used. The platform manual states the rule, and it is different enough between vendors that assuming it from a previous project is how a plant comes up with every setpoint at zero.',
+      },
+      { t: 'h2', text: 'What protects it' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Lithium battery', def: 'Holds up the memory when power is off. Lasts two to five years depending on the controller and how much of that time it spends without power. The controller warns when it is low, on a status light and in a status bit, and the warning is the most ignored indicator in the industry. Replace on a schedule, and replace with the controller powered so the memory is held during the swap.' },
+          { term: 'Energy storage module', def: 'A capacitor bank that charges while the controller runs and powers the memory long enough to write it to nonvolatile storage when power fails. No maintenance and no replacement, at the cost of holding data only for days to weeks if the controller is left unpowered, and a module that has aged holds less.' },
+          { term: 'Nonvolatile memory card', def: 'A removable card holding a copy of the program and, optionally, the data table. The controller can be set to load from it on power-up, on a corrupt memory, or never. It is the only protection that survives indefinitely without power, and it is also the one that can restore a copy months out of date.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'A card set to load on power-up restores the day it was written',
+        text: 'If the card was written at commissioning and the controller loads from it after a power cycle, every setpoint changed since commissioning is gone and every online edit since then is gone, and the plant runs on the commissioning program. Either rewrite the card after every change, or set it to load only when the memory is actually lost, and know which it is.',
+      },
+      { t: 'h2', text: 'What should be retentive' },
+      {
+        t: 'table',
+        caption: 'Deciding what survives a power cycle',
+        head: ['Data', 'Retentive?', 'Reason'],
+        rows: [
+          ['Setpoints and tuning constants', 'Yes', 'They are the configuration of the plant and re-entering them is slow and error prone'],
+          ['Totalizers and run hours', 'Yes', 'A total that resets on every power cycle is not a total'],
+          ['Lead and lag alternation state', 'Yes', 'Otherwise the same pump is lead after every outage'],
+          ['Alarm acknowledgment and shelving', 'Usually', 'An operator who acknowledged an alarm should not have to do it again'],
+          ['Sequence step number', 'Usually not', 'Resuming in the middle of a step with equipment in an unknown physical state is dangerous; restart from a safe step'],
+          ['Commands in progress', 'No', 'A start command retained through an outage starts the pump on power-up with nobody expecting it'],
+          ['Timers', 'Rarely', 'A retained timer resumes counting time that did not pass; make the decision per timer'],
+          ['Hand-off-auto selections from the HMI', 'Decide', 'Retaining auto restarts the plant automatically on power-up; retaining off leaves it down until someone arrives; the narrative says which'],
+        ],
+      },
+      { t: 'h2', text: 'First scan' },
+      {
+        t: 'p',
+        text: 'Every controller exposes a first-scan bit, true for the first scan after power-up or after a transition to run. The logic that runs on it decides what the plant does: clear the commands in progress, reset the sequence to its safe step, validate the retained setpoints against their ranges, and decide whether equipment that was in auto restarts. Left unwritten, the plant does whatever the retained bits happen to say, which was correct at the moment the power failed and may not be correct ten minutes later with the wet well full and the operator on the road.',
+      },
+      {
+        t: 'callout',
+        kind: 'safety',
+        title: 'Automatic restart is a decision',
+        text: 'Equipment that restarts on power-up without a person present can start with someone working on it, or start a sequence that expects conditions that no longer hold. Decide, per piece of equipment, whether it restarts automatically, and where the answer is yes, make sure the interlocks and the physical lockout procedures assume it will.',
+      },
+      { t: 'h2', text: 'How retained data gets lost' },
+      {
+        t: 'ul',
+        items: [
+          'The battery died, quietly, and the next power cycle found nothing to retain. The low battery indicator had been lit for months.',
+          'The controller sat unpowered on a shelf or in a de-energized panel long enough for the energy storage module to discharge.',
+          'A download loaded the project, and the project carried the tag values from the day it was saved, replacing the current ones.',
+          'A memory card set to load on power-up restored an old copy.',
+          'A firmware update or a processor replacement cleared the memory, and nobody had uploaded a current copy first.',
+          'The tags were never retentive on a platform that requires them to be marked, and this was the first power cycle since commissioning.',
+        ],
+      },
+      { t: 'h2', text: 'Keeping a copy' },
+      {
+        t: 'p',
+        text: 'The defence against every one of those is a current copy: an upload from the running controller, including the data table, taken on a schedule and after every change, stored somewhere that is not in the panel. Setpoints can additionally be held in SCADA and written back to the controller on first scan, so that a controller that comes up with zeros gets its configuration back from the host. Both are cheap. Re-commissioning a plant from memory is not.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'What does retentive mean in a PLC?',
+        a: 'That the value survives a power cycle. On some platforms every tag is retentive; on others only marked areas, files, or instructions are. The rest return to zero on power-up.',
+      },
+      {
+        q: 'How long does a PLC battery last?',
+        a: 'Two to five years depending on the model and how long the controller spends unpowered. The controller warns when it is low. Replace it on a schedule and with the controller powered, so the memory is held during the change.',
+      },
+      {
+        q: 'Why did all my setpoints reset to zero?',
+        a: 'The retention backup failed, a battery or a discharged energy storage module, or a download or a memory card restore replaced the current values with saved ones. Restore from the last upload, and then find out which happened so it does not recur.',
+      },
+      {
+        q: 'Should the plant restart automatically after a power outage?',
+        a: 'That is a decision per piece of equipment, written into the control narrative. Pumps in a lift station usually should. A chemical feed or a sequence that assumes a starting condition usually should not without checks. Either way, the first-scan logic implements the decision explicitly.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/plc-fundamentals/memory',
+      '/controls/plc-systems/plc-fundamentals/cpu',
+      '/troubleshooting/plc-troubleshooting/retentive-data-lost',
+      '/troubleshooting/plc-troubleshooting/program-will-not-download',
+      '/controls/plc-systems/plc-fundamentals/power-supplies',
+    ],
+  },
 ];

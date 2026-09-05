@@ -845,4 +845,411 @@ export const TROUBLESHOOTING_ENTRIES: Entry[] = [
       '/troubleshooting/plc-troubleshooting/retentive-data-lost',
     ],
   },
+  {
+    path: '/troubleshooting/plc-troubleshooting/logic-not-executing-as-expected',
+    kind: 'troubleshooting',
+    title: 'Logic Not Executing As Expected',
+    summary:
+      'The rung looks right and the plant does something else. The scan-order, duplicate-output, unscheduled-routine, and data-type traps behind it, and how to find which one you are in.',
+    answer:
+      'When logic that reads correctly does the wrong thing, the program is usually doing exactly what it says, in an order or a context the reader did not see. The last rung to write a bit wins; a routine that is never called never runs; a force overrides the rung; a comparison of two floats for equality never comes true; and an instruction that looks like the one you meant behaves differently. Find the discrepancy by watching the rung online, then searching for every other place that touches the same tag.',
+    symptom:
+      'A rung shows true online but the equipment does not respond, or the equipment responds when the rung is false, or a value in the program is not what the arithmetic should produce, or a change made to the program has no visible effect.',
+    keyPoints: [
+      'Search every reference to the output tag. A second rung writing it later in the scan overrides the one you are looking at.',
+      'Confirm the routine is actually called and its task is actually scheduled. Logic that is not scanned does nothing, however correct.',
+      'Check for forces and for online edits that were never assembled.',
+      'Float equality, integer overflow, and mismatched data types produce results that look like logic errors.',
+      'The instruction is not always the one it looks like: latch against output, one-shot rising against falling, retentive timer against on-delay.',
+    ],
+    causes: [
+      { cause: 'Duplicate destructive outputs', check: 'Cross reference the tag. Two OTE instructions on one bit leave it in the state of the last one scanned. The first rung appears true and ignored.' },
+      { cause: 'Routine not called, or task not scheduled', check: 'Find the jump to the routine and confirm its rung is true. Confirm the program containing it is scheduled in a running task and not inhibited.' },
+      { cause: 'Forces installed', check: 'The software shows forces enabled. A force on the input or the output makes the rung irrelevant.' },
+      { cause: 'Online edit pending', check: 'An edit that was accepted but not assembled or tested is not executing. The rung shows the edit; the controller runs the old logic.' },
+      { cause: 'Scan order', check: 'A value written late in the scan is read early in the next one. Logic that expects a value set by a later rung to be current in an earlier rung is one scan behind.' },
+      { cause: 'Float compared for equality', check: 'Two REALs that should be equal differ in the last digit and the equals instruction never fires. Compare with a tolerance.' },
+      { cause: 'Integer overflow or truncation', check: 'An INT that rolled past 32,767, or a REAL copied into an INT and truncated. Watch the value online through the arithmetic.' },
+      { cause: 'Wrong instruction', check: 'A latch where an output was intended holds forever. A one-shot on the wrong edge fires at the wrong time. A retentive timer never resets. Read the instruction help, not the symbol.' },
+      { cause: 'Indirect address pointing elsewhere', check: 'An array index or a pointer that is not the value assumed. Watch the index online.' },
+      { cause: 'Alias or mapping to the wrong tag', check: 'The tag in the rung is an alias for a different base tag than expected, or the I/O mapping moved with a module.' },
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['Troubleshooting', 'PLC', 'Programming'],
+    blocks: [
+      { t: 'h2', text: 'Watch it, do not read it' },
+      {
+        t: 'p',
+        text: 'Reading logic on a screen and reasoning about what it should do is where the trouble started. Go online and watch the rung execute: which instructions are true, what the values are, and whether the output changes when the rung does. The controller does not do what the logic looks like; it does what the logic is, in the order it is scanned, with the data it has at that moment. Watching shows that; reading does not.',
+      },
+      { t: 'h2', text: 'The scan is the first suspect' },
+      {
+        t: 'p',
+        text: 'A controller writes outputs at the end of the scan, so if two rungs write the same bit, only the last one matters. This is the single most common cause of a rung that is true and apparently ignored, and the fix is a cross reference: find every instruction that writes the tag. A bit written by an output instruction in one routine and cleared by a move or a clear in another, or written in two routines that were both copied from a template, is a bit whose state depends on scan order alone.',
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Cross reference before you edit',
+        text: 'The cross reference tool lists every instruction that reads or writes a tag, with its routine and rung. Run it on the output tag first, then on each input to the rung. Most logic mysteries end there, before a single edit is made.',
+      },
+      { t: 'h2', text: 'Is it even running?' },
+      {
+        t: 'p',
+        text: 'A routine executes only when something calls it. A routine created and never given a jump, a jump on a rung whose condition is never true, or a program placed in a task that is inhibited or was never scheduled, contains logic that is correct, visible, and dead. Online, a routine that is not being scanned shows no live values, or shows them frozen, and that is the tell. Confirm the call chain from the main routine down before trusting anything inside.',
+      },
+      { t: 'h2', text: 'Data that lies' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Float equality', def: 'A setpoint of 6.0 entered from the HMI and a level of 6.0 calculated from counts are not the same thirty-two bits. An equals instruction between them is false. Use a greater-than-or-equal with a deadband, or compare within a tolerance.' },
+          { term: 'Integer overflow', def: 'An INT that counts past 32,767 becomes negative. Arithmetic that overflows sets a status flag on most platforms and produces a wrong number that the logic then acts on.' },
+          { term: 'Truncation', def: 'A REAL moved into an INT loses its fraction, and on some platforms rounds while on others it truncates. A calculation done in integers divides and drops the remainder.' },
+          { term: 'Stale data', def: 'A value from a communication instruction or a consumed tag that stopped updating holds its last value. The logic acts on a number that was true an hour ago.' },
+        ],
+      },
+      { t: 'h2', text: 'The instruction that is not the one you meant' },
+      {
+        t: 'p',
+        text: 'Ladder symbols are compact and several of them look alike. An output latch holds the bit until an unlatch clears it, and looks almost like an output. A one-shot rising fires on the false-to-true transition; the falling version fires on the other, and both look like a contact. A retentive timer keeps its accumulated value when its rung goes false and needs a reset instruction; an on-delay timer resets itself. A negated output is on when the rung is false. When a rung behaves oddly, open the instruction help and read what the instruction actually does before assuming the logic around it is wrong.',
+      },
+      { t: 'h2', text: 'After an edit that did nothing' },
+      {
+        t: 'p',
+        text: 'A change that has no effect is either not executing or is being overridden. Online edits go through accept, test, and assemble on most platforms, and an edit that was accepted and never assembled shows in the editor and does not run. A download to the wrong controller, or a save without a download, leaves the plant on the old program. Confirm the controller is running the program you think it is by comparing the project against the controller.',
+      },
+      {
+        t: 'callout',
+        kind: 'safety',
+        title: 'Testing logic on a running plant moves equipment',
+        text: 'Toggling a bit to see what happens, or forcing an output to prove a rung, starts pumps and moves valves. Test with the equipment in hand or locked out where the result could hurt someone, and remove every force before leaving.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'The rung is true online but the output does not turn on. Why?',
+        a: 'Almost always another rung writing the same output later in the scan. Cross reference the output tag. If nothing else writes it, check for a force, then for the routine not actually being scanned.',
+      },
+      {
+        q: 'Why does my equals comparison never work on a level setpoint?',
+        a: 'Because the two floating point values differ in the last bit and are never exactly equal. Compare with a tolerance, or use greater than or equal and less than or equal with a deadband.',
+      },
+      {
+        q: 'I made an online edit and nothing changed.',
+        a: 'The edit is accepted but not assembled, so the controller still runs the old rung. Or the edit is in a routine that is not called. Or the edit was made to a project that was never downloaded. Check each in that order.',
+      },
+      {
+        q: 'What is a destructive output?',
+        a: 'An instruction that unconditionally writes a bit every scan, such as a standard output coil. Two of them on the same bit fight, and the last one scanned wins. Use one output per bit and combine the conditions on its rung.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/plc-fundamentals/scan-cycle',
+      '/controls/plc-systems/programming/ladder-logic',
+      '/controls/plc-systems/plc-fundamentals/memory',
+      '/troubleshooting/plc-troubleshooting/outputs-not-energizing',
+      '/controls/plc-systems/programming/program-organization',
+    ],
+  },
+  {
+    path: '/troubleshooting/plc-troubleshooting/retentive-data-lost',
+    kind: 'troubleshooting',
+    title: 'Retentive Data Lost',
+    summary:
+      'The plant came back from a power cycle with zero setpoints, zero totals, and the wrong pump as lead. Which backup failed, which restore overwrote what, and how to get the data back and keep it.',
+    answer:
+      'Retained data is lost when the backup that holds it fails, or when something writes over it. A dead battery or a discharged energy storage module leaves nothing after an outage; a download loads the values saved in the project; a memory card set to load on power-up restores the day it was written. Recover from the most recent upload of the controller, then find which of those happened, because the same cause will do it again at the next outage.',
+    symptom:
+      'After a power cycle, a download, or a processor replacement, setpoints read zero or default, totalizers and run hours have reset, alternation starts from the first pump, and operators are re-entering values from memory.',
+    keyPoints: [
+      'A low battery indicator that was lit for months is the usual story. Check it first and check the battery date.',
+      'A download replaces the data table with the values in the project file. If the project is old, so are the values.',
+      'A nonvolatile card configured to load on power-up restores whatever it held, however stale.',
+      'Recovery is from the last upload; if there is none, the values come from operator memory and the narrative.',
+      'Prevent the next one: replace the battery on schedule, upload after every change, and hold setpoints in SCADA as a second copy.',
+    ],
+    causes: [
+      { cause: 'Battery dead', check: 'The battery indicator is lit, and the battery date on the module or in the log is years old. A power cycle with a dead battery clears the retained data.' },
+      { cause: 'Energy storage module discharged', check: 'The controller was unpowered for longer than the module holds, days to weeks, or the module has aged and holds less than it did.' },
+      { cause: 'Download from a stale project', check: 'Someone downloaded. The project file on the laptop carried the tag values from the day it was saved.' },
+      { cause: 'Memory card restore', check: 'The card is set to load on power-up, and it was written at commissioning. Everything since then is gone after every power cycle.' },
+      { cause: 'Processor replaced or firmware updated', check: 'A new processor has an empty data table, and a firmware update clears it on most platforms. Was an upload taken first?' },
+      { cause: 'Tags not retentive', check: 'On a platform where retention is per tag or per area, the tags were never marked. This shows up at the first real power cycle after commissioning.' },
+      { cause: 'First-scan logic clearing values', check: 'A routine on the first-scan bit that initializes tags, written for commissioning and left in. It runs on every power-up.' },
+      { cause: 'Corrupted memory', check: 'A fault code naming memory, after a lightning event or a hardware failure. The data is gone and the processor may be suspect.' },
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 7,
+    tags: ['Troubleshooting', 'PLC'],
+    blocks: [
+      { t: 'h2', text: 'Get the plant running first' },
+      {
+        t: 'p',
+        text: 'A plant with zero setpoints is a plant that is not controlling. Before finding the cause, restore operation: load the last upload if there is one, or enter the setpoints from the control narrative and the operators, and check every one against its range before putting anything in auto. Totals and run hours can be reconstructed later from the historian; setpoints cannot wait.',
+      },
+      {
+        t: 'callout',
+        kind: 'safety',
+        title: 'Zero is not a safe setpoint',
+        text: 'A lead start level of zero starts the pumps continuously; a high level alarm of zero alarms continuously and gets silenced; a chemical dose setpoint of zero stops the dose. Put equipment in hand until the setpoints are back, and confirm each value before returning it to auto.',
+      },
+      { t: 'h2', text: 'Which one was it' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Look at the battery indicator and the fault log.', text: 'A lit battery light, a low battery entry in the log, or a battery date years past its replacement interval settles it.' },
+          { title: 'Ask what happened just before.', text: 'A power outage, a download, a processor swap, a firmware update, a card inserted. Each has its own signature, and someone knows.' },
+          { title: 'Check the memory card setting.', text: 'If a card is installed, read its load configuration and the date it was written. A card set to load on power-up with an old date is the cause, and it will be the cause again.' },
+          { title: 'Compare the values you have to what was lost.', text: 'Values reset to the project defaults point to a download or a card. Values reset to zero point to a lost data table.' },
+          { title: 'Check retention configuration.', text: 'On platforms that mark retention per tag or area, confirm the lost tags were marked. If not, the data was never retained and this was the first power cycle to show it.' },
+        ],
+      },
+      { t: 'h2', text: 'Recovering the data' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'From an upload', def: 'The best case. An upload taken from the running controller, with its data table, restores everything to the moment it was taken. Restore it and reconcile the setpoints changed since.' },
+          { term: 'From SCADA', def: 'Setpoints entered from the HMI are often stored in the SCADA database as well as the controller, and the historian holds the last value of every logged tag. Read them back from there.' },
+          { term: 'From the narrative and the operators', def: 'The control narrative lists initial setpoints; the operators know what they changed and why. Slower, and it works.' },
+          { term: 'Totals and run hours', def: 'Reconstruct from the historian, from the last report, or from the equipment’s own hour meters. Note the date of the reset on the record so that a future reviewer understands the step in the trend.' },
+        ],
+      },
+      { t: 'h2', text: 'Keeping it from happening again' },
+      {
+        t: 'ul',
+        items: [
+          'Replace the battery on a schedule, with the controller powered, and write the date on it and on the rack drawing. Alarm the low battery bit in SCADA so it cannot be ignored.',
+          'Upload the controller, including the data table, after every change and on a schedule, and keep the copies somewhere that is not in the panel.',
+          'Set the memory card to load only on a lost memory, not on every power-up, and rewrite it after every change if it is relied on at all.',
+          'Before any download, upload first and compare. Before any processor swap or firmware update, upload first.',
+          'Hold setpoints in SCADA as well, and write them back to the controller on first scan or on operator command, so that a controller that comes up empty is refilled from the host.',
+          'Remove commissioning initialization logic from the first-scan routine, or guard it so it runs once and never again.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Can I get the setpoints back after the battery died?',
+        a: 'From the last upload of the controller, from the SCADA database or historian, or from the control narrative and the operators. The controller itself has nothing to give back.',
+      },
+      {
+        q: 'Why did a download reset my setpoints?',
+        a: 'A download writes the whole project, including the tag values saved in the project file, and those are the values from the day it was saved. Upload before you download, and either merge the current values into the project or restore them afterward.',
+      },
+      {
+        q: 'How do I know if my controller has a battery or a capacitor module?',
+        a: 'From the processor manual and the module on the front of it. Newer processors mostly use an energy storage module with no replacement; older ones use a lithium battery with a replacement interval. Either way the controller reports its status.',
+      },
+      {
+        q: 'Should setpoints be stored in SCADA as well as the PLC?',
+        a: 'Yes. The controller is the authority while running, and SCADA is the backup that refills it after a loss. Write-back on first scan or on an operator command, with the operator confirming, is the usual arrangement.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/plc-fundamentals/retentive-memory',
+      '/troubleshooting/plc-troubleshooting/processor-faulted',
+      '/troubleshooting/plc-troubleshooting/program-will-not-download',
+      '/controls/plc-systems/plc-fundamentals/cpu',
+    ],
+  },
+  {
+    path: '/troubleshooting/scada-troubleshooting/values-frozen-on-screen',
+    kind: 'troubleshooting',
+    title: 'Values Frozen On Screen',
+    summary:
+      'The HMI shows numbers that are not changing while the plant runs. Whether the controller, the communication driver, the tag server, or the display stopped, and the order to check them in.',
+    answer:
+      'A frozen value is a value that has stopped updating somewhere between the field and the pixel. Work back along the path: is the controller in run and scanning, is the communication driver connected to it, is the tag server updating the tag, is the client connected to the server, is the display bound to the tag at all. The tag quality and timestamp, which every SCADA platform records, tell you at which link the update stopped.',
+    symptom:
+      'Values on one or more displays stay constant while the process is known to be changing. Alarms may not be arriving. The values may be plausible, which is what makes the symptom dangerous.',
+    keyPoints: [
+      'Check the tag timestamp and quality first; they say when the value last updated and whether the driver considers it good.',
+      'If every tag from one controller is frozen, the communication link or the controller is the problem, not the display.',
+      'If every tag on every controller is frozen, the tag server or the client connection stopped.',
+      'If one tag is frozen and its neighbors update, the tag is misconfigured, bound wrong, or the controller value really is static.',
+      'A controller in program mode or faulted delivers values that never change and reports a healthy connection.',
+    ],
+    causes: [
+      { cause: 'Controller faulted or in program mode', check: 'The connection is up and the values are static because the controller is not scanning. Look at the processor lights and the SCADA driver status.' },
+      { cause: 'Communication driver disconnected', check: 'Driver diagnostics show the device off line or timing out. Every tag from that device is stale with bad quality.' },
+      { cause: 'Tag server or service stopped', check: 'Every tag from every device is stale. The SCADA runtime or the OPC server has stopped or hung. The service status on the server shows it.' },
+      { cause: 'Client lost its connection to the server', check: 'On a client and server architecture the display is running but not receiving updates. Other clients update normally. The client connection status shows it.' },
+      { cause: 'License expired or limit reached', check: 'Some platforms stop updating tags, or stop accepting new connections, when the license lapses or the tag count exceeds it. A message on the server says so.' },
+      { cause: 'Scan class or polling disabled', check: 'A tag group set to a slow rate, or a scan class paused, or a device disabled in the driver. Tags in other groups update.' },
+      { cause: 'Display bound to a static tag or the wrong tag', check: 'One value on one display never updates while the same tag on another display does. The display object is bound to a memory tag, a constant, or the wrong name.' },
+      { cause: 'Duplicate IP address or device address', check: 'Two devices answering the same address, so the driver reads an unrelated device that happens to return constant data, or alternates between two.' },
+      { cause: 'The value really is static', check: 'A flow of zero at night, a tank at its overflow, a controller holding a bad-quality input. Confirm from the field before chasing SCADA.' },
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 7,
+    tags: ['Troubleshooting', 'SCADA', 'Communications'],
+    blocks: [
+      { t: 'h2', text: 'Frozen is worse than blank' },
+      {
+        t: 'p',
+        text: 'A display that shows nothing gets a phone call. A display that shows a plausible level from an hour ago gets trusted, and the operator makes decisions on it until something floods. Most SCADA platforms can show stale data differently, greyed, hatched, or flagged with the quality, and the first fix on a system where this has happened once is to turn that on so that frozen never looks like live again.',
+      },
+      { t: 'h2', text: 'Locate the break' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Read the timestamp and the quality.', text: 'Every tag carries the time it last updated and a quality from the driver. A tag with a timestamp from an hour ago and bad quality tells you the driver stopped getting it; a current timestamp with good quality on a value that is not changing tells you the value is not changing.' },
+          { title: 'Find the scope.', text: 'One tag, all the tags from one controller, or every tag on the system. One tag is the tag configuration. One controller is the link or the controller. Everything is the server or the client.' },
+          { title: 'Check the controller.', text: 'Run light on, no fault, I/O light solid. A faulted controller answers the driver perfectly well with values that never change.' },
+          { title: 'Check the driver.', text: 'The driver diagnostics show each device connected or failed, with error counts and the last good read. A device in a failed state, or one with a rising timeout count, is the break.' },
+          { title: 'Check the server and the client.', text: 'Service running, license valid, tag count within limits, and, on a client, the connection to the server up. A client showing a disconnected banner is a client that has been ignored.' },
+          { title: 'Check the display binding.', text: 'For a single frozen object, open the display in the designer and read the tag it is bound to. Compare with the tag browser and the controller.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Compare with the controller directly',
+        text: 'Go online to the controller with the programming software and watch the tag there. If it changes in the controller and not in SCADA, the problem is between them. If it is static in the controller, SCADA is reporting the truth and the fault is upstream, in the field or the program.',
+      },
+      { t: 'h2', text: 'The link' },
+      {
+        t: 'p',
+        text: 'The connection between the driver and the controller is where most freezes happen. A radio path that faded, a switch that rebooted, a cellular modem that lost registration, a controller Ethernet port that hung, an address conflict. The driver retries, gives up, and marks the device failed; some drivers mark it and some just stop updating. The network and radio troubleshooting pages cover the physical causes; from the SCADA side, the driver diagnostics say which device and since when.',
+      },
+      { t: 'h2', text: 'After it comes back' },
+      {
+        t: 'p',
+        text: 'When the updates resume, look at the alarm summary and the historian for the gap. Alarms that occurred during the freeze may have been missed or may arrive all at once; events in the controller that a DNP3 outstation would have buffered are gone on a polled protocol. Note the outage in the log with its start, its end, and its cause, and if the cause was a link, watch the driver counters for the next week.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'How can I tell whether the controller or SCADA is the problem?',
+        a: 'Watch the tag in the controller with the programming software. If it changes there and not on the screen, the path between them is broken. If it is static there too, the controller or the field is the problem and SCADA is showing the truth.',
+      },
+      {
+        q: 'Why does the driver show connected but the values do not update?',
+        a: 'The controller is answering but not scanning: faulted or in program mode. Or the tag is in a scan group that is disabled or set to a very slow rate. Or the value genuinely is not changing.',
+      },
+      {
+        q: 'Why did every screen freeze at once?',
+        a: 'The tag server or the SCADA runtime stopped, the license lapsed, or the client lost the server. Check the service on the server and the connection banner on the client.',
+      },
+      {
+        q: 'How do I make stale data obvious to operators?',
+        a: 'Use the platform feature that displays bad or stale quality differently, and put a communication status indicator for each controller on the overview display. Frozen data that looks live is the failure to design out.',
+      },
+    ],
+    related: [
+      '/troubleshooting/scada-troubleshooting/tag-shows-bad-quality',
+      '/troubleshooting/plc-troubleshooting/processor-faulted',
+      '/troubleshooting/network-troubleshooting/ethernet-device-drops-offline',
+      '/troubleshooting/radio-troubleshooting/remote-site-stops-communicating',
+      '/controls/scada-hmi/scada-fundamentals/what-is-scada',
+    ],
+  },
+  {
+    path: '/troubleshooting/scada-troubleshooting/tag-shows-bad-quality',
+    kind: 'troubleshooting',
+    title: 'Tag Shows Bad Quality',
+    summary:
+      'A tag flagged bad or uncertain by the driver. What the quality codes mean, the difference between a device that is not answering and an address that does not exist, and how to clear each.',
+    answer:
+      'Quality is the driver’s statement about whether it trusts the value. Bad quality with a not-connected substatus means the driver cannot reach the device. Bad quality with a configuration error means the device answered and refused: the address is out of range, the data type does not fit the register, or the tag no longer exists in the controller. Uncertain means the value is old or was substituted. Read the substatus; it splits the problem in half before any measurement is made.',
+    symptom:
+      'One tag, a group of tags, or every tag from a device displays with a bad or uncertain quality indicator, shows a question mark or a hatch pattern, or reads a default value while the driver reports an error.',
+    keyPoints: [
+      'Bad quality is a category, not a diagnosis; the substatus says whether it is the link, the address, or the data type.',
+      'All tags from a device bad means the connection; some tags bad means those addresses.',
+      'A register beyond what the device has, or a float requested at a register that holds an integer, comes back bad with a configuration error.',
+      'A tag renamed or deleted in the controller after a download is bad in SCADA until SCADA is updated.',
+      'Uncertain quality usually means the last value is being held past its update interval.',
+    ],
+    causes: [
+      { cause: 'Device not reachable', check: 'Every tag from the device is bad, substatus not connected or communication failure. The driver diagnostics show timeouts. Ping the device and check the link.' },
+      { cause: 'Address out of range', check: 'Specific tags are bad with an illegal address or configuration error. The device does not have that register or that point. Compare the address against the device map.' },
+      { cause: 'Data type mismatch', check: 'The tag is configured as a float or a string at an address the device serves as an integer, or the byte order is wrong. Read the raw registers and compare.' },
+      { cause: 'Tag missing in the controller', check: 'On tag-based controllers, the tag was renamed, deleted, or its scope changed. The driver cannot find it. Compare the SCADA tag list to the controller.' },
+      { cause: 'Access denied', check: 'A controller or server security setting refuses the driver, or refuses writes. The driver log names it.' },
+      { cause: 'Device busy or connection limit', check: 'Intermittent bad quality across many tags when other clients connect. The device has run out of connections or is overloaded by the poll rate.' },
+      { cause: 'Scan group too fast for the link', check: 'Tags flip between good and bad as polls time out on a slow radio or cellular link. Lengthen the timeout and slow the group.' },
+      { cause: 'Value held stale', check: 'Uncertain quality with an old timestamp. The driver is holding the last value because the update failed and the configuration says to hold.' },
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 7,
+    tags: ['Troubleshooting', 'SCADA', 'Communications', 'Modbus'],
+    blocks: [
+      { t: 'h2', text: 'What quality is' },
+      {
+        t: 'p',
+        text: 'Every value that comes through an OPC or a native driver carries a quality: good, bad, or uncertain, with a substatus that says why. It is the driver telling the display and the historian how much to trust the number, and it is the reason a well-built display shows a hatched box instead of a stale level. Reading the quality, not just the value, is the whole of the diagnosis at the SCADA end.',
+      },
+      {
+        t: 'table',
+        caption: 'Reading the quality',
+        head: ['Quality', 'Substatus', 'Meaning', 'Where to look'],
+        rows: [
+          ['Bad', 'Not connected, communication failure', 'The driver cannot reach the device', 'The link, the device, the address on the network'],
+          ['Bad', 'Configuration error, illegal address', 'The device answered and refused the request', 'The tag address against the device register map'],
+          ['Bad', 'Device failure', 'The device reported an internal fault', 'The device itself'],
+          ['Bad', 'Not found', 'No such tag in the controller', 'The controller tag list after the last download'],
+          ['Uncertain', 'Last usable value', 'The update failed and the driver is holding the old value', 'The link, and the hold configuration'],
+          ['Uncertain', 'Sub-normal, sensor not accurate', 'The device says the value is questionable', 'The instrument and the controller validation'],
+          ['Good', 'Local override', 'The value is forced in SCADA', 'Who forced it and why'],
+        ],
+      },
+      { t: 'h2', text: 'Scope first' },
+      {
+        t: 'p',
+        text: 'Before anything else, note how many tags are bad. Every tag from a device is a connection problem, and the address of every tag is irrelevant. Some tags from a device, with others good, is an address or type problem on those tags, and the connection is fine. One tag is that tag. The scope halves the work before a single setting is opened.',
+      },
+      { t: 'h2', text: 'Address and type' },
+      {
+        t: 'p',
+        text: 'A Modbus device serves a defined set of registers, and a request for one outside the set comes back with an exception, which the driver reports as bad. A device with holding registers 40001 through 40100 refuses a read of 40101. A float occupies two registers and a request that starts on the second half of one reads garbage or is refused. Byte and word order within a float differ between devices, and a wrong order produces a plausible wrong number with good quality, which is worse. The register map in the device manual, read with the offset convention of the driver in mind, settles all of it. The Modbus pages on this site cover the offset problem.',
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Read the raw registers',
+        text: 'Most drivers and most Modbus test tools can read a block of registers as plain integers. Read the block that the bad tag sits in. If the registers come back, the address exists and the problem is the data type or the offset. If the block is refused, the address does not exist on that device.',
+      },
+      { t: 'h2', text: 'Tag-based controllers' },
+      {
+        t: 'p',
+        text: 'On a controller addressed by tag names, SCADA asks for the tag by name and the controller looks it up. A tag renamed, moved into a program scope, or deleted in the last download no longer exists under the old name, and every SCADA reference to it goes bad at once, with a not-found or similar substatus. The fix is to update the SCADA tag, and the prevention is to treat a tag rename as a change to SCADA as well as to the controller.',
+      },
+      { t: 'h2', text: 'Intermittent bad' },
+      {
+        t: 'p',
+        text: 'Quality that flickers between good and bad on a slow link is a poll that sometimes times out. The driver asks, the radio takes longer than the timeout, the driver marks it bad, the answer arrives, the next poll succeeds. Lengthen the timeout to cover the real round trip, slow the scan group so the link is not saturated, and reduce the number of separate requests by grouping contiguous addresses. The device-times-out page covers the link side.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'What is the difference between bad and uncertain quality?',
+        a: 'Bad means the driver has no trustworthy value: the device is unreachable or refused the request. Uncertain means the driver has a value it does not fully trust, usually the last good one held past its update time, or one the device flagged as questionable.',
+      },
+      {
+        q: 'Why is one tag bad when the rest from the same device are good?',
+        a: 'That tag’s address does not exist on the device, or its data type does not match what the register holds. The connection is fine. Check the address against the register map and the type against what the device serves.',
+      },
+      {
+        q: 'All my tags went bad after a PLC download. Why?',
+        a: 'Tags were renamed, moved to a different scope, or deleted in the new program, or the download changed the controller path. Compare the SCADA tag list to the controller’s and update the references.',
+      },
+      {
+        q: 'Can a value be wrong with good quality?',
+        a: 'Yes. A float read with the wrong word order, or an integer read from the wrong register, returns a number the driver has no reason to doubt. Good quality means the transaction succeeded, not that the mapping is right.',
+      },
+    ],
+    related: [
+      '/troubleshooting/scada-troubleshooting/values-frozen-on-screen',
+      '/troubleshooting/communications-troubleshooting/wrong-register-data',
+      '/troubleshooting/communications-troubleshooting/device-times-out',
+      '/controls/plc-systems/communications/modbus-tcp',
+      '/controls/plc-systems/communications/opc-ua',
+    ],
+  },
 ];

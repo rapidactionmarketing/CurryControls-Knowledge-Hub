@@ -38,7 +38,7 @@ export const OWNERSHIP_NOTICE = {
     'Welcome to CurryControls.com, Eric Sullivan’s personal knowledge base for controls and automation. Please read the following before you continue.',
   paragraphs: [
     'CurryControls.com is independently owned and maintained by Eric Sullivan. It is his personal knowledge base containing technical notes, references, calculators, tools, and projects.',
-    'This website is not affiliated with, sponsored by, endorsed by, or operated by Curry Controls Company.',
+    'Curry Controls Company was purchased by Revere Control in 2021. CurryControls.com is not affiliated with, sponsored by, endorsed by, or operated by Curry Controls Company or Revere Control.',
     'This website is also not affiliated with, sponsored by, endorsed by, or operated by General Control Systems, Inc. Nothing on this site represents the official views, materials, or services of either company.',
   ],
   disclaimerLinkLabel: 'Read the information disclaimer',

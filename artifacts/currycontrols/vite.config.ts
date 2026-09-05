@@ -72,6 +72,14 @@ export default defineConfig({
     fs: {
       strict: true,
     },
+    // In production both artifacts sit behind the same router, so /api is
+    // same-origin. This proxy reproduces that locally.
+    proxy: {
+      '/api': {
+        target: process.env.API_ORIGIN ?? 'http://localhost:8080',
+        changeOrigin: true,
+      },
+    },
   },
   preview: {
     port,

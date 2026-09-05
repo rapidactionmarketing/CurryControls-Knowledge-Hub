@@ -27,6 +27,9 @@ app.use(
 );
 app.use(cors());
 app.use(express.json());
+// navigator.sendBeacon can deliver a JSON payload labelled text/plain, so the
+// analytics collector accepts that shape too and parses it in the route.
+app.use(express.text({ type: ["text/plain", "application/csp-report"], limit: "64kb" }));
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api", router);

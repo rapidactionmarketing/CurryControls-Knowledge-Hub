@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: analytics
+    description: First-party, cookieless site analytics
 paths:
   /healthz:
     get:
@@ -24,6 +26,50 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /analytics/events:
+    post:
+      operationId: collectAnalyticsEvents
+      tags: [analytics]
+      summary: Record a batch of analytics events
+      description: >
+        Accepts a batch of cookieless analytics events from the site. No
+        personal data is accepted or stored: there is no user identifier, and
+        the session id is a random value scoped to one browser session.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalyticsBatch"
+      responses:
+        "202":
+          description: Events accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalyticsAck"
+  /analytics/summary:
+    get:
+      operationId: getAnalyticsSummary
+      tags: [analytics]
+      summary: Aggregated analytics for the dashboard
+      parameters:
+        - name: days
+          in: query
+          required: false
+          description: Size of the reporting window in days.
+          schema:
+            type: number
+            minimum: 1
+            maximum: 365
+            default: 30
+      responses:
+        "200":
+          description: Aggregated analytics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalyticsSummary"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +79,205 @@ components:
           type: string
       required:
         - status
+    AnalyticsEvent:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - pageview
+            - phone_click
+            - contact_submit
+            - search
+            - search_result_open
+            - outbound_click
+            - scroll_depth
+            - web_vital
+        path:
+          type: string
+          description: Site path the event happened on.
+        ts:
+          type: number
+          description: Client timestamp in milliseconds since the epoch.
+        title:
+          type: string
+        referrer:
+          type: string
+          description: Referring origin only. Query strings are stripped client side.
+        label:
+          type: string
+          description: >
+            Event-specific dimension. Placement for a phone click, destination
+            host for an outbound click, metric name for a web vital.
+        value:
+          type: number
+          description: Numeric measure. Result count, scroll percentage, or vital value.
+        query:
+          type: string
+          description: Search text, for search events only.
+        viewport:
+          type: string
+          description: Coarse viewport bucket such as mobile, tablet, or desktop.
+        newSession:
+          type: boolean
+      required:
+        - type
+        - path
+        - ts
+    AnalyticsBatch:
+      type: object
+      properties:
+        sessionId:
+          type: string
+          maxLength: 64
+          description: Random per-session id held in sessionStorage. Not a cookie, not stable across sessions.
+        events:
+          type: array
+          maxItems: 50
+          items:
+            $ref: "#/components/schemas/AnalyticsEvent"
+      required:
+        - sessionId
+        - events
+    AnalyticsAck:
+      type: object
+      properties:
+        accepted:
+          type: number
+      required:
+        - accepted
+    AnalyticsCount:
+      type: object
+      properties:
+        key:
+          type: string
+        label:
+          type: string
+        count:
+          type: number
+      required:
+        - key
+        - count
+    AnalyticsDailyPoint:
+      type: object
+      properties:
+        date:
+          type: string
+          description: Calendar date in YYYY-MM-DD form, UTC.
+        pageviews:
+          type: number
+        sessions:
+          type: number
+        phoneClicks:
+          type: number
+      required:
+        - date
+        - pageviews
+        - sessions
+        - phoneClicks
+    AnalyticsSearchTerm:
+      type: object
+      properties:
+        query:
+          type: string
+        count:
+          type: number
+        zeroResultCount:
+          type: number
+      required:
+        - query
+        - count
+        - zeroResultCount
+    AnalyticsWebVital:
+      type: object
+      properties:
+        metric:
+          type: string
+        p75:
+          type: number
+        samples:
+          type: number
+      required:
+        - metric
+        - p75
+        - samples
+    AnalyticsTotals:
+      type: object
+      properties:
+        pageviews:
+          type: number
+        sessions:
+          type: number
+        phoneClicks:
+          type: number
+        searches:
+          type: number
+        contactSubmits:
+          type: number
+        outboundClicks:
+          type: number
+      required:
+        - pageviews
+        - sessions
+        - phoneClicks
+        - searches
+        - contactSubmits
+        - outboundClicks
+    AnalyticsSummary:
+      type: object
+      properties:
+        storage:
+          type: string
+          description: Which backing store served this response.
+        rangeDays:
+          type: number
+        generatedAt:
+          type: string
+        totals:
+          $ref: "#/components/schemas/AnalyticsTotals"
+        daily:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsDailyPoint"
+        topPages:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsCount"
+        topSearches:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsSearchTerm"
+        unansweredSearches:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsSearchTerm"
+        phoneClicksByPlacement:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsCount"
+        topReferrers:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsCount"
+        outboundClicks:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsCount"
+        webVitals:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsWebVital"
+      required:
+        - storage
+        - rangeDays
+        - generatedAt
+        - totals
+        - daily
+        - topPages
+        - topSearches
+        - unansweredSearches
+        - phoneClicksByPlacement
+        - topReferrers
+        - outboundClicks
+        - webVitals
 

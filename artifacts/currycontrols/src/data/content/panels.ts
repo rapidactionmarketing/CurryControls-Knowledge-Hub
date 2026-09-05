@@ -322,7 +322,7 @@ Lag = the other available pump, or none.`,
     published: '2026-09-05',
     updated: '2026-09-05',
     readingTime: 9,
-    tags: ['Control Panels', 'SCCR', 'UL 508A', 'NEC', 'Panel Design'],
+    tags: ['Panels', 'UL 508A', 'NEC', 'Design'],
     blocks: [
       { t: 'h2', text: 'What the rating means' },
       {

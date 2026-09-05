@@ -31,7 +31,7 @@ export const TROUBLESHOOTING_ENTRIES: Entry[] = [
     published: '2026-04-21',
     updated: '2026-08-23',
     readingTime: 8,
-    tags: ['Troubleshooting', 'Instrumentation', '4-20 mA', 'Noise'],
+    tags: ['Troubleshooting', 'Instrumentation', '4-20 mA', 'Signals'],
     blocks: [
       { t: 'h2', text: 'Start by characterizing the instability' },
       {
@@ -182,7 +182,7 @@ export const TROUBLESHOOTING_ENTRIES: Entry[] = [
     published: '2026-05-12',
     updated: '2026-08-21',
     readingTime: 9,
-    tags: ['Troubleshooting', 'Modbus', 'Serial', 'Communications'],
+    tags: ['Troubleshooting', 'Modbus', 'Communications'],
     blocks: [
       { t: 'h2', text: 'What intermittent tells you' },
       {
@@ -331,7 +331,7 @@ export const TROUBLESHOOTING_ENTRIES: Entry[] = [
     published: '2026-06-30',
     updated: '2026-08-16',
     readingTime: 9,
-    tags: ['Troubleshooting', 'Networking', 'Ethernet', 'Industrial Networks'],
+    tags: ['Troubleshooting', 'Networking', 'Ethernet'],
     blocks: [
       { t: 'h2', text: 'Read the switch counters first' },
       {

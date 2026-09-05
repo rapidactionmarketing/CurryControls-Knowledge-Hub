@@ -20,7 +20,7 @@ export const LIBRARY_ENTRIES: Entry[] = [
     published: '2026-09-05',
     updated: '2026-09-05',
     readingTime: 8,
-    tags: ['Drawings', 'P&ID', 'ISA', 'Instrumentation', 'Engineering'],
+    tags: ['Documentation', 'ISA', 'Instrumentation', 'Engineering'],
     blocks: [
       { t: 'h2', text: 'What a P&ID is for' },
       {
@@ -185,7 +185,7 @@ export const LIBRARY_ENTRIES: Entry[] = [
     published: '2026-09-05',
     updated: '2026-09-05',
     readingTime: 9,
-    tags: ['Documentation', 'Control Narrative', 'Engineering', 'Commissioning', 'FAT'],
+    tags: ['Documentation', 'Engineering', 'Commissioning'],
     blocks: [
       { t: 'h2', text: 'What the narrative is and is not' },
       {

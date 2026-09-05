@@ -141,7 +141,7 @@ export const SCADA_ENTRIES: Entry[] = [
     published: '2026-03-22',
     updated: '2026-08-15',
     readingTime: 10,
-    tags: ['SCADA', 'Alarms', 'ISA-18.2', 'Standards'],
+    tags: ['SCADA', 'Alarms', 'ISA', 'Standards'],
     blocks: [
       { t: 'h2', text: 'The definition does the heavy lifting' },
       {
@@ -280,7 +280,7 @@ export const SCADA_ENTRIES: Entry[] = [
     published: '2026-04-02',
     updated: '2026-07-24',
     readingTime: 8,
-    tags: ['HMI', 'SCADA', 'ISA-101', 'Design'],
+    tags: ['HMI', 'SCADA', 'ISA', 'Design'],
     blocks: [
       { t: 'h2', text: 'The problem it solves' },
       {
@@ -404,7 +404,7 @@ export const SCADA_ENTRIES: Entry[] = [
     published: '2026-09-05',
     updated: '2026-09-05',
     readingTime: 8,
-    tags: ['SCADA', 'HMI', 'ISA', 'Standards', 'HMI Design'],
+    tags: ['SCADA', 'HMI', 'ISA', 'Standards', 'Design'],
     blocks: [
       { t: 'h2', text: 'What the standard is' },
       {

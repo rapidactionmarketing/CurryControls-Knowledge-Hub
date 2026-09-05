@@ -19,7 +19,7 @@ export const COMMS_ENTRIES: Entry[] = [
     published: '2026-03-30',
     updated: '2026-07-21',
     readingTime: 10,
-    tags: ['Communications', 'Modbus', 'Serial', 'PLC'],
+    tags: ['Communications', 'Modbus', 'PLC'],
     blocks: [
       { t: 'h2', text: 'How a transaction works' },
       {

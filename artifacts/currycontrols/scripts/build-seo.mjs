@@ -42,6 +42,15 @@ ${urls}
 `,
 );
 
+/* -------------------------------- indexnow ------------------------------- */
+
+// IndexNow verifies ownership by fetching <key>.txt from the site root. The
+// key is not a secret; it only proves the pinger controls the host.
+const indexNowKey = process.env['INDEXNOW_KEY'];
+if (indexNowKey && /^[a-zA-Z0-9-]{8,128}$/.test(indexNowKey)) {
+  writeFileSync(resolve(outDir, `${indexNowKey}.txt`), indexNowKey);
+}
+
 /* --------------------------------- robots -------------------------------- */
 
 writeFileSync(

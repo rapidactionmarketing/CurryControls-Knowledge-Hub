@@ -8,7 +8,7 @@
  */
 
 import { NAV_ENTRIES } from '@/data/nav-index';
-import { ALL_TAGS, ENTRIES, getContent } from '@/data/content';
+import { ENTRIES, TOPIC_TAGS, getContent } from '@/data/content';
 import { GLOSSARY } from '@/data/glossary';
 import { CALCULATORS } from '@/data/calculators';
 import { REFERENCE_TABLES } from '@/data/tables';
@@ -73,7 +73,7 @@ function buildRoutes(): RouteRecord[] {
   add({ path: '/faq', priority: 0.7, changefreq: 'weekly' });
   add({ path: '/sitemap', priority: 0.5, changefreq: 'weekly' });
   add({ path: '/topics', priority: 0.6, changefreq: 'weekly' });
-  for (const { tag } of ALL_TAGS) {
+  for (const { tag } of TOPIC_TAGS) {
     add({ path: `/topics/${tagSlug(tag)}`, priority: 0.5, changefreq: 'weekly' });
   }
 

@@ -197,7 +197,7 @@ export const ANALOG_ENTRIES: Entry[] = [
     published: '2026-01-27',
     updated: '2026-07-16',
     readingTime: 8,
-    tags: ['Analog', 'PLC', 'Scaling', 'Programming'],
+    tags: ['Analog', 'PLC', 'Programming'],
     blocks: [
       { t: 'h2', text: 'What the card gives you' },
       {

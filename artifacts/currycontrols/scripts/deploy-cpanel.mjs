@@ -171,6 +171,33 @@ if (result?.error || result?.data?.[0]?.result === 0) {
 }
 console.log('[deploy] extracted');
 
+/* ------------------------------- indexnow ------------------------------- */
+
+// Tell the IndexNow-participating engines (Bing, Yandex, Naver, Seznam and
+// others) which URLs changed. Google does not participate; it reads the
+// sitemap. Optional: needs INDEXNOW_KEY and SITE_URL, and the key file that
+// build-seo writes to the site root when the key is set.
+const INDEXNOW_KEY = process.env['INDEXNOW_KEY'];
+if (SITE_URL && INDEXNOW_KEY) {
+  try {
+    const sitemap = readFileSync(resolve(publicDir, 'sitemap.xml'), 'utf8');
+    const urls = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]).slice(0, 10000);
+    const host = new URL(SITE_URL).host;
+    const res = await fetch('https://api.indexnow.org/indexnow', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      body: JSON.stringify({ host, key: INDEXNOW_KEY, keyLocation: `${SITE_URL}/${INDEXNOW_KEY}.txt`, urlList: urls }),
+    });
+    // 200 and 202 both mean accepted.
+    if (res.status === 200 || res.status === 202) console.log(`[deploy] IndexNow accepted ${urls.length} URLs`);
+    else console.error(`[deploy] IndexNow responded ${res.status}; the key file may not be reachable at ${SITE_URL}/${INDEXNOW_KEY}.txt`);
+  } catch (error) {
+    console.error('[deploy] IndexNow ping failed:', error.message);
+  }
+} else {
+  console.log('[deploy] IndexNow skipped. Set INDEXNOW_KEY (and SITE_URL) to notify search engines on deploy.');
+}
+
 /* ------------------------------- verify --------------------------------- */
 
 if (!SITE_URL) {

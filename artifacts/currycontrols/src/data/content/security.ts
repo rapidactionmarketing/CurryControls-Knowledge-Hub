@@ -19,7 +19,7 @@ export const SECURITY_ENTRIES: Entry[] = [
     published: '2026-06-11',
     updated: '2026-08-26',
     readingTime: 8,
-    tags: ['Cybersecurity', 'OT', 'ICS'],
+    tags: ['Cybersecurity'],
     blocks: [
       { t: 'h2', text: 'The inversion' },
       {
@@ -133,7 +133,7 @@ export const SECURITY_ENTRIES: Entry[] = [
     published: '2026-06-24',
     updated: '2026-08-20',
     readingTime: 8,
-    tags: ['Cybersecurity', 'Architecture', 'Segmentation', 'OT'],
+    tags: ['Cybersecurity', 'Fundamentals', 'Networking'],
     blocks: [
       { t: 'h2', text: 'The levels' },
       {
@@ -244,7 +244,7 @@ export const SECURITY_ENTRIES: Entry[] = [
     published: '2026-07-07',
     updated: '2026-08-28',
     readingTime: 8,
-    tags: ['Cybersecurity', 'Water', 'Wastewater', 'Utilities'],
+    tags: ['Cybersecurity', 'Water', 'Wastewater'],
     blocks: [
       { t: 'h2', text: 'What the reported incidents have in common' },
       {

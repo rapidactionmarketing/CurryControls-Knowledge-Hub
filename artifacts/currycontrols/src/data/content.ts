@@ -73,6 +73,18 @@ export const ALL_TAGS: { tag: string; count: number }[] = (() => {
     .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag));
 })();
 
+/**
+ * Tags that get a topic page. A topic page with one article is a thin page
+ * that competes with the article itself, so a tag earns a page only once two
+ * or more articles carry it. Single-use tags still appear on the article as
+ * plain text.
+ */
+export const TOPIC_TAGS: { tag: string; count: number }[] = ALL_TAGS.filter((t) => t.count >= 2);
+
+export function hasTopicPage(tag: string): boolean {
+  return TOPIC_TAGS.some((t) => t.tag === tag);
+}
+
 /** Word count of an entry's prose, used for reading-time sanity checks. */
 export function wordCount(entry: Entry): number {
   let text = `${entry.summary} ${entry.answer} ${entry.keyPoints.join(' ')}`;

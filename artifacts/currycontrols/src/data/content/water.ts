@@ -19,7 +19,7 @@ export const WATER_ENTRIES: Entry[] = [
     published: '2026-05-19',
     updated: '2026-08-27',
     readingTime: 11,
-    tags: ['Wastewater', 'Lift Stations', 'Pumps', 'Controls'],
+    tags: ['Wastewater', 'Lift Stations', 'Pumps', 'Control'],
     blocks: [
       { t: 'h2', text: 'What the station is' },
       {
@@ -333,7 +333,7 @@ ELSE
     published: '2026-09-05',
     updated: '2026-09-05',
     readingTime: 9,
-    tags: ['Water', 'Pumps', 'PID', 'Control', 'VFD', 'Pressure'],
+    tags: ['Water', 'Pumps', 'PID', 'Control', 'VFD'],
     blocks: [
       { t: 'h2', text: 'What the station is trying to do' },
       {
@@ -455,7 +455,7 @@ ELSE
     published: '2026-09-05',
     updated: '2026-09-05',
     readingTime: 8,
-    tags: ['Water', 'Level', 'Storage', 'Telemetry', 'Pumps', 'SCADA'],
+    tags: ['Water', 'Level', 'Telemetry', 'Pumps', 'SCADA'],
     blocks: [
       { t: 'h2', text: 'What the tank is for' },
       {

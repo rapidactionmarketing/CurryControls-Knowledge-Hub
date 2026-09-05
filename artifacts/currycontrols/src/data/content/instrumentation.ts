@@ -19,7 +19,7 @@ export const INSTRUMENTATION_ENTRIES: Entry[] = [
     published: '2026-02-25',
     updated: '2026-08-08',
     readingTime: 8,
-    tags: ['Instrumentation', 'Signals', 'Grounding', 'Noise'],
+    tags: ['Instrumentation', 'Signals', 'Grounding'],
     blocks: [
       { t: 'h2', text: 'Why two grounds are a problem' },
       {
@@ -138,7 +138,7 @@ export const INSTRUMENTATION_ENTRIES: Entry[] = [
     published: '2026-03-11',
     updated: '2026-07-09',
     readingTime: 9,
-    tags: ['Instrumentation', 'Level', 'Radar', 'Wastewater'],
+    tags: ['Instrumentation', 'Level', 'Wastewater'],
     blocks: [
       { t: 'h2', text: 'How it works' },
       {
@@ -406,7 +406,7 @@ export const INSTRUMENTATION_ENTRIES: Entry[] = [
     published: '2026-09-05',
     updated: '2026-09-05',
     readingTime: 9,
-    tags: ['Instrumentation', '4-20 mA', 'Signals', 'Analog', 'Loop'],
+    tags: ['Instrumentation', '4-20 mA', 'Signals', 'Analog'],
     blocks: [
       { t: 'h2', text: 'Why current and not voltage' },
       {

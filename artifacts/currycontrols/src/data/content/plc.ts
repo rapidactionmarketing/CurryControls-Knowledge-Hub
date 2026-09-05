@@ -19,7 +19,7 @@ export const PLC_ENTRIES: Entry[] = [
     published: '2026-01-14',
     updated: '2026-08-22',
     readingTime: 8,
-    tags: ['PLC', 'Fundamentals', 'Controls'],
+    tags: ['PLC', 'Fundamentals', 'Control'],
     blocks: [
       { t: 'h2', text: 'What a PLC actually does' },
       {
@@ -138,7 +138,7 @@ export const PLC_ENTRIES: Entry[] = [
     published: '2026-01-20',
     updated: '2026-07-30',
     readingTime: 9,
-    tags: ['PLC', 'Fundamentals', 'Scan Time'],
+    tags: ['PLC', 'Fundamentals'],
     blocks: [
       { t: 'h2', text: 'The four phases' },
       {
@@ -255,7 +255,7 @@ Order B: pressing the button energizes Pump_Out one scan LATER,
     published: '2026-02-03',
     updated: '2026-08-11',
     readingTime: 10,
-    tags: ['PLC', 'Programming', 'Ladder Logic'],
+    tags: ['PLC', 'Programming'],
     blocks: [
       { t: 'h2', text: 'Reading a rung' },
       {
@@ -394,7 +394,7 @@ Stop_PB or Fault breaks the path and the output drops.`,
     published: '2026-02-18',
     updated: '2026-06-27',
     readingTime: 7,
-    tags: ['PLC', 'Programming', 'Interlocks', 'Design'],
+    tags: ['PLC', 'Programming', 'Design'],
     blocks: [
       { t: 'h2', text: 'The distinction that matters' },
       {

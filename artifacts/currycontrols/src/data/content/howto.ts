@@ -25,7 +25,7 @@ export const HOWTO_ENTRIES: Entry[] = [
     published: '2026-02-14',
     updated: '2026-08-12',
     readingTime: 7,
-    tags: ['PLC', 'Analog', 'How-To', 'Scaling'],
+    tags: ['PLC', 'Analog', 'How-To'],
     blocks: [
       {
         t: 'callout',

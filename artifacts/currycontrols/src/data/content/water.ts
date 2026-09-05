@@ -2550,4 +2550,940 @@ Station_Critical := Avail_Count < 2;`,
       '/water-wastewater/wastewater-systems/wastewater-treatment/headworks',
     ],
   },
+  {
+    path: '/water-wastewater/water-systems/water-treatment/raw-water',
+    kind: 'reference',
+    title: 'Raw Water',
+    summary:
+      'Controlling the front of a surface water plant: intake and screens, low-lift pumping, the raw water flow that paces the whole plant, the online quality instruments that warn of a changing source, and the alarms and ramp limits that keep the train stable.',
+    answer:
+      'Raw water control sets the plant production rate and delivers it steadily: the low-lift pumps and a flow control valve or drive hold a raw water flow setpoint that comes from the clearwell level or a production schedule, and that flow is the master signal for chemical flow pacing downstream. Raw water turbidity, pH, temperature, and conductivity are monitored continuously because a change in the source is the earliest warning the plant gets, and screen differential, intake level, and gate positions protect the intake. Flow changes are ramped rather than stepped so that coagulation and filtration see a stable load.',
+    keyPoints: [
+      'Raw water flow is the plant flow; nearly every chemical feed and every filter loading is paced from it.',
+      'The setpoint comes from the clearwell: falling level raises production, rising level lowers it, within ramp limits.',
+      'Online raw turbidity, pH, temperature, and conductivity are the early warning; alarm on rate of change, not only on limits.',
+      'Intake level, screen differential, and gate position protect the pumps and the structure.',
+      'A treatment train likes steady flow; ramp changes over minutes and stage pumps with the flow controller, not against it.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['Water', 'Flow', 'Instrumentation', 'Control', 'SCADA'],
+    blocks: [
+      { t: 'h2', text: 'What the raw water system does' },
+      {
+        t: 'p',
+        text: 'A surface water plant draws from a river, lake, or reservoir through an intake structure, screens it, and pumps it to the head of the treatment process with low-lift pumps. The rate at which it does that is the plant production rate. Every process downstream is sized and paced for it: the coagulant dose is a ratio to it, the flocculation and sedimentation basins have detention times that depend on it, the filters have loading rates set by it, and the disinfection contact time is computed from it. Controlling raw water well means delivering the rate the plant needs, changing it slowly, and knowing what is in it.',
+      },
+      { t: 'h2', text: 'Flow control' },
+      {
+        t: 'p',
+        text: 'The plant flow setpoint usually comes from finished water storage: the clearwell level, or the level of the distribution tanks that the clearwell feeds. Falling level calls for more production, rising level for less, within a band that keeps the plant running at a few discrete rates rather than hunting. Many plants run a production schedule instead, with operators setting a rate for the shift and the clearwell absorbing the difference. Either way, the raw water flow controller holds the setpoint with a control valve on the low-lift discharge, a drive on the pumps, or a combination, and the pumps stage up and down as the setpoint moves.',
+      },
+      {
+        t: 'ul',
+        items: [
+          'Ramp the setpoint. A step of 20 percent in raw water flow hits the flocculators and filters at once and shows up as a turbidity spike an hour later. Ramp at a rate the process engineer sets, often a few percent per minute.',
+          'Stage pumps by the controller output, not by flow alone. Start the lag pump when the lead is at maximum for a time and the flow is still below setpoint; stop it when the lead is at minimum for a time.',
+          'Protect the minimum flow. Filters have a minimum rate below which they do not work well, and some chemical feeds have a minimum. The controller has a floor.',
+          'Hold flow through a source change. Switching intake ports or wells changes the quality, not the rate; the flow controller keeps the plant steady while chemistry is adjusted.',
+        ],
+      },
+      { t: 'h2', text: 'Instruments' },
+      {
+        t: 'table',
+        head: ['Measurement', 'Where', 'Why'],
+        rows: [
+          ['Raw water flow', 'Low-lift discharge, magnetic meter', 'Plant flow; the pacing signal for chemical feed and the basis of every rate'],
+          ['Intake or wet well level', 'Intake structure', 'Pump protection, screen submergence, and source level'],
+          ['Screen differential', 'Across the traveling or bar screen', 'Screen cleaning and blockage alarm'],
+          ['Turbidity', 'Raw water sample line', 'Source quality; coagulant dose adjustment; storm and turnover warning'],
+          ['pH and alkalinity', 'Raw water sample', 'Coagulation chemistry; alkalinity is usually a lab test'],
+          ['Temperature', 'Raw water', 'Coagulation and disinfection kinetics; seasonal changes'],
+          ['Conductivity', 'Raw water', 'Source change, saltwater intrusion, and an easy continuous fingerprint'],
+          ['Gate and valve positions', 'Intake ports and isolation', 'Which port is in service; interlocks'],
+          ['Pump status, current, vibration', 'Low-lift pumps', 'Staging confirmation and protection'],
+        ],
+      },
+      { t: 'h2', text: 'Watching the source' },
+      {
+        t: 'p',
+        text: 'Raw water quality changes with storms, seasons, lake turnover, algae blooms, and upstream events, and the change usually arrives before anyone has seen it. The online instruments trend continuously on the SCADA system, and the useful alarms are on rate of change as well as on absolute value: turbidity that doubles in an hour is a storm plume arriving, whatever the number is. Operators respond by adjusting coagulant dose, changing intake ports where the structure allows drawing from a different depth, and slowing production so that the process has more time. A plant with several intake ports uses them deliberately: a deeper port during a bloom, a shallower one during turnover, and the port selection and its reason are recorded.',
+      },
+      { t: 'h2', text: 'Protecting the intake' },
+      {
+        t: 'ul',
+        items: [
+          'Low level: stop the pumps before they lose suction, and alarm early enough for the operator to reduce production first.',
+          'Screen differential: clean on a differential or a timer; alarm on high differential and on screen drive failure. A blinded screen starves the pumps.',
+          'Zebra mussel and biofouling control: chemical feed at the intake, paced to raw water flow, with feed failure alarms.',
+          'Ice and frazil: intake heating or port changes in cold climates, with temperature as the trigger.',
+          'Security: intrusion and door alarms on the intake structure, which is usually remote and unattended.',
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'One number for the plant',
+        text: 'The raw water flow is used by so many downstream loops that a flowmeter fault is a plant-wide event: every flow-paced chemical feed follows it. Validate the raw water flow signal, alarm on bad quality, and give each chemical feed a fallback dose rate to hold when the pacing signal is bad, rather than letting it pace to zero or to a spike.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Should the raw water flow follow the clearwell level automatically?',
+        a: 'It can, with a slow controller and a ramp limit, and many plants do it. Others prefer the operator to set the rate for the shift so that the process is deliberately steady and the clearwell is allowed to swing. Either works; what does not work is a fast level loop that changes production every few minutes.',
+      },
+      {
+        q: 'What is the earliest warning of a raw water quality event?',
+        a: 'Usually turbidity rate of change, followed by conductivity for a source change and pH for an algae bloom. Upstream gauges and weather feeds, where available, come earlier still. Alarm on the rate and trend everything.',
+      },
+      {
+        q: 'How much straight run does the raw water magnetic meter need?',
+        a: 'The manufacturer figure, commonly five diameters upstream and two or three downstream, measured from the pump discharge or the nearest valve, and more after a pump. The raw water meter is the most important meter in the plant; give it a good installation and verify it against a clamp-on meter once a year.',
+      },
+      {
+        q: 'What happens to chemical feed when the raw water pumps stop?',
+        a: 'Every flow-paced feed should go to zero with the flow, and the feed pumps should be interlocked so that they cannot run without water flow. A feed pump that keeps dosing into a stopped pipe delivers a slug when flow resumes.',
+      },
+    ],
+    related: [
+      '/water-wastewater/water-systems/water-treatment/chemical-feed',
+      '/water-wastewater/water-systems/water-treatment/filtration',
+      '/water-wastewater/water-systems/water-treatment/storage',
+      '/controls/instrumentation/analytical/turbidity',
+      '/controls/instrumentation/flow/magnetic-flowmeters',
+      '/controls/plc-systems/programming/control-strategies',
+    ],
+  },
+  {
+    path: '/water-wastewater/water-systems/water-treatment/wells',
+    kind: 'reference',
+    title: 'Wells',
+    summary:
+      'Operating a wellfield as a water source: selecting and rotating wells, pump-to-waste on start, drawdown and specific capacity, wellhead chemical feed, blending for nitrate or arsenic, the telemetry a well needs, and the interlocks that protect the pump.',
+    answer:
+      'A groundwater system runs its wells by demand, usually from the level of a storage tank or a pressure setpoint, rotating among wells to share wear and to manage water quality and aquifer drawdown. Each well start typically pumps to waste for a period or until turbidity clears, then diverts to the system, with chlorine and any other treatment paced to the well flow. Well level is monitored to track drawdown and specific capacity and to protect the pump from running dry, and each well reports flow, pressure, level, residual, and pump status by telemetry, with interlocks for low level, low flow, and high turbidity and a minimum run time to limit cycling.',
+    keyPoints: [
+      'Wells run by tank level or pressure, in a rotation that shares hours and manages the aquifer.',
+      'Pump to waste on every start until the water clears; then divert to the system with chemical feed paced to flow.',
+      'Drawdown and specific capacity are the health record of a well; trend them from the level transmitter.',
+      'Low level, low flow, and high turbidity interlocks protect the pump and the system.',
+      'Blending is a ratio control problem: hold the mixed concentration below the limit with margin.',
+      'A well is a remote site; telemetry, backup control, and a local fallback are part of the design.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['Water', 'Pumps', 'Telemetry', 'Control', 'Instrumentation'],
+    blocks: [
+      { t: 'h2', text: 'Running the wellfield' },
+      {
+        t: 'p',
+        text: 'A groundwater system has no raw water pumps and no intake; the wells are the source and the pumps together. Demand is met by starting wells, and the call to start usually comes from a storage tank level, from system pressure where there is no storage, or from a schedule. With several wells, the controller selects which to run by a rotation that equalizes run hours, by a priority list that favors the best water or the cheapest power, or by a combination, and it allows the operator to remove a well from the rotation for maintenance or a water quality problem. Wells with different water quality are run in combinations that keep the blended water within limits, which is a control function in its own right.',
+      },
+      { t: 'h2', text: 'The start sequence' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Call and permissives', text: 'Tank level below the start point or pressure below setpoint; the well in AUTO and available; minimum off time elapsed; well level above the low cutoff.' },
+          { title: 'Start the pump to waste', text: 'The waste valve open and the system valve closed, so the first water goes to a drain or a pond. Submersible pumps start across the line or on a soft starter; drives are less common on wells but used where flow must be controlled.' },
+          { title: 'Wait for clear water', text: 'A timer, commonly a few minutes, or a turbidity reading below setpoint, whichever the operating permit or the plant practice specifies. Sand and turbidity are highest at the start.' },
+          { title: 'Divert to the system', text: 'Open the system valve, then close the waste valve, in that order so the pump is never dead-headed. Start chemical feed when flow to the system is proven.' },
+          { title: 'Run and monitor', text: 'Flow, discharge pressure, well level, residual, and pump current. Stop on the tank high level or pressure high setpoint after the minimum run time.' },
+          { title: 'Stop', text: 'Stop chemical feed, stop the pump, and allow the check valve to close; some installations close the system valve first to limit surge.' },
+        ],
+      },
+      { t: 'h2', text: 'Level and specific capacity' },
+      {
+        t: 'p',
+        text: 'The water level in the well drops when the pump starts, from the static level to a pumping level, and the difference is the drawdown. The flow divided by the drawdown is the specific capacity, in gallons per minute per foot, and it is the single best indicator of the condition of the well: a falling specific capacity means the screen is plugging, the aquifer is declining, or the pump is wearing. A submersible pressure transmitter hung in the well, or a bubbler airline, measures the level continuously; the controller computes drawdown and specific capacity at a fixed time after each start and trends them. A low level cutoff stops the pump before it breaks suction, with a delay so that the initial drawdown does not trip it.',
+      },
+      {
+        t: 'formula',
+        expr: 'Specific capacity = Q / (static level − pumping level)',
+        where: [
+          'Q = well flow in gallons per minute at the time of the level reading',
+          'static level = depth to water with the pump off and the well recovered',
+          'pumping level = depth to water at a fixed time after start, often 30 or 60 minutes',
+        ],
+      },
+      { t: 'h2', text: 'Wellhead treatment' },
+      {
+        t: 'ul',
+        items: [
+          'Chlorination: hypochlorite paced to well flow, with a residual analyzer downstream of the contact main or the tank and an alarm on low residual. Groundwater rule requirements for virus inactivation set the contact time some systems must demonstrate.',
+          'Fluoride: paced to flow, with a maximum feed limit, a day tank sized to make an overfeed impossible, and an alarm on high residual.',
+          'Sequestering: polyphosphate for iron and manganese, paced to flow.',
+          'Iron and manganese removal: aeration and filtration or oxidation and filtration at a central site, with the well flow steady enough for the filters.',
+          'Corrosion control: orthophosphate or pH adjustment, paced to flow.',
+          'All feeds interlocked with proven flow to the system, and none running during pump-to-waste unless the permit requires it.',
+        ],
+      },
+      { t: 'h2', text: 'Blending' },
+      {
+        t: 'p',
+        text: 'A well with nitrate or arsenic above the limit can often be used by blending it with cleaner wells so that the combined water meets the standard. The control holds the ratio of the high-concentration well flow to the total below a limit computed from the concentrations, with margin for measurement error and variation, and it prevents the high-concentration well from running alone. Flow from each well is measured, the ratio is computed continuously, and the blend is alarmed and the problem well stopped if the ratio is exceeded. Regulators generally expect the blend to be demonstrated by sampling at the point of entry, and the control records support that.',
+      },
+      { t: 'h2', text: 'Telemetry and protection' },
+      {
+        t: 'table',
+        head: ['Point', 'Purpose'],
+        rows: [
+          ['Pump running, in AUTO, fault', 'Status and alarm'],
+          ['Flow', 'Pacing, totalizing, blending, low-flow detection'],
+          ['Discharge pressure', 'System pressure, dead-head detection, check valve failure'],
+          ['Well level', 'Drawdown, specific capacity, low-level cutoff'],
+          ['Chlorine residual', 'Treatment verification and alarm'],
+          ['Turbidity where fitted', 'Pump-to-waste diversion and sand alarm'],
+          ['Valve positions', 'Waste and system valves; sequence confirmation'],
+          ['Motor current, power', 'Pump condition, power outage detection, energy'],
+          ['Intrusion, power fail, communication status', 'Site security and telemetry health'],
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'When the telemetry drops',
+        text: 'A well that starts only on a tank level received by radio stops starting when the radio fails. Give each well a local fallback: pressure control from a local transmitter, a time-based duty cycle, or a last-known-level hold with a timeout, and alarm the loss of communication so someone drives out. The fallback is written in the functional description and tested at commissioning.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'How long should a well pump to waste?',
+        a: 'Long enough for the water to clear, which depends on the well. Many systems use a fixed time of a few minutes set from experience; a turbidity instrument makes it a measured condition and lets the time shrink for good wells. The permit or the state guidance may specify a minimum.',
+      },
+      {
+        q: 'Why rotate wells rather than always run the best one?',
+        a: 'Running one well continuously draws the aquifer down locally, wears one pump, and leaves the others idle where their pumps and screens deteriorate. Rotation shares the load and keeps every well proven. Priority within the rotation can still favor the best water or the lowest cost.',
+      },
+      {
+        q: 'What does a sudden drop in specific capacity mean?',
+        a: 'A change in the well or the pump rather than the aquifer, which changes slowly: a plugged screen, a broken column pipe or a failed check valve, a worn impeller, or a level transmitter that has moved. Compare flow, current, and pressure with the previous run; a broken column shows normal current and low flow.',
+      },
+      {
+        q: 'Can a drive be used on a well pump?',
+        a: 'Yes, where flow must be matched to demand or blended, and with attention to the motor and cable, since submersible motors have minimum speed and cooling requirements. Most wells run at full speed into storage, where a drive adds cost without benefit.',
+      },
+    ],
+    related: [
+      '/water-wastewater/water-systems/water-pumping/well-pumps',
+      '/water-wastewater/water-systems/storage/tank-level-control',
+      '/water-wastewater/water-systems/water-treatment/disinfection',
+      '/water-wastewater/water-systems/water-treatment/chemical-feed',
+      '/controls/instrumentation/level/hydrostatic-level',
+      '/controls/instrumentation/analytical/chlorine',
+    ],
+  },
+  {
+    path: '/water-wastewater/water-systems/water-treatment/aeration',
+    kind: 'reference',
+    title: 'Aeration',
+    summary:
+      'Aeration in drinking water treatment: stripping carbon dioxide, hydrogen sulfide, radon, and volatile organics, and oxidizing iron and manganese ahead of filtration. The aerator types, what each needs from the control system, the pH shift, and the interlocks.',
+    answer:
+      'Aeration in water treatment brings water and air into contact to remove dissolved gases and to oxidize dissolved iron and manganese into particles that filtration can remove. Cascade, tray, and spray aerators are passive and need only flow and level control; packed tower air strippers and diffused aeration use blowers and need air flow control, an interlock that stops water when air is lost, and monitoring of the pressure drop across the packing. Stripping carbon dioxide raises pH, which changes corrosion control and disinfection downstream, and oxidizing iron and manganese needs enough dissolved oxygen and contact time, so dissolved oxygen, pH, and the air-to-water ratio are the process variables that matter.',
+    keyPoints: [
+      'Two jobs: strip gases out, put oxygen in. Both need contact between air and water; the equipment sets how much control is involved.',
+      'Passive aerators need flow and level; blowers need air flow control, an air-loss interlock, and packing pressure drop monitoring.',
+      'Air-to-water ratio is the design variable for stripping; hold it as the water flow changes.',
+      'Stripping carbon dioxide raises pH; plan the corrosion control and disinfection chemistry around the aerated water.',
+      'Iron and manganese oxidation needs dissolved oxygen, time, and often pH; the filter downstream does the removal.',
+      'Fouling of packing and trays by iron and biology shows up as rising pressure drop and falling performance.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['Water', 'Control', 'Instrumentation', 'Engineering', 'Alarms'],
+    blocks: [
+      { t: 'h2', text: 'Why water is aerated' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Carbon dioxide', def: 'Groundwater often carries dissolved carbon dioxide that lowers pH and makes the water corrosive and hungry for lime or caustic. Stripping it raises pH and cuts chemical use.' },
+          { term: 'Hydrogen sulfide', def: 'The rotten egg odor in some groundwater; stripped by aeration, though oxidation and chlorination may be needed to finish it and the off-gas needs to go somewhere.' },
+          { term: 'Radon and volatile organics', def: 'Regulated contaminants removed by air stripping in packed towers with high air-to-water ratios; the off-gas may need treatment.' },
+          { term: 'Methane', def: 'In some wells; stripped to prevent accumulation in structures.' },
+          { term: 'Iron and manganese', def: 'Dissolved as reduced ions; oxygen from aeration oxidizes iron readily and manganese slowly, forming particles that filters remove. Manganese usually needs a chemical oxidant or a catalytic filter media as well.' },
+          { term: 'Taste and odor', def: 'Some volatile taste and odor compounds are reduced by aeration; many are not.' },
+        ],
+      },
+      { t: 'h2', text: 'Equipment and what it needs' },
+      {
+        t: 'table',
+        head: ['Type', 'How it works', 'Control and instrumentation'],
+        rows: [
+          ['Cascade or step aerator', 'Water falls over steps or weirs in open air', 'Flow only; level in the receiving basin; freeze and algae considerations'],
+          ['Tray aerator', 'Water drips through stacked perforated trays, often with coke or media', 'Flow; tray fouling by iron and biology; blower where forced draft'],
+          ['Spray aerator', 'Nozzles spray water into the air over a basin', 'Flow and nozzle pressure; nozzle plugging; basin level'],
+          ['Packed tower air stripper', 'Water flows down over packing, air is blown up countercurrent', 'Blower control, air flow, tower pressure drop, sump level, water-air interlock, off-gas'],
+          ['Diffused aeration', 'Air bubbled through diffusers in a tank', 'Blower control, air flow, dissolved oxygen, diffuser back pressure'],
+          ['Induced draft aerator', 'A fan draws air through a cascade or tray unit in a housing', 'Fan status and interlock; freeze protection'],
+        ],
+      },
+      { t: 'h2', text: 'Air-to-water ratio' },
+      {
+        t: 'p',
+        text: 'For stripping, the design quantity is the volume of air per volume of water, and it can range from a few to one for carbon dioxide to tens to one for volatile organics and radon. The blower is sized for the maximum water flow at the design ratio, and the control holds the ratio as water flow changes: a drive on the blower, or an inlet damper, controlled from an air flow measurement with a setpoint computed from the water flow. Running the full air flow at low water flow wastes energy and can flood or channel the packing; running too little air fails the treatment. The tower pressure drop across the packing, measured with a differential pressure transmitter, rises as the packing fouls with iron deposits or biological growth, and it is the maintenance indicator.',
+      },
+      { t: 'h2', text: 'Interlocks' },
+      {
+        t: 'ul',
+        items: [
+          'No water without air on a stripper: if the blower stops, the feed pump stops or the water is diverted, because water leaving a stripper that is not stripping is untreated water going to the clearwell.',
+          'No air without water where the blower could overheat, on some designs.',
+          'Sump or basin level: high stops the feed, low stops the transfer pump.',
+          'Tower differential pressure high: alarm, then a reduced flow limit, then shutdown at the value the manufacturer gives.',
+          'Blower discharge temperature and vibration on larger blowers.',
+          'Off-gas treatment status where the stripper has one; a permit condition on some volatile organic installations.',
+        ],
+      },
+      { t: 'h2', text: 'What happens downstream' },
+      {
+        t: 'p',
+        text: 'Aerated water is different water. Stripping carbon dioxide raises pH, sometimes by a full unit, which changes the dose of any pH adjustment chemical, the effectiveness of chlorine, and the corrosion behavior in the distribution system. Oxygen added to groundwater that had none makes it more corrosive to iron mains and turns dissolved iron into particles that stain everything they touch until the filters remove them. Design the chemistry downstream for the aerated water, measure pH and dissolved oxygen after the aerator, and give the filters the detention time the oxidation reactions need. Manganese in particular is slow to oxidize with air alone and is usually handled with a chemical oxidant, a raised pH, or a catalytic media after the aerator.',
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Freeze and fouling',
+        text: 'Open aerators in cold climates freeze; enclosures, heat, or a bypass in winter are design items. Every aerator that handles iron fouls: trays, packing, nozzles, and diffusers all need a cleaning schedule, and the pressure drop or the nozzle pressure tells you when. Put both on the maintenance calendar and the alarm list.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Is aeration enough to remove iron and manganese?',
+        a: 'For iron in most groundwater, aeration followed by detention and filtration works. Manganese oxidizes slowly with air unless the pH is high, and most plants use permanganate, chlorine, or a catalytic filter media to finish it. Aeration is the first step, not the whole process.',
+      },
+      {
+        q: 'How much does aeration raise pH?',
+        a: 'It depends on how much carbon dioxide the water carried; groundwater with a pH of 6.5 from dissolved carbon dioxide can come out of an aerator near 7.5 or higher. Measure it after the aerator and treat the aerated pH as the starting point for corrosion control.',
+      },
+      {
+        q: 'What is the off-gas concern on a stripper?',
+        a: 'Whatever was stripped is now in the air: hydrogen sulfide is an odor and a corrosion problem near the tower, radon and volatile organics may be regulated in the discharge, and methane is a safety issue in enclosed spaces. The air permit and the site layout decide whether the off-gas needs treatment or just a stack.',
+      },
+      {
+        q: 'Can a stripper run at reduced water flow?',
+        a: 'Yes, within the turndown of the packing and the distributor, with the air flow reduced to hold the ratio. Below the minimum wetting rate the packing channels and treatment falls off; the manufacturer gives the minimum, and the flow controller should not go below it.',
+      },
+    ],
+    related: [
+      '/water-wastewater/water-systems/water-treatment/filtration',
+      '/water-wastewater/water-systems/water-treatment/wells',
+      '/water-wastewater/water-systems/water-treatment/chemical-feed',
+      '/controls/instrumentation/analytical/dissolved-oxygen',
+      '/controls/instrumentation/analytical/ph',
+      '/controls/instrumentation/pressure/differential-pressure',
+    ],
+  },
+  {
+    path: '/water-wastewater/water-systems/water-treatment/filtration',
+    kind: 'reference',
+    title: 'Filtration',
+    summary:
+      'Controlling gravity and pressure filters: effluent rate and level control, head loss and turbidity on every filter, the backwash triggers and sequence, filter-to-waste and ripening, the turbidity rules that filter monitoring answers to, and the operator view.',
+    answer:
+      'A filter is controlled by holding its effluent rate or its water level with a modulating effluent valve, monitored by a head loss measurement and an individual turbidimeter on its effluent, and taken out of service for backwash when head loss, run time, or turbidity reaches its trigger. The backwash is a sequence of isolating, draining, air scouring where fitted, washing at rates that expand the bed, settling, and returning to service through a filter-to-waste period until the effluent turbidity is acceptable. Turbidity rules require continuous monitoring of each filter with recording at short intervals and define the values that trigger investigation, so the filter control system is also a compliance record.',
+    keyPoints: [
+      'Each filter has a rate or level controller on its effluent valve, a head loss transmitter, and its own turbidimeter.',
+      'Backwash triggers: head loss, run time, or turbidity, whichever comes first, and the operator can call one.',
+      'The backwash is a sequencer: isolate, drain, air scour, wash, settle, filter to waste, return.',
+      'Filter to waste until the effluent turbidity is below the ripening setpoint; the first minutes after a wash are the worst.',
+      'Individual filter turbidity, recorded every 15 minutes, is the compliance record; the control system keeps it.',
+      'Only one filter washes at a time, and the plant flow is rebalanced across the filters that remain.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 11,
+    tags: ['Water', 'Control', 'Instrumentation', 'Standards', 'PLC'],
+    blocks: [
+      { t: 'h2', text: 'What the filter does and what the controls do' },
+      {
+        t: 'p',
+        text: 'A rapid gravity filter passes coagulated and settled water down through a bed of sand, anthracite, or both, and the bed captures the remaining particles. As it captures them the head loss through the bed rises, and eventually the filter either clogs or begins to pass particles, and it is backwashed. The control system has three jobs: hold each filter at the rate or level the plant needs while it runs, watch head loss and turbidity to decide when the run is over, and run the backwash sequence safely and repeatably. Pressure filters do the same in a closed vessel with pump-driven flow, with pressure and differential pressure in place of level and head loss.',
+      },
+      { t: 'h2', text: 'Rate and level control' },
+      {
+        t: 'table',
+        head: ['Mode', 'How it works', 'Notes'],
+        rows: [
+          ['Constant rate, constant level', 'A level controller on the filter modulates the effluent valve to hold the water level; the influent flow is split evenly among filters by weirs or influent valves, so each filter runs at a constant rate', 'The common arrangement; the effluent valve opens gradually over the run as head loss grows'],
+          ['Constant rate by flow', 'A flow controller on the effluent holds a rate setpoint, and the level rises over the run', 'Needs a flowmeter per filter; the level must be watched'],
+          ['Declining rate', 'Effluent valves are fixed; flow declines as head loss grows; the level rises across the bank', 'Simple, few instruments, less control over individual filters'],
+        ],
+      },
+      {
+        t: 'p',
+        text: 'In constant level control, the loop is slow and the valve is large, so the controller is tuned gently and the valve travel is limited to avoid cycling. Filter loading rate, in gallons per minute per square foot, is the number the process engineer cares about; the control system computes it from flow and filter area and displays it. When a filter is removed for backwash, the plant flow is redistributed among the others, and a rate-of-change limit keeps the remaining filters from taking a step that shakes particles loose.',
+      },
+      { t: 'h2', text: 'Head loss and turbidity' },
+      {
+        t: 'p',
+        text: 'Head loss is the difference between the water level above the media and the pressure below it, measured by a differential pressure transmitter or by two level transmitters, and it is the fundamental indicator of a filter run. Clean bed head loss is a foot or two; terminal head loss, where the run ends, is set by the plant, often around eight feet on a gravity filter. Turbidity on each filter effluent, from an online turbidimeter with a sample flow that is itself monitored, is the measure of whether the filter is doing its job and the measure regulators watch. A filter whose turbidity rises before its head loss reaches the terminal value has broken through and is washed on turbidity.',
+      },
+      {
+        t: 'table',
+        head: ['Trigger', 'Typical setting', 'What it protects'],
+        rows: [
+          ['Terminal head loss', 'Around 6 to 10 feet of water on gravity filters', 'Media and underdrain; prevents air binding and a stalled filter'],
+          ['Turbidity', 'Effluent above a setpoint such as 0.15 or 0.2 NTU for a sustained period', 'Water quality; breakthrough ends the run before the head loss does'],
+          ['Run time', '24 to 96 hours depending on the plant', 'Biological growth and mudballs; a filter is washed on time even if it looks fine'],
+          ['Operator call', 'Any time', 'Maintenance, unusual conditions'],
+        ],
+      },
+      { t: 'h2', text: 'The backwash sequence' },
+      {
+        t: 'p',
+        text: 'A backwash is a sequencer in the controller, with steps, transitions on feedback, timeouts, and a defined response to a fault. The sequence below is typical; the durations and rates come from the plant design and are setpoints on the HMI, not constants in the code.',
+      },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Request and permissives', text: 'No other filter washing; wash water supply available at the tank level or pump; waste washwater capacity available; the filter effluent valve closed by the sequence.' },
+          { title: 'Isolate', text: 'Close the influent valve and confirm; close the effluent valve and confirm.' },
+          { title: 'Drain down', text: 'Open the drain or waste valve until the level falls to the air scour level, with a timeout.' },
+          { title: 'Air scour', text: 'Start the blower and open the air valve for the design time; on some filters this is combined with a low-rate water wash.' },
+          { title: 'Water wash', text: 'Stop the air, open the washwater valve, and ramp the wash rate to the design value that expands the bed by 20 to 30 percent; hold for the design time, or until the waste turbidity falls below a setpoint. Surface wash or a high-rate step where fitted.' },
+          { title: 'Settle', text: 'Stop the wash, close the washwater and waste valves, and wait for the bed to settle.' },
+          { title: 'Filter to waste', text: 'Open the influent valve, open the filter-to-waste valve, and run until the effluent turbidity falls below the ripening setpoint or the maximum time elapses.' },
+          { title: 'Return to service', text: 'Close the filter-to-waste valve, open the effluent valve, and hand the filter back to its rate or level controller with a ramp.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Wash rate and media',
+        text: 'Too high a wash rate carries media out of the filter to the waste channel; too low a rate does not clean it. The rate is controlled, ramped up gradually so the bed fluidizes without heaving, and corrected for water temperature where the plant does so, since cold water expands the bed more. A wash that starts at full rate through a closed or slow valve can lift the underdrain.',
+      },
+      { t: 'h2', text: 'Compliance monitoring' },
+      {
+        t: 'p',
+        text: 'Under the surface water treatment rules in the United States, conventional plants monitor turbidity on the combined filter effluent at least every four hours with limits on the fraction of readings above set values, and they monitor each individual filter continuously with values recorded at least every 15 minutes. Readings above defined values on an individual filter for defined durations trigger reporting, a filter profile, a self-assessment, or a comprehensive performance evaluation. The control system is the recorder: it stores the individual filter turbidity at the required interval, flags the exceedances with the filter and the time, and keeps the record for the retention period. A turbidimeter with a lost sample flow or a failed instrument is a monitoring gap the system must alarm.',
+      },
+      { t: 'h2', text: 'The operator view' },
+      {
+        t: 'ul',
+        items: [
+          'A filter bank overview: each filter with its state, rate, level, head loss, turbidity, run time since wash, and volume since wash.',
+          'A filter detail: the valves and their positions, the controller, the trends, the wash history, and the sequence step when washing.',
+          'Backwash controls: start, hold, resume, abort, and the supervisor advance, with the current step, the step timer, and what the step is waiting for.',
+          'Setpoints: terminal head loss, turbidity triggers, run time limit, wash rates and durations, filter-to-waste turbidity and time, all with limits.',
+          'Reports: unit filter run volume per run, wash water used, turbidity compliance summaries, and exceedances.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Why filter to waste after a backwash?',
+        a: 'A freshly washed bed passes particles for the first minutes until it ripens, and the effluent turbidity spike after a wash is often the highest turbidity a filter produces all run. Sending that water to waste until the turbidimeter shows it has cleared keeps the spike out of the clearwell and out of the compliance record.',
+      },
+      {
+        q: 'What is unit filter run volume and why track it?',
+        a: 'The volume of water filtered per square foot of filter area between washes. It combines rate and run length into one number that says how productive a run was, and a falling value over months means the media, the coagulation, or the wash is deteriorating. Compute it from the flow total and the area at each wash and trend it.',
+      },
+      {
+        q: 'Can two filters wash at once?',
+        a: 'Usually not: the wash water supply and the waste handling are sized for one, and two filters out at once overloads the rest. The sequence permissive checks that no other wash is in progress and queues requests. A plant designed for two simultaneous washes says so in the functional description.',
+      },
+      {
+        q: 'How is head loss measured on a filter?',
+        a: 'With a differential pressure transmitter between the water above the media and the effluent below it, or by subtracting a pressure below the underdrain from the level above the bed. Either way it is the drop across the media, in feet of water, and it should read near the clean bed value right after a wash; a higher reading after a wash means the wash was inadequate or the taps are plugged.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/programming/sequencers',
+      '/controls/instrumentation/analytical/turbidity',
+      '/controls/instrumentation/pressure/differential-pressure',
+      '/water-wastewater/water-systems/water-treatment/raw-water',
+      '/water-wastewater/water-systems/water-treatment/storage',
+      '/controls/plc-systems/programming/permissives',
+    ],
+  },
+  {
+    path: '/water-wastewater/water-systems/water-treatment/chemical-feed',
+    kind: 'reference',
+    title: 'Chemical Feed',
+    summary:
+      'Chemical feed from the control side: the chemicals and where they go, metering pumps and dry feeders, flow pacing with residual trim, the dose arithmetic, day tanks and drawdown tests, loss-of-feed detection, interlocks, and overfeed protection.',
+    answer:
+      'Chemical feed in a water plant is controlled by pacing each feeder to the flow it treats, at a dose set by the operator or trimmed by a downstream analyzer, with the feeder interlocked so that it cannot run without proven water flow. Metering pumps are controlled by speed and stroke, dry feeders by motor speed, and gas feeders by an automatic valve, each with a feedback that proves chemical is actually moving. Day tanks with level measurement, calibration columns for drawdown tests, and loss-of-feed alarms verify delivery, and overfeed protections such as maximum feed limits, day tank sizing, and high residual alarms guard the chemicals, fluoride above all, that can hurt people when overdosed.',
+    keyPoints: [
+      'Dose times flow is the feed rate; pace every feeder to the flow it treats and trim from the residual where one is measured.',
+      'No feed without proven flow, and no flow without feed for disinfection: two interlocks that are not negotiable.',
+      'Prove delivery: pump stroke feedback, a flow switch or pulse flowmeter, day tank level rate, and a drawdown test on a schedule.',
+      'Day tanks sized so a full tank cannot overdose the plant at maximum feed, for fluoride especially.',
+      'Fallback dose when the pacing flow signal is bad; never pace to zero or to a spike.',
+      'The chemical, the concentration, and the units are on the loop sheet and the HMI; the math is where feed errors hide.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 11,
+    tags: ['Water', 'Control', 'Instrumentation', 'Pumps', 'Alarms'],
+    blocks: [
+      { t: 'h2', text: 'The chemicals' },
+      {
+        t: 'table',
+        head: ['Chemical', 'Purpose', 'Usual feed point', 'Control basis'],
+        rows: [
+          ['Coagulant: alum, ferric, polyaluminum chloride', 'Particle removal', 'Rapid mix', 'Flow paced; dose from jar tests, streaming current, or raw turbidity'],
+          ['Polymer', 'Flocculation and filter aid', 'Flocculation or filter influent', 'Flow paced'],
+          ['Pre-oxidant: permanganate, chlorine dioxide, ozone', 'Iron, manganese, taste and odor, algae', 'Raw water or head of plant', 'Flow paced; residual or demand'],
+          ['pH adjustment: lime, caustic, soda ash, carbon dioxide', 'Coagulation pH and corrosion control', 'Rapid mix and finished water', 'Flow paced with pH trim'],
+          ['Disinfectant: hypochlorite, chlorine gas, chloramine', 'Disinfection and residual', 'Clearwell inlet, finished water', 'Flow paced with residual trim'],
+          ['Fluoride', 'Dental health', 'Finished water', 'Flow paced; strict overfeed protection'],
+          ['Corrosion inhibitor: orthophosphate', 'Lead and copper control', 'Finished water', 'Flow paced'],
+          ['Powdered activated carbon', 'Taste, odor, organics', 'Raw water or rapid mix', 'Flow paced, often seasonal'],
+        ],
+      },
+      { t: 'h2', text: 'Feeders and how they are controlled' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Diaphragm metering pump', def: 'Output is stroke length times stroke frequency. Stroke length is set manually or by a positioner; frequency is controlled by a 4-20 mA speed signal or a pulse input. Accurate at moderate turndown; loses accuracy at very short strokes.' },
+          { term: 'Peristaltic pump', def: 'Output is proportional to speed, controlled by 4-20 mA. Tolerant of gas in the chemical, gentle on polymers, tube life is the maintenance item.' },
+          { term: 'Gas chlorinator', def: 'A vacuum-operated feeder with an automatic valve positioned by a signal proportional to flow, and a residual analyzer trimming. Leak detection and ventilation are part of the installation.' },
+          { term: 'Dry feeder', def: 'Volumetric feeders meter by screw speed; gravimetric feeders weigh the discharge and correct. Motor speed follows the flow-paced signal; a dissolver and a carrier water flow are interlocked.' },
+          { term: 'Lime slaker', def: 'Dry lime fed to a slaker producing slurry, with slaker temperature and grit removal; slurry feed by pump or gravity.' },
+        ],
+      },
+      { t: 'h2', text: 'The arithmetic' },
+      {
+        t: 'formula',
+        expr: 'Feed, lb/day = Dose, mg/L × Flow, MGD × 8.34',
+        where: [
+          'Dose = the concentration of the chemical to be added, as the pure chemical',
+          'Flow = the water flow being treated, in million gallons per day',
+          '8.34 = pounds per gallon of water; the conversion that makes the units work',
+        ],
+      },
+      {
+        t: 'p',
+        text: 'For a liquid chemical the pounds per day are divided by the pounds of active chemical per gallon of the solution as supplied, which comes from its density and its strength, to get gallons per day, and then converted to the pump units. Hypochlorite is the usual trap: it is bought as a percentage available chlorine by weight or by volume, it loses strength in storage, and a dose computed from the nominal strength drifts as the solution ages. Put the concentration on the HMI as an operator entry with a date, and confirm the delivered dose with a drawdown test and the residual.',
+      },
+      { t: 'h2', text: 'Control strategies' },
+      {
+        t: 'ul',
+        items: [
+          'Flow pacing: the feed rate follows the treated flow at a dose setpoint. The basis of every feed. The flow signal must be validated, and a fallback dose rate held when it is bad.',
+          'Residual trim: a downstream analyzer adjusts the dose setpoint slowly, within limits, to hold a residual. Chlorine and pH are the usual cases. The trim is a slow outer loop; the pacing does the fast work.',
+          'Manual dose: the operator sets the dose from a jar test or experience, and the pacing follows flow. Coagulant is usually run this way, sometimes with a streaming current monitor as a guide.',
+          'Batch: polymer makeup and lime slaking are sequences that make a batch and then feed from it.',
+        ],
+      },
+      { t: 'h2', text: 'Proving that chemical is moving' },
+      {
+        t: 'p',
+        text: 'A metering pump that has lost prime, a plugged injection quill, an empty day tank, or a closed valve all leave the pump running and the plant untreated. Proof of feed comes from more than one source: a stroke or flow pulse from the pump, a flow switch or a small flowmeter on the discharge, the day tank level falling at the expected rate, and the residual analyzer downstream. A loss-of-feed alarm compares the expected and the proven, and for disinfection it is an interlock: no proven chlorine feed for a set time, and the plant is alarmed and, at the level the plant decides, the finished water pumps stop. A calibration column, a graduated cylinder on the pump suction, allows a drawdown test that measures actual pump output against the expected value; do it on a schedule and after every pump repair.',
+      },
+      { t: 'h2', text: 'Interlocks and overfeed protection' },
+      {
+        t: 'table',
+        head: ['Protection', 'How', 'Applies to'],
+        rows: [
+          ['No feed without flow', 'Feeder enable requires the treated water flow above a minimum for a delay; feed stops when flow stops', 'Every chemical'],
+          ['No flow without feed', 'Loss of disinfectant feed alarms and, after a delay, stops finished water delivery', 'Disinfection'],
+          ['Maximum feed limit', 'The controller clamps the feed rate at a value that cannot exceed the maximum dose', 'Fluoride, chlorine, and any chemical with a health limit'],
+          ['Day tank sizing', 'A day tank holds no more than one day of feed at maximum rate, so an overfeed is bounded', 'Fluoride especially; good practice for all'],
+          ['High residual alarm and shutoff', 'Analyzer high alarm stops the feed', 'Fluoride, chlorine, pH chemicals'],
+          ['Carrier water interlock', 'Feed only when carrier water flow is proven', 'Dry feeders, dissolvers, injection quills with carrier water'],
+          ['Leak detection', 'Gas detection with alarm, ventilation, and feed shutoff', 'Chlorine gas, ammonia, chlorine dioxide'],
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'safety',
+        title: 'Fluoride overfeed',
+        text: 'Fluoride is the chemical that has hurt people through control failures. The protections are layered: a day tank that cannot hold enough to overdose, a feed rate limit in the controller, a flow-paced feed that stops with the flow, a residual analyzer with a high alarm and shutoff, and a daily lab check. Design and test all of them; a plant that relies on one has relied on the one that will fail.',
+      },
+      { t: 'h2', text: 'What the operator sees' },
+      {
+        t: 'ul',
+        items: [
+          'Per chemical: dose setpoint, computed feed rate, feeder output, proven feed status, day tank level and days remaining, residual where measured, and the concentration entered with its date.',
+          'Alarms: loss of feed, day tank low, residual high and low, feeder fault, leak detection, carrier water lost.',
+          'Trends: dose, residual, and flow together, so a residual excursion can be read against what the feed was doing.',
+          'Totals: chemical used per day, which is also the inventory and the regulatory report.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Why pace from flow rather than control from the residual alone?',
+        a: 'Because the residual is measured downstream after a delay, and a controller that waits for the residual to move reacts late and overshoots. Flow pacing changes the feed the instant the flow changes; the residual loop then corrects slowly for demand changes. Residual-only control oscillates in most plants.',
+      },
+      {
+        q: 'How do I know the pump is delivering what the controller thinks?',
+        a: 'Drawdown test with a calibration column: isolate the day tank, let the pump draw from the column for a timed interval, and compute the output. Compare with the expected rate at that speed and stroke. Do it weekly for critical chemicals and after any repair, and record the results; the trend catches wear before the residual does.',
+      },
+      {
+        q: 'What should the feed do if the flowmeter fails?',
+        a: 'Hold a fallback: the last good feed rate, or a rate computed from a fixed assumed flow, with an alarm. Pacing from a failed signal reading zero stops disinfection; pacing from a failed signal reading full scale overdoses. Signal validation on the pacing flow is part of every feed loop.',
+      },
+      {
+        q: 'Stroke or speed control on a diaphragm pump?',
+        a: 'Speed for the automatic control, because it is linear and repeatable over a wide range. Set the stroke length so that the pump runs in the middle of its speed range at the normal dose, and leave it. Pumps controlled by stroke with a positioner exist, but speed control is simpler and more accurate.',
+      },
+    ],
+    related: [
+      '/water-wastewater/water-systems/water-treatment/disinfection',
+      '/controls/instrumentation/analytical/chlorine',
+      '/controls/instrumentation/analytical/ph',
+      '/controls/plc-systems/programming/control-strategies',
+      '/water-wastewater/water-systems/water-treatment/raw-water',
+      '/controls/plc-systems/analog-control/signal-validation',
+    ],
+  },
+  {
+    path: '/water-wastewater/water-systems/water-treatment/storage',
+    kind: 'reference',
+    title: 'Finished Water Storage',
+    summary:
+      'Storage inside the plant: the clearwell that provides contact time and high service suction, backwash supply tanks, and how their levels drive production and pumping. The contact time calculation and the minimum level it demands, water age, and alarms.',
+    answer:
+      'The clearwell holds finished water long enough for disinfection to be credited, buffers the difference between the production rate and the demand, and provides suction for the high service pumps. Its level therefore sets the plant production setpoint, has a minimum below which contact time is not met and the pumps are cut off, and has a maximum where production is reduced and the overflow alarms. Contact time is computed from the effective volume at the current level, the flow through the tank, and the baffling factor, and the control system displays it and alarms when it falls short. Backwash supply tanks and other in-plant storage are managed for availability, and all of them are watched for water age, mixing, and security.',
+    keyPoints: [
+      'The clearwell level is the plant production setpoint, the high service suction, and the disinfection contact volume at once.',
+      'Contact time falls with level; the minimum operating level is a compliance setting, not just a pump protection.',
+      'Low level cuts off the high service pumps and alarms; high level cuts production and alarms before the overflow.',
+      'Compute and display the contact time continuously from level, flow, and the baffling factor.',
+      'Water age and stratification are storage problems; turnover and mixing are the answers.',
+      'Backwash supply is a separate availability check before a wash can start.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['Water', 'Level', 'Control', 'Standards', 'Alarms'],
+    blocks: [
+      { t: 'h2', text: 'What the clearwell does' },
+      {
+        t: 'p',
+        text: 'Finished water leaves the filters and enters the clearwell, where chlorine is added or has just been added, and where it sits long enough for the disinfectant to do its work before the water is pumped to the distribution system. The clearwell also lets the plant produce at a steady rate while the demand varies through the day, and it gives the high service pumps a suction supply. Those three jobs pull in different directions: contact time wants the tank full, buffering wants room to rise and fall, and the pumps want a level that never gets low. The control settings are the compromise, and they are written down.',
+      },
+      { t: 'h2', text: 'Contact time' },
+      {
+        t: 'p',
+        text: 'Disinfection credit is computed as the disinfectant concentration at the clearwell outlet multiplied by the time the water spends in the tank, with the time taken as the time for the first ten percent of the water to pass through, which is the theoretical detention time reduced by a baffling factor that reflects how much short-circuiting the tank allows. A tank with no baffles has a small factor; a well-baffled serpentine tank has a large one. The required value depends on the pathogen, the temperature, and the pH, and comes from the regulatory tables.',
+      },
+      {
+        t: 'formula',
+        expr: 'CT = C × T₁₀ = C × (V_at_level × BF) / Q',
+        where: [
+          'C = disinfectant residual at the outlet of the contact volume, mg/L',
+          'V_at_level = the volume of the clearwell at the current level',
+          'BF = the baffling factor, from a tracer study or the regulatory default for the tank geometry',
+          'Q = the flow through the clearwell, usually the high service pumping rate',
+        ],
+      },
+      {
+        t: 'p',
+        text: 'The control system computes this continuously from the level transmitter, the flow, the residual analyzer, and the temperature and pH used to look up the required value, and it displays the ratio of achieved to required. The minimum operating level is the level at which the ratio reaches one at the maximum pumping rate; below it the plant is out of compliance, so the level low alarm and the high service cutoff are set at or above it, with the cutoff protecting compliance as well as the pumps.',
+      },
+      { t: 'h2', text: 'Level control' },
+      {
+        t: 'table',
+        head: ['Level', 'Action'],
+        rows: [
+          ['High high', 'Alarm; stop or minimize production; overflow imminent'],
+          ['High', 'Reduce the production setpoint; alarm if sustained'],
+          ['Normal band', 'Production follows a slow level controller or a schedule; high service pumps run on demand'],
+          ['Low', 'Increase production; alarm; contact time ratio displayed and approaching one'],
+          ['Low low', 'High service pumps cut off; contact time not met below this level; alarm'],
+        ],
+      },
+      {
+        t: 'p',
+        text: 'The production controller that follows level is slow and ramp-limited so that the treatment process sees gradual changes. The high service pumps do not follow the clearwell level at all; they follow the distribution system, and the clearwell absorbs the difference. That means the two controllers can fight: high demand drains the clearwell while production is still ramping. The band between the low and low-low levels is the buffer that gives production time to catch up, and it is sized from the maximum demand and the maximum ramp rate.',
+      },
+      { t: 'h2', text: 'Water age and mixing' },
+      {
+        t: 'p',
+        text: 'Water that sits in storage loses disinfectant residual, warms, and can stratify, with the oldest water at the top of a tank that fills and drains from the bottom. In the clearwell that is managed by keeping the level cycling, by the inlet and outlet arrangement, and by mixing where the tank is large. The larger problem is in distribution storage, where tanks that stay full for reliability turn over slowly; that is covered on the storage tank pages. In the plant, the control system tracks a simple water age from the volume and the flow and alarms a residual at the clearwell outlet that falls below the setpoint.',
+      },
+      { t: 'h2', text: 'Other in-plant storage' },
+      {
+        t: 'ul',
+        items: [
+          'Backwash supply tank or elevated washwater tank: level measured, a minimum available volume for a full wash is a permissive for starting one, and refilling is sequenced so that it does not coincide with a wash.',
+          'Waste washwater and equalization tanks: level for the return pumps and the recycle rate to the head of the plant, which is limited by the recycle rules.',
+          'Chemical day tanks and bulk tanks: level, days remaining, low alarms, and secondary containment leak detection.',
+          'Reclaim and reuse water tanks: level and the interlocks that keep them separate from finished water.',
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Security and integrity',
+        text: 'Finished water storage is where contamination would be most direct. Hatch and vent intrusion alarms, locked access, screened vents and overflows, and periodic inspection are part of the storage design, and the alarms go to the same place as the process alarms. A clearwell hatch alarm at night is investigated, not acknowledged.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Why does the high service pump cutoff level seem high?',
+        a: 'Because it is set for contact time, not for pump suction. The level below which the clearwell cannot deliver the required contact time at the pumping rate is often several feet above the level where the pumps would lose suction. The cutoff is a compliance setting, and raising the pumping rate raises it.',
+      },
+      {
+        q: 'How is the baffling factor determined?',
+        a: 'By a tracer study, in which a tracer is injected at the inlet and its arrival at the outlet is measured to find the time for ten percent to pass, or by the regulatory default for the tank geometry, which is conservative. A tracer study usually earns a higher factor and more credit, and it has to be repeated if the tank is modified.',
+      },
+      {
+        q: 'Should the clearwell be kept as full as possible?',
+        a: 'For contact time, yes; for buffering and water age, no. Most plants run in a band in the upper part of the tank that keeps contact time comfortable and still cycles the level daily so that the water turns over. The band is a setpoint pair on the HMI, chosen from the contact time calculation and the daily demand pattern.',
+      },
+      {
+        q: 'What happens if the level transmitter fails?',
+        a: 'The contact time calculation, the production controller, and the pump cutoff all lose their input. Validate the signal, provide a second level measurement or backup floats at the critical levels, and define the fallback: production holds its last setpoint and the pumps continue only if a backup low-level switch is satisfied.',
+      },
+    ],
+    related: [
+      '/water-wastewater/water-systems/water-treatment/disinfection',
+      '/water-wastewater/water-systems/water-treatment/high-service-pumping',
+      '/water-wastewater/water-systems/storage/tank-level-control',
+      '/water-wastewater/water-systems/storage/elevated-tanks',
+      '/controls/instrumentation/level/radar-level',
+      '/controls/instrumentation/analytical/chlorine',
+    ],
+  },
+  {
+    path: '/water-wastewater/water-systems/water-treatment/high-service-pumping',
+    kind: 'reference',
+    title: 'High Service Pumping',
+    summary:
+      'Pumping finished water into distribution: the control modes of tank level, pressure, and flow, how they interact with the clearwell and contact time, staging and surge, the telemetry the station depends on and its fallback, energy scheduling, and the alarms.',
+    answer:
+      'High service pumping delivers finished water from the clearwell into the distribution system at the rate the system needs, controlled by the level of the distribution storage tanks where they exist, by discharge pressure where they do not, or by a flow setpoint into a transmission main, with pumps staged to meet demand and drives used where pressure or flow must be modulated. The station is bounded on the suction side by the clearwell level and the contact time it represents, and on the discharge side by the pressure limits of the system, and it depends on telemetry from remote tanks that must have a local fallback. Surge is managed by slow starts and stops, pump control valves, and relief, and energy cost is managed by filling tanks off peak within the constraints of water age.',
+    keyPoints: [
+      'Control from the system: tank level where there is storage, pressure where there is not, flow into a main where that is the job.',
+      'The clearwell low level and the contact time bound the station on the suction side; distribution pressure limits bound it on the discharge side.',
+      'Stage pumps on the controller output and time, not on the controlled variable alone.',
+      'Loss of tank telemetry is a normal event; the fallback is local pressure or flow control with an alarm.',
+      'Surge control is part of the sequence: slow ramps, control valves that open after the start and close before the stop.',
+      'Off-peak tank filling saves energy up to the point where water age suffers.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['Water', 'Pumps', 'Control', 'Telemetry', 'VFD'],
+    blocks: [
+      { t: 'h2', text: 'What the station controls' },
+      {
+        t: 'table',
+        head: ['Mode', 'Controlled variable', 'When used', 'Notes'],
+        rows: [
+          ['Tank level', 'Level of a distribution storage tank, by telemetry', 'Systems with elevated or ground storage floating on the system', 'Pumps start at a low level and stop at a high level; the tank holds pressure; the simplest and most robust mode'],
+          ['Pressure', 'Discharge pressure at the station or at a remote point', 'Systems without floating storage, or zones fed directly', 'A drive holds the pressure; staging adds pumps at high demand; needs surge attention'],
+          ['Flow', 'Flow into a transmission main or to a wholesale customer', 'Transfers to another system or a remote tank far away', 'A drive or a control valve holds the flow; pressure is monitored as a limit'],
+          ['Schedule', 'Time of day, with level or pressure as limits', 'Energy management', 'Fill tanks off peak; respect water age and minimum levels'],
+        ],
+      },
+      { t: 'h2', text: 'The suction side' },
+      {
+        t: 'p',
+        text: 'The high service pumps draw from the clearwell, and the clearwell has a minimum level that is set by disinfection contact time before it is set by pump suction. As the pumps run, the level falls unless production keeps up, and at the low-low level the pumps are cut off regardless of what the distribution system wants. That cutoff is the point where the plant would deliver water that has not been disinfected long enough, and the alarm before it is the operator warning to raise production or reduce pumping. Suction pressure or clearwell level is therefore an input to the station controller, not just a protection: as the level approaches the low alarm, the station reduces its output rather than waiting for the cutoff.',
+      },
+      { t: 'h2', text: 'The discharge side' },
+      {
+        t: 'p',
+        text: 'The distribution system sets the limits. A minimum pressure at the customer, commonly 20 psi under all conditions and more under normal conditions, and a maximum pressure that the mains and the service lines tolerate. The station discharge pressure is measured and alarmed at both ends, and where the station feeds a zone directly, a remote pressure point tells the truth about what customers see. Tanks floating on the system hold the pressure between pump cycles, and the pump start and stop levels are chosen so that the pressure stays within limits at the tank elevation.',
+      },
+      { t: 'h2', text: 'Staging and drives' },
+      {
+        t: 'p',
+        text: 'A station with several pumps starts them in turn as demand rises. In tank level mode the staging is by level: the lead pump starts at one level, the lag at a lower one, and they stop at higher levels in reverse order, with alternation to share hours. In pressure mode a drive on the lead pump holds the pressure, and the lag pump is started when the lead has been at maximum speed for a set time and pressure is still below setpoint, and stopped when the lead has been at minimum speed for a set time and pressure is above. That basis, speed and time rather than pressure alone, keeps the staging from fighting the drive. Minimum run and off times limit cycling, and a pump that fails to prove flow after a start is alarmed and the next one is started.',
+      },
+      { t: 'h2', text: 'Surge' },
+      {
+        t: 'p',
+        text: 'Stopping a large pump suddenly against a long main produces a pressure wave that can break pipe and lift check valves off their seats. The sequence controls it: drives ramp down over tens of seconds before the pump stops; constant speed pumps start against a closed pump control valve that opens slowly after the start and close it slowly before the stop; surge relief valves and surge tanks handle the power failure case where no sequence is possible. The control system runs the valve sequence with position feedback and timeouts, and it alarms a check valve that slams or a control valve that fails to reach position.',
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Power failure',
+        text: 'The sequence cannot run when the power fails, and every pump stops at once. Surge protection for that case is mechanical, sized by a surge analysis, and the control system only records what happened: pressures at the station and remote points, at a fast rate, for the engineer to review. Trend the discharge pressure at one-second resolution through every unplanned stop.',
+      },
+      { t: 'h2', text: 'Telemetry and fallback' },
+      {
+        t: 'p',
+        text: 'Tank level mode depends on a level from a tank miles away, over radio, cellular, or leased line. The link fails, and the station has to keep the system supplied while it is down. The fallback is written in the functional description and tested: hold the last known level for a limited time, then switch to pressure control from the station transmitter, or to a time-based duty cycle derived from the demand pattern, with an alarm that says telemetry is lost and the fallback is active. When the link returns, the transition back is bumpless. A station without a fallback has a control system whose availability is that of the radio link.',
+      },
+      { t: 'h2', text: 'Energy' },
+      {
+        t: 'p',
+        text: 'High service pumping is usually the largest electricity cost in a water utility. Filling the tanks during off-peak hours and letting them draw down during peak hours moves the energy to cheaper time, within the limits of the tank levels and the water age, and drives let the pumps run near their best efficiency point rather than throttled. The control system supports this with a schedule that biases the start and stop levels by time of day, a display of wire-to-water efficiency for each pump, and a report of energy per million gallons. The saving is real; the constraint is that a tank held low for energy reasons is a tank with less fire reserve and less contact for the level fallback.',
+      },
+      { t: 'h2', text: 'Alarms' },
+      {
+        t: 'ul',
+        items: [
+          'Clearwell low and low-low; contact time ratio below one.',
+          'Discharge pressure high and low; remote pressure low.',
+          'Pump fail to start, fail to prove flow, fail to stop; check valve or control valve failure.',
+          'Tank level high and low; tank telemetry lost; fallback active.',
+          'Motor and pump protection: overload, high vibration, high bearing or winding temperature, low suction pressure.',
+          'Station power fail, generator status, and transfer switch position.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Why not control high service pumps from the clearwell level?',
+        a: 'Because the clearwell level says how much water the plant has, not how much the system needs. Pumping down the clearwell when the distribution tanks are full raises pressures and wastes energy; the pumps follow the system, and the clearwell level adjusts production instead. The clearwell only limits the pumps at its low level.',
+      },
+      {
+        q: 'How should a station with both a drive and constant speed pumps be run?',
+        a: 'The drive pump leads and holds the pressure or flow; the constant speed pumps stage in when the drive has been at maximum for a time and out when it has been at minimum. The drive then absorbs the difference between the fixed pump output and the demand. With alternation, the drive pump is usually kept as lead and the others alternate as lag.',
+      },
+      {
+        q: 'What is a reasonable pump control valve timing?',
+        a: 'Whatever the surge analysis says for the main, commonly tens of seconds to a couple of minutes of closing time before the pump stops. The valve opens after the pump reaches speed and closes before it stops, with the pump stop interlocked to the valve closed limit or a timer if the limit fails. The values are setpoints on the HMI, chosen by the engineer, not by trial.',
+      },
+      {
+        q: 'Does off-peak filling risk water quality?',
+        a: 'It can, if the tanks are held full for long periods or the schedule leaves them stagnant. Water age rises and residual falls. Set the schedule to cycle the tanks daily, monitor the residual at the tank, and let water quality override the energy schedule when it must.',
+      },
+    ],
+    related: [
+      '/water-wastewater/water-systems/water-pumping/high-service-pumps',
+      '/water-wastewater/water-systems/water-pumping/pressure-control',
+      '/water-wastewater/water-systems/storage/tank-level-control',
+      '/water-wastewater/water-systems/water-treatment/storage',
+      '/water-wastewater/water-systems/storage/elevated-tanks',
+      '/controls/plc-systems/programming/control-strategies',
+    ],
+  },
+  {
+    path: '/water-wastewater/water-systems/water-pumping/high-service-pumps',
+    kind: 'reference',
+    title: 'High Service Pumps',
+    summary:
+      'The pumps that carry finished water into distribution: types, the pump curve against the system curve, best efficiency point, the affinity laws and where a drive pays, parallel operation, valves, protection, and the efficiency monitoring that shows wear.',
+    answer:
+      'High service pumps are usually horizontal split case or vertical turbine centrifugal pumps taking suction from the clearwell and discharging into the distribution system, and they operate where their curve crosses the system curve, which moves as demand and tank levels change. Each pump is most efficient near its best efficiency point, and running far from it wastes energy and shortens life. A drive changes the curve according to the affinity laws, which is valuable where the system head is mostly friction and of limited value where it is mostly static, since below a certain speed the pump cannot overcome the static head at all. Pumps in parallel add flow at the same head, and dissimilar pumps have to be checked for the one that gets pushed off its curve. Pump control valves, check valves, isolation, and protection on vibration, temperature, seal water, and suction pressure complete the installation, and wire-to-water efficiency computed from flow, head, and power is the measure of pump condition.',
+    keyPoints: [
+      'The operating point is where the pump curve meets the system curve; both move, and the pump has to live everywhere they meet.',
+      'Best efficiency point is the design target; a pump run far left or right of it vibrates, heats, and wears.',
+      'Affinity laws: flow with speed, head with speed squared, power with speed cubed. Savings from a drive depend on how much of the head is friction.',
+      'Static head sets a minimum useful speed; below it the pump delivers nothing and heats the water.',
+      'Parallel pumps add flow at equal head; a smaller pump in parallel with a larger one can be forced to shutoff.',
+      'Wire-to-water efficiency from flow, head, and power, trended per pump, is the wear indicator.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 11,
+    tags: ['Pumps', 'Water', 'VFD', 'Engineering', 'Power'],
+    blocks: [
+      { t: 'h2', text: 'Types' },
+      {
+        t: 'table',
+        head: ['Type', 'Arrangement', 'Where it fits'],
+        rows: [
+          ['Horizontal split case', 'Double suction impeller, motor beside the pump, flooded suction from the clearwell', 'The common high service pump; easy to maintain, efficient in large sizes'],
+          ['Vertical turbine', 'Bowl assembly in a can or in the clearwell, motor above', 'Where suction lift or footprint rules; the clearwell can be the sump'],
+          ['End suction', 'Single suction, close coupled or frame mounted', 'Smaller stations and booster duty'],
+          ['Multistage', 'Several impellers in series', 'High head at moderate flow, such as feeding a high zone'],
+        ],
+      },
+      { t: 'h2', text: 'Curves' },
+      {
+        t: 'p',
+        text: 'The pump curve, from the manufacturer, gives head against flow at a fixed speed, with efficiency, power, and required net positive suction head drawn on the same axes. The system curve gives the head the system demands at each flow: a static part, which is the elevation difference between the clearwell and the tank or the pressure the system must be held at, and a friction part that rises with the square of the flow. The pump operates where the two curves cross. When a tank fills, the static head rises and the crossing moves left to lower flow; when demand rises and the tank falls, it moves right. When a second pump starts, the system curve is the same but the combined pump curve adds the flows at each head, and each pump moves left on its own curve.',
+      },
+      { t: 'h2', text: 'Best efficiency point' },
+      {
+        t: 'p',
+        text: 'Every pump has one flow at which its efficiency peaks, and the manufacturer draws a preferred operating range around it, commonly from about 70 to 120 percent of that flow. Inside the range the pump is smooth. To the left, at low flow and high head, recirculation inside the impeller causes vibration, heating, and bearing and seal wear, and at shutoff the water in the casing heats rapidly. To the right, at high flow and low head, the required suction head rises and the pump cavitates. A pump selected for the system at its design point will spend hours at the edges of the range as tanks and demand move; the selection is checked across the whole range of system curves, not at one point.',
+      },
+      { t: 'h2', text: 'Affinity laws and drives' },
+      {
+        t: 'formula',
+        expr: 'Q₂/Q₁ = N₂/N₁     H₂/H₁ = (N₂/N₁)²     P₂/P₁ = (N₂/N₁)³',
+        where: [
+          'Q = flow, H = head, P = power, N = speed',
+          'The relations hold for the pump curve moving with speed; the system decides where on the new curve the pump runs',
+        ],
+      },
+      {
+        t: 'p',
+        text: 'The power law is where drive savings come from: a pump slowed to 80 percent speed draws roughly half the power. But the flow it delivers depends on the system curve. Where the head is mostly friction, as in a long transmission main, slowing the pump reduces flow and head together along a curve that follows the system, and the saving is close to the affinity prediction. Where the head is mostly static, as in pumping into an elevated tank, the pump must produce the static head at any flow, and below the speed at which its shutoff head equals the static head it delivers nothing at all. Between that minimum speed and full speed the flow changes quickly and the saving is modest. The economic case for a drive on a high service pump depends on that ratio, and a system curve on the pump curve shows it in one glance.',
+      },
+      {
+        t: 'formula',
+        expr: 'Water horsepower = Q × H / 3960     Wire-to-water efficiency = Water horsepower / (Input kW × 1.341)',
+        where: [
+          'Q = flow in gallons per minute',
+          'H = total head in feet, from suction and discharge pressure corrected for elevation and velocity',
+          'Input kW = electrical power to the drive or the motor',
+        ],
+      },
+      { t: 'h2', text: 'Parallel operation' },
+      {
+        t: 'p',
+        text: 'Pumps in parallel deliver the sum of their flows at a common head. Identical pumps share the flow; each runs at the same point on its own curve. A smaller pump in parallel with a larger one delivers flow only when the system head is below its shutoff head; as the larger pump raises the head, the smaller one is pushed toward shutoff, where it heats and does nothing useful. The check on any parallel combination is to draw the combined curve against the system curve and confirm that every pump in the combination is within its range at every system condition. A drive pump in parallel with a constant speed pump has the same problem in reverse: at low speed the drive pump cannot reach the head the fixed pump produces, and it runs at shutoff until its speed rises.',
+      },
+      { t: 'h2', text: 'Valves and fittings' },
+      {
+        t: 'ul',
+        items: [
+          'Isolation valves on suction and discharge for maintenance.',
+          'A check valve on the discharge, of a type chosen for the surge behavior of the main: a slow-closing swing check slams on a long main; a silent check or a controlled-closing valve does not.',
+          'A pump control valve where surge requires it: opens after the pump starts, closes before it stops, on a controlled timing, with limit switches to the controller.',
+          'A suction strainer where the clearwell can carry debris, with a differential alarm.',
+          'Air release at the high point of the pump casing and at the discharge where air can collect.',
+          'Pressure gauges and transmitters on suction and discharge, and a flowmeter on the station discharge or per pump.',
+        ],
+      },
+      { t: 'h2', text: 'Protection' },
+      {
+        t: 'table',
+        head: ['Condition', 'Detection', 'Response'],
+        rows: [
+          ['Low suction pressure or clearwell level', 'Transmitter, with a delay', 'Stop; protects against cavitation and dry running'],
+          ['High discharge pressure', 'Transmitter', 'Stop or reduce speed; a closed valve downstream'],
+          ['Fail to prove flow', 'Flowmeter or flow switch, after a start delay', 'Stop and alarm; start the next pump'],
+          ['High vibration', 'Vibration switch or transmitter on the bearings', 'Alarm, then stop at the trip level'],
+          ['High bearing or winding temperature', 'RTDs', 'Alarm, then stop'],
+          ['Seal water loss on packed pumps', 'Flow switch', 'Alarm, stop after a delay'],
+          ['Motor overload, phase loss', 'Overload relay, monitor relay', 'Trip in hardware'],
+          ['Excessive starts', 'Counter in the controller', 'Block the next start until the interval has elapsed'],
+        ],
+      },
+      { t: 'h2', text: 'Watching the pump wear' },
+      {
+        t: 'p',
+        text: 'A worn impeller or wear ring delivers less head at a given flow and speed and uses more power for the water it moves. The control system can see it: compute the water horsepower from the flow and the head, divide by the input power, and trend the efficiency for each pump at comparable operating points. A pump whose efficiency has fallen by several points since commissioning is due for inspection, and a station that trends this schedules pump overhauls on evidence rather than on failure. The same data shows a pump running far from its best efficiency point most of the time, which is a selection or a staging problem worth fixing.',
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Check the whole range',
+        text: 'Before accepting a pump, put every system curve on its curve: tank empty and full, one pump and all pumps, the transmission main new and aged. The pump has to be within its preferred range at every crossing that will happen in practice. Most high service pump problems were visible on that drawing before the pump was bought.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Will a drive on the high service pump save energy?',
+        a: 'It depends on the head. On a system where most of the head is friction, a drive saves a great deal by matching flow to demand at low speed. On a system pumping into a tank with a high static head, the pump has to run near full speed to deliver anything and the drive saves little beyond the soft start. Draw the system curve and decide from it.',
+      },
+      {
+        q: 'How low can a drive pump run?',
+        a: 'Down to the speed at which its shutoff head equals the static head, plus a margin so it actually delivers flow, and in any case above the minimum the motor and pump need for cooling and lubrication. On a high static head system that minimum can be 80 or 90 percent of full speed; the drive is then a soft starter with a narrow control range.',
+      },
+      {
+        q: 'Why does the small pump in the station never seem to move water when the big one runs?',
+        a: 'Because the big pump raises the system head above the small pump shutoff head, and the small pump is pushed off its curve. That combination should not run; the staging logic should either run the small pump alone or the big one alone, or the small pump needs to be replaced with a match.',
+      },
+      {
+        q: 'What total head should I use for the efficiency calculation?',
+        a: 'Discharge pressure minus suction pressure, converted to feet, corrected for the elevation difference between the two gauges and, where the suction and discharge pipes are different sizes, the difference in velocity head. Use the same taps every time so the trend is consistent.',
+      },
+    ],
+    related: [
+      '/water-wastewater/water-systems/water-treatment/high-service-pumping',
+      '/water-wastewater/water-systems/water-pumping/pressure-control',
+      '/water-wastewater/water-systems/water-pumping/booster-pumps',
+      '/controls/control-panels/pump-panels/vfd',
+      '/controls/instrumentation/pressure/differential-pressure',
+      '/troubleshooting/pump-troubleshooting/pump-runs-but-no-flow',
+    ],
+  },
 ];

@@ -1391,4 +1391,524 @@ two-second answer instead of a site visit.`,
       '/controls/plc-systems/plc-fundamentals/power-supplies',
     ],
   },
+  {
+    path: '/controls/plc-systems/programming/iec-61131-3',
+    kind: 'reference',
+    title: 'IEC 61131-3',
+    summary:
+      'The standard behind PLC programming languages: the five languages, the common elements of data types, variables, and program organization units, what conformance actually means, and how the standard shows up in real platforms.',
+    answer:
+      'IEC 61131-3 is the international standard for programmable controller programming languages. It defines five languages: ladder diagram, function block diagram, structured text, instruction list, and sequential function chart, plus a common model of data types, variables, and program organization units (programs, function blocks, and functions) that all five share. Most modern controllers implement the standard to some degree, but conformance is partial and dialects differ, so a program does not move between vendors without work.',
+    keyPoints: [
+      'Five languages, one data model. Mix them within a project; pick each by the job.',
+      'Program organization units: programs, function blocks with state, and functions without.',
+      'Typed variables with declared scope replace raw addresses.',
+      'Conformance is partial on nearly every platform, and dialects differ. Portability is a goal, not a fact.',
+      'The standard is why a function block written well once can be reused across a plant.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['PLC', 'Programming', 'Standards', 'Fundamentals'],
+    blocks: [
+      { t: 'h2', text: 'What the standard covers' },
+      {
+        t: 'p',
+        text: 'IEC 61131 is a family of standards for programmable controllers, and part 3 is the one programmers meet. First published in 1993 and revised since, it standardized what had been a different language on every controller: the syntax and semantics of the programming languages, the data types a program can declare, how variables are scoped and how they persist, and how a program is organized into reusable units. Its purpose was to let a programmer trained on one platform read another, and to let well-built code be reused.',
+      },
+      {
+        t: 'p',
+        text: 'What it does not cover is the hardware, the I/O addressing conventions, the communication protocols, or the engineering software. Those remain vendor territory, which is why two conformant controllers can still feel very different to work on.',
+      },
+      { t: 'h2', text: 'The five languages' },
+      {
+        t: 'table',
+        head: ['Language', 'Form', 'Best for', 'Weak at'],
+        rows: [
+          ['Ladder Diagram (LD)', 'Graphical; rungs of contacts and coils resembling relay logic', 'Discrete interlocks, motor control, anything an electrician will troubleshoot online', 'Arithmetic, string handling, loops, and anything with more than a few branches'],
+          ['Function Block Diagram (FBD)', 'Graphical; blocks with inputs and outputs wired together', 'Analog signal processing, PID loops, and data flow that reads left to right', 'Sequences and conditional branching'],
+          ['Structured Text (ST)', 'Text; a Pascal-like language with IF, CASE, FOR, and assignments', 'Calculations, data manipulation, algorithms, state machines, anything with loops', 'Online troubleshooting by people who do not read code; discrete logic that is clearer as rungs'],
+          ['Sequential Function Chart (SFC)', 'Graphical; steps and transitions', 'Batch and startup sequences with clearly defined states', 'Continuous control; sequences with many parallel branches become hard to follow'],
+          ['Instruction List (IL)', 'Text; an assembler-like list of instructions', 'Very small controllers and legacy code', 'Readability. Deprecated in the third edition of the standard'],
+        ],
+      },
+      {
+        t: 'p',
+        text: 'A project mixes them. A typical water plant program has ladder for the motor and valve control, function blocks or structured text for the analog processing and PID, structured text for the calculations and the more involved logic, and SFC where a real sequence exists. Choosing one language for everything, in either direction, makes some part of the program harder to read than it needs to be.',
+      },
+      { t: 'h2', text: 'The common elements' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Data types', def: 'BOOL, INT and DINT, REAL and LREAL, TIME, STRING, and the rest, with defined sizes and behavior. Derived types let a programmer declare a structure, an array, or an enumeration, so a pump can be one variable with all its members rather than forty separate tags.' },
+          { term: 'Variables', def: 'Declared with a type and a scope: local to a unit, global to the project, or mapped to an input or output. The standard includes attributes for retentive variables that survive a power cycle and constants that cannot be written.' },
+          { term: 'Programs', def: 'The top-level units, assigned to tasks and executed by the scheduler. A program owns its variables and calls function blocks and functions.' },
+          { term: 'Function blocks', def: 'Units with internal state: a timer, a PID controller, a pump control block. Each instance keeps its own data, so one block definition serves every pump in the plant. Function blocks are the standard mechanism for reuse.' },
+          { term: 'Functions', def: 'Units without state that return a value from their inputs, like a scaling function or a square root. Same inputs, same output, every time.' },
+          { term: 'Tasks', def: 'Execution containers with a cycle time or a trigger, to which programs are assigned. The standard defines periodic and event tasks and priorities among them.' },
+        ],
+      },
+      { t: 'h2', text: 'What conformance means' },
+      {
+        t: 'p',
+        text: 'The standard defines a conformance model in which a vendor declares which features are implemented. Nearly every platform implements a subset and adds extensions, and the same feature can differ in detail: how a retentive variable is declared, what a timer instruction is called, how an array is indexed. A program written in structured text on one platform is much easier to move to another than a ladder program was in 1990, but it still needs editing, and the I/O mapping and communication configuration are rewritten from scratch.',
+      },
+      {
+        t: 'p',
+        text: 'Some platforms that predate the standard wrap it around an older model. Others were designed to it. A useful test is whether the platform lets you write a function block with a structured input, instantiate it a hundred times, and pass the structures around; that capability is what the standard was for, and it is where the differences between platforms show.',
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'PLCopen',
+        text: 'PLCopen is the industry association that promotes the standard and publishes companion specifications: motion control function blocks, safety function blocks, an XML exchange format for programs, and guidance on structuring code. Its coding guidelines are a good starting point for a site programming standard.',
+      },
+      { t: 'h2', text: 'Why it matters for a utility' },
+      {
+        t: 'p',
+        text: 'A utility rarely chooses a controller for its language conformance. The standard matters for a practical reason: a program written in the style the standard encourages, with typed variables, function blocks for each equipment type, and a program organization someone else can follow, costs less to maintain for twenty years than one written as thousands of rungs on raw addresses. The standard gives that style a vocabulary and a set of tools. Whether the integrator uses them is a specification question, and worth asking.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Which language should I learn first?',
+        a: 'Ladder, because it is what the installed base is written in and what most troubleshooting is done in. Structured text second, because it is where the calculations and the more capable logic live, and it transfers between platforms most easily. The other three are learned when a project needs them.',
+      },
+      {
+        q: 'Is ladder logic obsolete?',
+        a: 'No. It remains the best language for discrete control that maintenance staff troubleshoot online, because the state of every contact is visible in place. It is a poor language for arithmetic and data handling, and programs that force those into ladder are the ones that give it a bad name.',
+      },
+      {
+        q: 'Can I move a program from one vendor to another?',
+        a: 'Not without rewriting. Structured text and the logic structure move with editing; the I/O configuration, communications, and vendor-specific instructions are rebuilt. The PLCopen XML format helps with some tools, but the honest expectation is a re-implementation informed by the original.',
+      },
+      {
+        q: 'Does the standard say anything about how to structure a program?',
+        a: 'It provides the mechanisms, not the rules. Program organization, naming, and the discipline of one function block per equipment type are site standards, and the PLCopen guidelines are a good source for them.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/programming/ladder-logic',
+      '/controls/plc-systems/programming/structured-text',
+      '/controls/plc-systems/programming/function-block-diagram',
+      '/controls/plc-systems/plc-fundamentals/tasks',
+      '/controls/plc-systems/plc-fundamentals/memory',
+      '/controls/plc-systems/programming/state-machines',
+    ],
+  },
+  {
+    path: '/controls/plc-systems/programming/structured-text',
+    kind: 'reference',
+    title: 'Structured Text',
+    summary:
+      'The text language of IEC 61131-3: syntax, control structures, how it fits alongside ladder, the conventions that keep it readable for the next person, and the mistakes that make structured text a liability in a plant that troubleshoots online.',
+    answer:
+      'Structured text is the high-level text language defined by IEC 61131-3. It has assignments, IF and CASE branches, FOR and WHILE loops, and calls to functions and function blocks, and it is the right language for calculations, data handling, and logic with many conditions. It is harder to troubleshoot online than ladder, so in a water or wastewater program it is best used inside well-named function blocks that ladder calls, not as a replacement for the ladder an electrician expects to see.',
+    keyPoints: [
+      'Use it for arithmetic, data handling, state machines, and anything with a loop.',
+      'Keep discrete motor and valve control in ladder where it is troubleshot online.',
+      'One statement per line, named constants, and comments that say why, not what.',
+      'Every IF that writes an output has an ELSE that writes it too, or the output holds its last value forever.',
+      'A loop that can run long stalls the scan. Bound every loop.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['PLC', 'Programming', 'Standards'],
+    blocks: [
+      { t: 'h2', text: 'What it looks like' },
+      {
+        t: 'p',
+        text: 'Structured text reads like Pascal. Statements end in semicolons, assignment is a colon-equals, comparisons produce booleans, and blocks are delimited by keywords rather than braces. The example computes a scaled analog value with clamping and a validity flag, which in ladder would take a dozen rungs and in structured text takes a dozen lines that read top to bottom.',
+      },
+      {
+        t: 'code',
+        lang: 'text',
+        caption: 'Scaling with validity, in structured text',
+        code: `(* Scale a 4-20 mA input to engineering units, with range checks. *)
+Raw_Span := Raw_Max - Raw_Min;
+IF Raw_Span > 0 THEN
+    Level_ft := (Raw - Raw_Min) / Raw_Span * (EU_Max - EU_Min) + EU_Min;
+ELSE
+    Level_ft := EU_Min;            (* bad configuration: do not divide by zero *)
+END_IF;
+
+(* Under-range and over-range flags, with a small margin for calibration error. *)
+Level_Under := Raw < (Raw_Min - Raw_Margin);
+Level_Over  := Raw > (Raw_Max + Raw_Margin);
+Level_OK    := NOT Level_Under AND NOT Level_Over AND Input_Card_OK;
+
+(* Clamp the scaled value, but never let a clamped value look valid. *)
+IF Level_ft < EU_Min THEN Level_ft := EU_Min; END_IF;
+IF Level_ft > EU_Max THEN Level_ft := EU_Max; END_IF;`,
+      },
+      {
+        t: 'p',
+        text: 'Every element of the language is visible: comments in parentheses and asterisks, assignment, arithmetic, IF with ELSE, comparisons producing booleans, and named variables in place of addresses.',
+      },
+      { t: 'h2', text: 'Control structures' },
+      {
+        t: 'table',
+        head: ['Structure', 'Use', 'Caution'],
+        rows: [
+          ['IF ... ELSIF ... ELSE ... END_IF', 'Conditional assignment', 'Without an ELSE, an output assigned only in the IF branch keeps its last value when the condition is false. Sometimes that is intended; usually it is a bug.'],
+          ['CASE ... OF ... END_CASE', 'Selection on an integer or enumeration; the natural form of a state machine', 'Include an ELSE branch that handles an unexpected value, and write the state to a monitored tag.'],
+          ['FOR ... TO ... DO ... END_FOR', 'Iterate over an array: scan all pumps, all zones, all alarms', 'The loop runs to completion inside one scan. A large or nested loop extends the scan time; a FOR loop in a fast task is a watchdog risk.'],
+          ['WHILE ... DO ... END_WHILE and REPEAT ... UNTIL', 'Loop until a condition', 'A condition that never becomes true stalls the scan and trips the watchdog. Bound them with a counter, or avoid them in controller code.'],
+          ['Function and function block calls', 'Call a scaling function, a PID block, a pump control block', 'Function block instances must be declared; calling one changes its stored state.'],
+        ],
+      },
+      { t: 'h2', text: 'Where it belongs in a plant program' },
+      {
+        t: 'p',
+        text: 'The question in a water or wastewater plant is not whether structured text is a good language; it is who will be standing in front of the panel at 2 a.m. An operator or an electrician troubleshooting online reads ladder: they see the contacts, the coils, and their states. Structured text shows them a page of code with values in the margin. That does not make structured text wrong; it makes it the wrong place for the logic they need to see.',
+      },
+      {
+        t: 'ul',
+        items: [
+          'Discrete control of motors, valves, and interlocks in ladder, calling function blocks whose internals may be structured text.',
+          'Analog scaling, validation, filtering, totalizing, and calculations in structured text inside function blocks.',
+          'State machines and sequences in structured text with a CASE statement, with the current state and step description written to tags the HMI shows.',
+          'Loops over arrays of equipment in structured text, never in ladder.',
+          'Communication message handling, string building, and data packing in structured text.',
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Expose the state, not the code',
+        text: 'A structured text block is opaque to the person at the panel unless it publishes what it is doing. Every block should write its current state, its active step, and the reason for any hold to tags with clear names, so the HMI and the online monitor show the answer without reading the code.',
+      },
+      { t: 'h2', text: 'Conventions that keep it maintainable' },
+      {
+        t: 'ol',
+        items: [
+          'One statement per line. A line with three assignments hides two of them.',
+          'Named constants for every number that is not zero or one. A 0.85 in the middle of a calculation is a question nobody can answer in five years.',
+          'Comments that explain intent and units. The code already says what it does.',
+          'Consistent naming: prefix by equipment, suffix by type, no abbreviations that only the author understands.',
+          'Every IF that writes an output has an ELSE that writes it too, unless the hold is deliberate and commented.',
+          'No magic addresses. Every variable is declared with a type and a meaning; the I/O mapping is in one place.',
+          'Short blocks. A block longer than a screen is two blocks.',
+          'Unit tests where the platform allows simulation, and at minimum a documented set of input cases with expected outputs.',
+        ],
+      },
+      { t: 'h2', text: 'Common mistakes' },
+      {
+        t: 'table',
+        head: ['Mistake', 'Effect', 'Fix'],
+        rows: [
+          ['Output assigned only inside an IF', 'Output sticks at last value when the condition ends', 'Add the ELSE, or assign a default before the IF'],
+          ['Integer division', 'Fractions truncated silently; 7 / 2 = 3', 'Convert to REAL before dividing'],
+          ['Comparing REALs for equality', 'Almost never true', 'Compare against a tolerance'],
+          ['Unbounded WHILE', 'Scan stalls; watchdog fault', 'Use FOR with a fixed bound, or a counter guard'],
+          ['State held in a local variable that is not retentive', 'State resets on power cycle', 'Declare it retentive, or reinitialize deliberately on first scan'],
+          ['Same output written from two places', 'Last write wins, and the first is invisible', 'One owner per output'],
+          ['Logic that the HMI also does', 'Two behaviors that drift apart', 'Logic in the controller, display in the HMI'],
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Is structured text faster than ladder?',
+        a: 'Execution speed is similar on most platforms; the compiler produces comparable code. Structured text is faster to write for calculations and slower to troubleshoot for discrete logic. Choose by readability for the person who will maintain it, not by execution speed.',
+      },
+      {
+        q: 'Can I write the whole program in structured text?',
+        a: 'You can, and some integrators do. In a utility where operators and electricians troubleshoot online, an all-text program is a maintenance problem they will resent for the life of the plant. Keep the discrete control they look at in ladder.',
+      },
+      {
+        q: 'How do I troubleshoot structured text online?',
+        a: 'Most platforms show live values beside each variable and let you set a breakpoint or a watch. The better answer is to write the block so it publishes its state, step, and hold reasons to tags, and to troubleshoot from those on the HMI or the tag monitor.',
+      },
+      {
+        q: 'Does structured text move between platforms?',
+        a: 'Better than any other language in the standard. The core syntax is the same; timers, function block declarations, and vendor extensions differ. Expect editing, not a rewrite.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/programming/iec-61131-3',
+      '/controls/plc-systems/programming/ladder-logic',
+      '/controls/plc-systems/programming/state-machines',
+      '/controls/plc-systems/analog-control/scaling',
+      '/controls/plc-systems/plc-fundamentals/watchdog',
+      '/controls/plc-systems/plc-fundamentals/retentive-memory',
+    ],
+  },
+  {
+    path: '/controls/plc-systems/programming/function-block-diagram',
+    kind: 'reference',
+    title: 'Function Block Diagram',
+    summary:
+      'The graphical data-flow language of IEC 61131-3: how blocks, pins, and wires work, execution order, where FBD beats ladder and structured text, building reusable equipment blocks, and the habits that keep a diagram readable.',
+    answer:
+      'Function block diagram is a graphical language in which blocks with input and output pins are wired together so that data flows from left to right. It is the natural language for analog signal processing, PID control, and any logic that reads as a chain of operations, and it is the usual host for reusable equipment blocks such as a pump or valve controller. Its weaknesses are sequences and branching, which are clearer in structured text or a sequential function chart.',
+    keyPoints: [
+      'Data flows left to right through wired blocks. Read a diagram the way the signal travels.',
+      'Execution order follows the wiring, and feedback paths need an explicit rule.',
+      'FBD is where analog processing, PID, and reusable equipment blocks live.',
+      'A user-defined function block with a structured interface is the reuse mechanism.',
+      'Keep one idea per sheet. A diagram that needs scrolling in two directions is two diagrams.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['PLC', 'Programming', 'Standards', 'Analog'],
+    blocks: [
+      { t: 'h2', text: 'How it works' },
+      {
+        t: 'p',
+        text: 'A function block diagram is a set of blocks, each with named input pins on the left and output pins on the right, connected by wires that carry values. A block executes when its inputs are available and produces its outputs; the next block along the wire consumes them. The diagram reads like a signal path: the raw input enters at the left, passes through scaling, filtering, and validation, feeds a PID controller, and leaves as a speed reference at the right.',
+      },
+      {
+        t: 'p',
+        text: 'Blocks can be standard instructions supplied by the platform, such as a timer, a comparator, or a PID, or user-defined function blocks written in any IEC language. A wire can carry any data type, including a structure, which is how a whole pump status travels from block to block as one connection.',
+      },
+      { t: 'h2', text: 'Execution order' },
+      {
+        t: 'p',
+        text: 'In a text language the order of statements is explicit. In a diagram it is implied by the wiring, and the platform resolves it: blocks execute in an order that ensures each has its inputs before it runs, generally left to right and top to bottom where the wiring allows. That works until the diagram has a feedback loop, where the output of a block feeds back to an input of an earlier block. Then some value must come from the previous scan, and the platform either requires a marker on the feedback wire or picks one silently.',
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Mark every feedback wire',
+        text: 'A feedback connection that the platform resolves silently can change execution order when a block is added elsewhere on the sheet, and the diagram behaves differently after an edit that looked unrelated. Where the platform provides a feedback marker or an explicit execution number, use it, and comment what the one-scan delay means for the logic.',
+      },
+      { t: 'h2', text: 'Where FBD fits' },
+      {
+        t: 'table',
+        head: ['Job', 'FBD', 'Alternative'],
+        rows: [
+          ['Analog signal chain: scale, filter, validate, alarm', 'Excellent; the chain is visible', 'Structured text inside a block for the arithmetic'],
+          ['PID control with feedforward, limits, and mode logic', 'Excellent; the PID block and its surroundings are one picture', 'A PID function block called from ladder'],
+          ['Reusable equipment control: pump, valve, analyzer', 'Excellent as the host for a user-defined block', 'The same block called from ladder'],
+          ['Discrete interlock chains and motor control', 'Adequate; boolean blocks work but read worse than rungs', 'Ladder'],
+          ['Sequences and startup steps', 'Poor; state logic becomes a mesh of wires', 'Sequential function chart or a CASE in structured text'],
+          ['Loops over arrays', 'Not possible directly', 'Structured text'],
+          ['Calculations with many terms', 'Cluttered; a formula becomes a tree of blocks', 'Structured text'],
+        ],
+      },
+      { t: 'h2', text: 'User-defined function blocks' },
+      {
+        t: 'p',
+        text: 'The reason FBD carries so much of a modern program is the user-defined function block. A block called PumpControl is written once, with inputs for the call, the run feedback, the fault inputs, the HOA state, and the setpoints, and outputs for the run command, the status word, the alarms, and the run time. Every pump in the plant is an instance of that block, wired to its own I/O. When the failed-to-prove logic needs a change, it changes in one place and every pump gets it.',
+      },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Define the interface', text: 'Inputs and outputs as structures where the platform supports it: one command structure in, one status structure out, plus the configuration parameters. A block with forty loose pins is hard to wire and harder to read.' },
+          { title: 'Write the internals in the language that suits them', text: 'The interlock logic can be ladder; the timers and counters can be FBD; the state machine is structured text. The block hides which.' },
+          { title: 'Publish the state', text: 'The block writes its mode, its active hold reason, its fault list, and its counters to the status structure, so the HMI faceplate and the online monitor show what it is doing without opening it.' },
+          { title: 'Test it once, well', text: 'Simulate every input combination the block claims to handle, including the failure cases. That test is worth repeating on every revision, because every pump depends on it.' },
+          { title: 'Version it', text: 'A block used a hundred times needs a version number in its description and a change record. A silent edit to a shared block is a change to a hundred pumps.' },
+        ],
+      },
+      { t: 'h2', text: 'Keeping a diagram readable' },
+      {
+        t: 'ul',
+        items: [
+          'Signal enters at the left, leaves at the right, and does not double back.',
+          'One idea per sheet: one loop, one pump, one analyzer. Cross-sheet connections use named tags, not wires that leave the page.',
+          'Name every intermediate wire that carries something an operator or a troubleshooter would want to see. Unnamed wires cannot be trended.',
+          'Align blocks in the order they execute and keep the wiring uncrossed where possible. A diagram that looks like a circuit board is not being read by anyone.',
+          'Put constants in named parameters, not in literal pins scattered across the sheet.',
+          'Comment the sheet with what it does and why, at the top, once.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Is FBD the same as a function block?',
+        a: 'No. A function block is a program organization unit with internal state, and it can be written in any of the five languages. Function block diagram is one of the languages, and it is the one most often used to wire function blocks together. The naming is confusing and the distinction matters when reading a specification.',
+      },
+      {
+        q: 'Can I troubleshoot FBD online?',
+        a: 'Yes, and it is one of its strengths for analog problems: the value on every wire is shown live, so a bad reading can be followed from the input pin through scaling and filtering to the point where it goes wrong. For discrete logic, ladder still shows the state of a contact more directly.',
+      },
+      {
+        q: 'Why does the diagram behave differently after I added a block?',
+        a: 'Execution order changed. The platform re-resolved the order when the wiring changed, and a feedback path that was reading last scan is now reading this scan, or the reverse. Mark feedback wires explicitly and check the execution numbers after any edit.',
+      },
+      {
+        q: 'Should I build my own pump block or use the vendor library?',
+        a: 'Vendor and integrator libraries exist for exactly this and are well tested. Use one where it matches the site standard and the HMI faceplates. Build your own when the library does something the site does not want, and then test it as carefully as the vendor did.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/programming/iec-61131-3',
+      '/controls/plc-systems/programming/structured-text',
+      '/controls/plc-systems/programming/ladder-logic',
+      '/controls/plc-systems/analog-control/pid',
+      '/controls/plc-systems/analog-control/signal-validation',
+      '/how-to/plc-how-to/create-a-pid-loop',
+    ],
+  },
+  {
+    path: '/controls/plc-systems/programming/state-machines',
+    kind: 'reference',
+    title: 'State Machines in PLC Programs',
+    summary:
+      'Writing sequences as explicit states instead of tangled interlock chains: what a state is, how transitions are written, the pattern in structured text and in ladder, publishing the state to the HMI, and the failure handling every state machine needs.',
+    answer:
+      'A state machine writes a sequence as a set of named states, exactly one of which is active, with explicit transitions between them. Each state defines what the outputs do while it is active and what condition moves the machine to the next state. The pattern replaces the seal-in rungs and interlock chains that grow unmaintainable, makes the current step visible on the HMI, and forces the programmer to decide what happens on a fault, a stop, and a power loss in every state.',
+    keyPoints: [
+      'One state active at a time, held in one integer or enumeration.',
+      'Outputs are decided by the state; transitions are decided by conditions. Keep the two apart.',
+      'Every state has a way out on fault, on stop, and on timeout.',
+      'Publish the state number and a description to the HMI. That is the troubleshooting tool.',
+      'Decide what happens on power loss: restart, resume, or go to a safe state.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 11,
+    tags: ['PLC', 'Programming', 'Design', 'Control'],
+    blocks: [
+      { t: 'h2', text: 'The problem state machines solve' },
+      {
+        t: 'p',
+        text: 'A backwash sequence, a generator transfer, a chemical batch, a well pump startup with its pump-to-waste period: each is a series of steps that depend on time and on conditions. Written as ladder with seal-in bits, each step is a rung that latches when the previous step is done and unlatches when its own completion is seen, plus the interlocks, plus the fault handling, plus the reset. By the twelfth step nobody can say with confidence which bits are set, and a fault mid-sequence leaves latches in a combination that was never tested.',
+      },
+      {
+        t: 'p',
+        text: 'A state machine replaces all of that with one variable, the current state, and a structure that makes each state explicit. The program can be in state 30, Combined Wash, and nothing else. What the outputs do in state 30 is written in one place. What moves the sequence to state 40 is written in one place. What happens in state 30 on a fault is written in one place. The HMI shows the number and the name.',
+      },
+      { t: 'h2', text: 'The structure' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'State variable', def: 'An integer or enumeration, one per machine, retentive if the sequence must survive a power cycle. Numbered with gaps, 10, 20, 30, so a state can be inserted later without renumbering.' },
+          { term: 'States', def: 'Each has a name, a description, and a purpose. Idle, Drain, Air Scour, Combined Wash, Rinse, Return to Service, Aborting, Fault. Idle and Fault always exist.' },
+          { term: 'Outputs by state', def: 'What each output does in each state, written as a function of the state, not as a latch. In state 20 the air scour blower runs; in states where it should not, it does not. Because outputs are derived from state, they cannot be left on by a forgotten unlatch.' },
+          { term: 'Transitions', def: 'The condition that moves from one state to the next: a timer expired, a level reached, a valve confirmed open, an operator acknowledgment. Written per state, and the only place the state variable is changed.' },
+          { term: 'Timeouts', def: 'Each state that waits for something has a maximum time. A valve that does not confirm open in 60 seconds moves the machine to Fault, not to waiting forever.' },
+          { term: 'Fault and abort paths', def: 'From any state, a fault condition goes to the Fault state, and a stop request goes to Aborting, which returns the equipment to a safe configuration and then to Idle. These transitions are written once, above the per-state logic.' },
+        ],
+      },
+      {
+        t: 'code',
+        lang: 'text',
+        caption: 'A filter backwash sequence as a CASE statement',
+        code: `(* Global exits: evaluated before the per-state logic, every scan. *)
+IF Fault_Any THEN
+    State := 900;                          (* Fault *)
+ELSIF Stop_Request AND State > 0 AND State < 800 THEN
+    State := 800;                          (* Aborting *)
+END_IF;
+
+CASE State OF
+    0:   (* Idle *)
+        IF Backwash_Request AND Permissives_OK THEN
+            State := 10;  Step_Timer := T#0s;
+        END_IF;
+
+    10:  (* Close influent, drain to wash level *)
+        IF Influent_Valve_Closed AND Level < Wash_Level THEN
+            State := 20;  Step_Timer := T#0s;
+        ELSIF Step_Timer > T#5m THEN
+            State := 900;  Fault_Code := 10;
+        END_IF;
+
+    20:  (* Air scour *)
+        IF Step_Timer > Air_Scour_Time THEN
+            State := 30;  Step_Timer := T#0s;
+        END_IF;
+
+    30:  (* Combined air and water wash *)
+        IF Step_Timer > Combined_Time THEN
+            State := 40;  Step_Timer := T#0s;
+        END_IF;
+
+    40:  (* Water rinse until turbidity clears *)
+        IF Wash_Turbidity < Rinse_Limit AND Step_Timer > Min_Rinse_Time THEN
+            State := 50;  Step_Timer := T#0s;
+        ELSIF Step_Timer > Max_Rinse_Time THEN
+            State := 900;  Fault_Code := 40;
+        END_IF;
+
+    50:  (* Return to service *)
+        IF Influent_Valve_Open AND Effluent_Valve_Open THEN
+            State := 0;
+        END_IF;
+
+    800: (* Aborting: close wash valves, stop blower, then idle *)
+        IF Wash_Valves_Closed AND NOT Blower_Running THEN
+            State := 0;
+        END_IF;
+
+    900: (* Fault: hold safe until reset *)
+        IF Fault_Reset AND NOT Fault_Any THEN
+            State := 0;
+        END_IF;
+ELSE
+    State := 900;  Fault_Code := 999;      (* unknown state *)
+END_CASE;
+
+(* Outputs derived from state. Nothing latches. *)
+Air_Scour_Blower_Cmd := (State = 20) OR (State = 30);
+Wash_Water_Valve_Cmd := (State = 30) OR (State = 40);
+Influent_Valve_Cmd   := (State = 0) OR (State = 50);`,
+      },
+      {
+        t: 'p',
+        text: 'The shape is the whole lesson. Exits that apply everywhere are at the top. Each state changes the state variable and nothing else. Outputs are computed from the state at the bottom, so there is nothing to unlatch and nothing left on when the sequence leaves a state by any route. The ELSE catches a state value that should not exist, which happens after a program edit or a memory fault.',
+      },
+      { t: 'h2', text: 'The same pattern in ladder' },
+      {
+        t: 'p',
+        text: 'Where the site standard requires ladder, the pattern survives. One integer holds the state. A rung per transition compares the state and the condition and moves a new value into the integer. A rung per output compares the state and drives the coil. It is more rungs than the CASE statement and it is still one variable, one place per transition, and outputs that follow the state. What it must not become is a set of seal-in bits with the state number added as decoration.',
+      },
+      { t: 'h2', text: 'Power loss and restart' },
+      {
+        t: 'p',
+        text: 'The one decision a state machine forces that latch logic lets a programmer avoid is what happens on a power cycle. Three answers are common, and the control narrative picks one per sequence.',
+      },
+      {
+        t: 'table',
+        head: ['Behavior', 'How', 'Where it fits'],
+        rows: [
+          ['Restart from Idle', 'State variable not retentive, or first-scan logic sets it to 0', 'Sequences that are safe and cheap to start over: a pump startup, a valve exercise'],
+          ['Resume where it stopped', 'State variable retentive; timers and step data retentive too', 'Long sequences where restarting wastes product or time: a batch, a long backwash; only if every state is safe to resume into'],
+          ['Go to a safe state and wait', 'First-scan logic moves any active state to Aborting or a Hold state that needs an operator', 'Anything where resuming blind could be unsafe: chemical feeds, sequences with manual steps'],
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'Test the restart on purpose',
+        text: 'Cycle power in the middle of every state during commissioning, and watch what the machine does. The chosen behavior is only real if it has been seen. Retentive state with non-retentive timers, which resumes a state that then waits forever, is the classic mistake.',
+      },
+      { t: 'h2', text: 'Publishing the state' },
+      {
+        t: 'p',
+        text: 'The state number is the single most useful troubleshooting tag in a sequence. Publish it, and publish a text description of the current state and the reason the machine is waiting: state 40, Rinse, waiting for turbidity below 5 NTU, 3:20 elapsed of 10:00 maximum. A sequence that says why it is waiting does not need someone to open the program. Log every state change with a timestamp to the historian; the record of when each step started and ended is the commissioning evidence and the maintenance history.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Should I use a sequential function chart instead?',
+        a: 'SFC is the graphical form of the same idea and some platforms implement it well. It excels at simple linear sequences and at showing the active step. It becomes hard to read with many exits and parallel branches, and online troubleshooting depends on the platform. A CASE statement in structured text is portable and explicit; SFC is a fine choice where the platform and the site are comfortable with it.',
+      },
+      {
+        q: 'How do I handle two things happening at once?',
+        a: 'Two state machines. A filter with a backwash sequence and a separate flow control loop is two machines that exchange status. Trying to express parallel activity inside one state machine produces the branching mesh that the pattern was meant to avoid.',
+      },
+      {
+        q: 'Where do the interlocks go?',
+        a: 'Permissives gate the transition out of Idle. Interlocks that must stop the sequence go into the fault condition and produce the transition to Fault from every state. Interlocks that protect a single output stay on that output, after the state logic, so an output the state calls for is still blocked when its interlock says so.',
+      },
+      {
+        q: 'The sequence is stuck in a state. How do I find out why?',
+        a: 'Read the published wait reason and the step timer. If the machine does not publish them, look at the transition condition for that state in the program and evaluate each term. The fix after the event is to add the wait reason so the next time does not need the program.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/programming/structured-text',
+      '/controls/plc-systems/programming/interlocks',
+      '/controls/plc-systems/plc-fundamentals/retentive-memory',
+      '/engineering-library/control-documentation/sequences-of-operation',
+      '/controls/plc-systems/programming/ladder-logic',
+      '/controls/plc-systems/plc-fundamentals/watchdog',
+    ],
+  },
 ];

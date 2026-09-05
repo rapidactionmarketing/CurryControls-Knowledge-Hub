@@ -862,4 +862,463 @@ Lag = the other available pump, or none.`,
       '/troubleshooting/pump-troubleshooting/pump-will-not-start',
     ],
   },
+  {
+    path: '/controls/control-panels/pump-panels/vfd',
+    kind: 'reference',
+    title: 'Variable Frequency Drives in Pump Panels',
+    summary:
+      'What a drive adds to a pump panel and what it costs: speed control, soft start, reduced inrush, and diagnostics against heat, harmonics, cable and motor stress, bypass, and the minimum speed below which a pump does no work.',
+    answer:
+      'A variable frequency drive in a pump panel converts fixed-frequency AC to a variable-frequency output, so pump speed follows a control signal instead of running at full speed. That gives level or pressure control, soft starting, lower starting current, and built-in motor protection and diagnostics, at the cost of heat in the enclosure, harmonic distortion, output cable and motor stresses, and a device that needs a bypass or a spare if the station cannot wait for a replacement.',
+    keyPoints: [
+      'A drive is a speed control, a soft starter, a motor protector, and a diagnostic device in one package.',
+      'The affinity laws mean modest speed reductions save real energy, but only where the system has friction head to save.',
+      'A pump below its minimum useful speed runs without moving water. Set the drive minimum from the curve.',
+      'Drives make heat, harmonics, and voltage spikes at the motor. Each has a mitigation, and each costs money.',
+      'Decide on bypass before the panel is built. Retrofit bypass is expensive.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 11,
+    tags: ['VFD', 'Panels', 'Pumps', 'Power'],
+    blocks: [
+      { t: 'h2', text: 'What the drive does' },
+      {
+        t: 'p',
+        text: 'A variable frequency drive rectifies the incoming three-phase supply to DC, filters it on a capacitor bus, and inverts it back to AC at whatever frequency and voltage the control asks for, using pulse-width modulation. Motor speed follows frequency, so the pump runs at the speed the process needs. Along the way the drive ramps the motor up and down, limits current, monitors motor thermal state, and reports current, voltage, power, torque, and faults over a network or through its terminals.',
+      },
+      {
+        t: 'p',
+        text: 'For a pump the speed control is the point. A level loop holds a wet well at a setpoint by varying pump speed instead of cycling; a pressure loop holds distribution pressure without a pressure-reducing valve; a flow loop feeds a process at the rate it needs. The other benefits, soft starting and reduced inrush, matter at stations on weak power or on a generator.',
+      },
+      { t: 'h2', text: 'When a drive earns its cost' },
+      {
+        t: 'table',
+        head: ['Condition', 'Drive value', 'Note'],
+        rows: [
+          ['High friction head, variable flow', 'High: energy saved roughly with the cube of speed on the friction portion', 'Force mains and long distribution mains'],
+          ['Mostly static head', 'Low for energy: the pump must make the same head at any flow', 'Lift into an elevated tank; a drive saves little and may reduce efficiency'],
+          ['Process needs steady flow or pressure', 'High for control quality', 'Membrane feed, filter effluent, chemical dilution water, distribution pressure zones'],
+          ['Weak utility or generator power', 'High: soft start and reduced inrush', 'Rural lift stations, wells at the end of a long line'],
+          ['Starts-per-hour limit reached', 'High: continuous running at reduced speed instead of cycling', 'Small wet wells, low nighttime inflow'],
+          ['Simple duty with a large cycle volume', 'Low', 'A constant-speed starter does the job for less money and less heat'],
+        ],
+      },
+      { t: 'h2', text: 'Minimum speed' },
+      {
+        t: 'p',
+        text: 'A centrifugal pump develops head roughly with the square of speed. Below some speed it cannot produce enough head to open the check valve against the static head of the system, and it spins in the well doing nothing while the level rises. The drive minimum speed is set above that point, found from the pump curve at the static head or by test, and it is often in the range of 50 to 70 percent for a wastewater pump on a force main. Setting the minimum to the drive default of zero, or to a number that felt reasonable, is one of the most common commissioning errors in pump stations.',
+      },
+      {
+        t: 'p',
+        text: 'Running near minimum speed for long periods has its own problems: low velocity in the force main lets solids settle, and the pump operates far from its best efficiency point. A level PID loop with a minimum speed, and stop-and-restart logic for when inflow drops below what minimum speed moves, is the usual answer.',
+      },
+      { t: 'h2', text: 'What the drive costs' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Heat', def: 'A drive dissipates roughly 2 to 4 percent of its rating as heat, all of it inside the enclosure. A 50 hp drive at full load makes on the order of a kilowatt. That heat sets the enclosure size and cooling, as described on the heat calculations page, and it is why drives in outdoor enclosures in the sun fail early.' },
+          { term: 'Harmonics', def: 'The rectifier draws current in pulses, distorting the supply. A single small drive rarely matters; a station with most of its load on drives can exceed the distortion limits in IEEE 519 and heat the transformer. Line reactors, DC bus chokes, and for larger installations active front ends or harmonic filters address it.' },
+          { term: 'Output voltage spikes', def: 'The PWM output has fast edges that reflect at the motor terminals, especially on long cable runs, producing peaks that stress motor insulation. Inverter-duty motors, output reactors or dV/dt filters, and cable length limits from the drive manufacturer are the mitigations. Submersible pumps on long cables are the sensitive case.' },
+          { term: 'Bearing currents', def: 'The common-mode voltage of the PWM output can discharge through motor bearings and pit them. Insulated bearings, shaft grounding rings, and common-mode chokes address it on larger motors.' },
+          { term: 'Instrument noise', def: 'Output cables radiate. Signal cables routed with them pick it up. Shielded output cable, separation, and proper grounding of the shield at the drive prevent most of it.' },
+          { term: 'A single point of failure', def: 'A failed starter is replaced from stock in an hour. A failed drive may be a week away. Bypass or a spare is a design decision.' },
+        ],
+      },
+      { t: 'h2', text: 'Bypass' },
+      {
+        t: 'p',
+        text: 'A bypass contactor arrangement lets the pump run across the line at full speed when the drive has failed. It costs a contactor pair, an interlock so the drive output and the bypass contactor can never close together, and a selector switch. In a duplex station with two drives, many utilities skip bypass and rely on the second pump plus a spare drive on the shelf. In a station with one pump, bypass is cheap insurance. The decision is easy at design and expensive after the panel is built.',
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Never close the bypass onto a running drive output',
+        text: 'The drive output and the utility supply must never be connected to the motor at the same time. The bypass scheme interlocks the contactors mechanically and electrically, and the drive run command is removed before the bypass contactor is allowed to close. This interlock is tested at commissioning with the motor disconnected.',
+      },
+      { t: 'h2', text: 'Integration with the panel' },
+      {
+        t: 'ul',
+        items: [
+          'Control: run command and speed reference by hardwired inputs or by network. Network control gives full diagnostics; hardwired control keeps running when the network does not. Many panels use network for monitoring and hardwired for the run and the reference, or the reverse with a hardwired fallback.',
+          'Feedback: running status, fault, current, and speed back to the controller. A drive that reports a run status from its own logic is a better proof than an auxiliary contact.',
+          'Protection: the drive provides overload, overcurrent, phase loss, and ground fault protection for the motor. Upstream, the drive itself needs short-circuit protection that matches its listing, and the SCCR of the panel depends on it.',
+          'Enable and safe torque off: hardwired through the HOA and any safety devices, independent of the controller.',
+          'Parameters: backed up, printed, and kept with the panel drawings. A replacement drive is configured from that backup, not from memory.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Do I need an inverter-duty motor?',
+        a: 'For a new installation with a drive, yes; the cost difference is small and the insulation system is designed for the voltage peaks. For an existing motor being put on a drive, check the cable length against the drive manufacturer limits and consider an output filter. Submersible pumps are supplied by the pump manufacturer for drive duty, and the manufacturer specifies the cable and filter requirements.',
+      },
+      {
+        q: 'How much energy will a drive save?',
+        a: 'It depends entirely on the system curve. Where most of the head is friction, running at 80 percent speed uses roughly half the power. Where most of the head is static, the pump must still make the same head and the saving is small or negative because the pump leaves its efficient range. Plot the system curve before promising a payback.',
+      },
+      {
+        q: 'Should the PID loop be in the drive or the PLC?',
+        a: 'Drives include a PID controller and it works for a standalone pump. In a station with a PLC, the loop belongs in the PLC, where its tuning, limits, failure handling, and alarming are visible on SCADA and consistent with the rest of the program.',
+      },
+      {
+        q: 'Why does the pump run but the level keeps rising with the drive at minimum speed?',
+        a: 'The minimum speed is below the point where the pump develops enough head to move water into the force main. Raise the minimum speed until flow begins, with margin, and set the level control to stop the pump when inflow is below what minimum speed delivers.',
+      },
+    ],
+    related: [
+      '/controls/control-panels/panel-design/heat-calculations',
+      '/controls/control-panels/pump-panels/hoa',
+      '/controls/control-panels/pump-panels/soft-starters',
+      '/water-wastewater/water-systems/water-pumping/pressure-control',
+      '/troubleshooting/vfd-troubleshooting/drive-will-not-start-in-auto',
+      '/how-to/plc-how-to/create-a-pid-loop',
+      '/controls/control-panels/panel-design/sccr',
+    ],
+  },
+  {
+    path: '/controls/control-panels/pump-panels/soft-starters',
+    kind: 'reference',
+    title: 'Soft Starters',
+    summary:
+      'Reduced-voltage solid-state starters: how they ramp a motor, what they do for inrush, water hammer, and mechanical stress, where they beat a drive and where they do not, bypass contactors, and the settings that matter on a pump.',
+    answer:
+      'A soft starter uses thyristors to ramp the voltage applied to a motor during starting, reducing the inrush current and the mechanical and hydraulic shock of an across-the-line start, then runs the motor at full speed, usually through a bypass contactor. It provides no speed control. It is the right choice where the pump runs at one speed and the concern is starting: weak power, generator operation, water hammer on a long force main, or a starts-per-hour limit that a gentler start relaxes.',
+    keyPoints: [
+      'A soft starter controls the start and the stop. It does not control speed.',
+      'Starting current drops from about six times full load to two or three times, with a longer ramp.',
+      'A controlled stop is often the bigger benefit on a pump: no check valve slam, no water hammer.',
+      'Bypass contactors take the thyristors out of circuit at full speed, which removes the heat and most of the failure modes.',
+      'Set current limit and ramp time for the pump, and confirm the motor reaches full speed within its thermal limits.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['Panels', 'Pumps', 'Power', 'Control'],
+    blocks: [
+      { t: 'h2', text: 'What it does' },
+      {
+        t: 'p',
+        text: 'An across-the-line starter applies full voltage instantly. The motor draws locked-rotor current, typically six to eight times its full-load rating, for the second or two it takes to accelerate, and the pump accelerates the water column with it. A soft starter puts back-to-back thyristors in each phase and phases them on progressively, so the voltage ramps from an initial value to full over a set time. Torque follows the square of voltage, so the motor accelerates gently and the current peak is reduced to whatever the current limit setting allows, commonly 250 to 350 percent of full-load current.',
+      },
+      {
+        t: 'p',
+        text: 'Once the motor is at speed, most soft starters close an internal or external bypass contactor and the thyristors carry no current until the next start. On a stop command, the starter can ramp the voltage down over a set time, a soft stop, which lets the pump decelerate gradually and the check valve close slowly instead of slamming shut on a reversing column.',
+      },
+      { t: 'h2', text: 'Where a soft starter fits' },
+      {
+        t: 'table',
+        head: ['Situation', 'Across-the-line', 'Soft starter', 'Drive'],
+        rows: [
+          ['Pump runs at one speed, strong supply, short force main', 'Adequate', 'Optional', 'Unnecessary'],
+          ['Weak supply, voltage sag on start, generator', 'Poor', 'Good', 'Good'],
+          ['Long force main, check valve slam, water hammer on stop', 'Poor', 'Good, with soft stop', 'Good'],
+          ['Starts per hour near the motor limit', 'Poor', 'Better: less heating per start', 'Best: run continuously instead'],
+          ['Level, pressure, or flow control needed', 'No', 'No', 'Yes'],
+          ['Energy saving on a friction-dominated system', 'No', 'No', 'Yes'],
+          ['Panel space, heat, and cost', 'Smallest', 'Small with bypass', 'Largest'],
+          ['Harmonics and motor stress', 'None', 'None in run; brief distortion during the ramp', 'Present; mitigated at cost'],
+        ],
+      },
+      {
+        t: 'p',
+        text: 'The soft starter sits between the two extremes. It fixes the starting problems for a fraction of the cost, heat, and complexity of a drive. It does nothing for a process that needs speed control, and a station that installs soft starters to save energy has been sold the wrong device.',
+      },
+      { t: 'h2', text: 'Settings that matter on a pump' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Initial voltage or torque', def: 'The starting point of the ramp, typically 30 to 50 percent. Too low and the motor sits without turning while it heats; too high and the start is nearly across the line.' },
+          { term: 'Ramp time', def: 'Time from initial voltage to full, typically 5 to 20 seconds on a pump. Longer is gentler and heats the motor longer; the ramp must end with the motor at speed.' },
+          { term: 'Current limit', def: 'The ceiling on starting current, commonly 300 percent of full-load amps. The starter holds voltage at whatever keeps current under the limit until the motor accelerates. On a weak supply this is the setting that stops the lights dimming.' },
+          { term: 'Kick start', def: 'A brief pulse of higher voltage at the beginning to break a pump free of grit or a stiff seal, then the ramp. Useful on pumps that sit; unnecessary otherwise.' },
+          { term: 'Soft stop time', def: 'The voltage ramp-down on stop, typically 5 to 30 seconds. Long enough that the check valve closes gently; short enough that the pump does not run below the speed that moves water for long, which matters with a large static head where the pump stops moving water early in the ramp.' },
+          { term: 'Stall and thermal protection', def: 'The starter monitors current and time during the ramp and trips if the motor does not accelerate, and models motor thermal state across starts. Set from the motor data, not left at defaults.' },
+          { term: 'Phase loss and imbalance', def: 'Built into most starters; confirm they are enabled and set.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'The thermal budget',
+        text: 'A soft start reduces peak current but extends the time the motor draws above full-load current. The heating per start is usually lower than across the line but not always, and a very long ramp at a high current limit can exceed it. Check the motor thermal limit curve against the starting profile, especially on large motors and high-inertia loads.',
+      },
+      { t: 'h2', text: 'Bypass' },
+      {
+        t: 'p',
+        text: 'Thyristors dissipate on the order of a watt per amp per phase while conducting. A 100 amp starter without bypass makes a few hundred watts continuously, needs a heatsink and enclosure cooling, and has three semiconductors in the motor circuit around the clock. With a bypass contactor closed at full speed, the thyristors carry current only during the ramp, the heat drops to almost nothing in run, and a thyristor failure does not take the pump down until the next start. Most modern soft starters include the bypass internally. Specify it, and confirm the bypass is rated for the motor full-load current and the contactor duty.',
+      },
+      { t: 'h2', text: 'Integration with the panel' },
+      {
+        t: 'ul',
+        items: [
+          'Control: a run input and a stop input, with a run and a fault output back to the controller. Many starters also offer a network interface for current and diagnostics.',
+          'Protection: the starter provides motor overload, phase loss, and stall protection. Short-circuit protection upstream is chosen to match the starter listing and the panel SCCR; semiconductor fuses are required for some ratings.',
+          'HOA: the same as any starter. The soft starter is the starter; the HOA and the controller call it.',
+          'Run confirmation: from the starter run output or the bypass contactor auxiliary, plus current where available. A starter in the ramp is not yet at speed; use the at-speed or bypass-closed signal for the proof where the logic cares.',
+          'Parameters recorded on the drawings and in the commissioning record, as with a drive.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Can a soft starter control pump speed at all?',
+        a: 'No. It controls voltage during start and stop; at any steady state the motor runs at full speed, or stalls. A soft starter held at reduced voltage in run is a motor heater. Speed control requires a drive.',
+      },
+      {
+        q: 'Does a soft starter reduce starting current enough to run on a generator?',
+        a: 'Usually. A generator sized for an across-the-line start must handle six times full-load current; with a soft starter at a 300 percent limit, the generator can be much smaller, or the same generator can start a larger pump. Check the generator manufacturer sizing for the starting profile.',
+      },
+      {
+        q: 'Is soft stop always a good idea on a pump?',
+        a: 'It is a good idea where check valve slam or water hammer is a problem. On a station with a large static head, a long soft stop has the pump running at a speed where it moves no water while still heating, so the stop time is set short and the check valve is chosen for the application. On a very short force main it may not be needed at all.',
+      },
+      {
+        q: 'What fails on a soft starter?',
+        a: 'Thyristors, usually from heat or a short-circuit event, and the bypass contactor, from ordinary contactor wear. Keep the starter cool and the enclosure clean. A starter with an internal bypass and correct upstream protection lasts as long as a contactor.',
+      },
+    ],
+    related: [
+      '/controls/control-panels/pump-panels/vfd',
+      '/controls/control-panels/pump-panels/hoa',
+      '/controls/control-panels/panel-design/sccr',
+      '/controls/control-panels/panel-design/heat-calculations',
+      '/water-wastewater/wastewater-systems/lift-stations/duplex-lift-stations',
+      '/troubleshooting/pump-troubleshooting/pump-will-not-start',
+    ],
+  },
+  {
+    path: '/controls/control-panels/panel-components/circuit-breakers',
+    kind: 'reference',
+    title: 'Circuit Breakers in Control Panels',
+    summary:
+      'Miniature, molded-case, and supplementary protectors: what each is listed to do, how a trip curve is read, where the NEC and UL 508A set the rules, and how breaker choice drives the short-circuit current rating of the whole panel.',
+    answer:
+      'A circuit breaker in a control panel is chosen by what it is listed to protect, not only by its ampere rating. Molded-case and miniature circuit breakers listed to UL 489 provide branch circuit protection; supplementary protectors listed to UL 1077 do not and may only be used downstream of branch protection. The trip curve sets how the breaker responds to overload and to fault current, and the interrupting rating, together with any series rating, sets the short-circuit current rating of the panel.',
+    keyPoints: [
+      'UL 489 breakers protect branch circuits. UL 1077 supplementary protectors do not, whatever they look like.',
+      'The ampere rating handles overload. The interrupting rating handles a fault. Both must be right.',
+      'Trip curves B, C, and D on miniature breakers differ only in the instantaneous trip point.',
+      'The panel SCCR is set by the weakest device, and breakers are usually where it is won or lost.',
+      'A breaker feeding a drive or a transformer needs a curve that rides through inrush.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['Panels', 'UL 508A', 'NEC', 'Power'],
+    blocks: [
+      { t: 'h2', text: 'Three devices that look alike' },
+      {
+        t: 'table',
+        head: ['Device', 'Listing', 'What it may protect', 'Typical use'],
+        rows: [
+          ['Molded-case circuit breaker (MCCB)', 'UL 489', 'Branch circuits, feeders, and service equipment; may be the panel main', 'Panel main disconnect, motor branch circuits above the miniature range, feeders to sub-panels'],
+          ['Miniature circuit breaker (MCB), UL 489 type', 'UL 489', 'Branch circuits, within its rating', 'Control transformer primaries, small motor branches, receptacles and lighting in the panel'],
+          ['Supplementary protector', 'UL 1077', 'Only equipment already protected by an upstream branch circuit device; provides supplementary protection within a piece of equipment', '24 V DC distribution, individual instrument and PLC circuits, small control loads, all downstream of a UL 489 device or a fuse'],
+        ],
+      },
+      {
+        t: 'p',
+        text: 'The supplementary protector is the one that causes trouble. It is a DIN-rail device that looks exactly like a miniature breaker, is often cheaper, and is sometimes sold on the same catalog page. It is not listed to protect a branch circuit, and UL 508A does not permit it where branch circuit protection is required. Used where it belongs, downstream of proper protection to subdivide a control circuit, it is a good device. Used as the only protection on a transformer primary or a motor circuit, it is a listing violation and a hazard.',
+      },
+      { t: 'h2', text: 'Ratings' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Ampere rating', def: 'The continuous current the breaker carries without tripping. Chosen from the conductor ampacity and the load, with the NEC rules for motor circuits allowing a higher rating than the conductor ampacity so the motor branch rides through starting.' },
+          { term: 'Voltage rating', def: 'The system voltage the breaker is listed for, including whether it is rated for the grounded or ungrounded system and for DC where used on DC.' },
+          { term: 'Interrupting rating', def: 'The maximum fault current the breaker can interrupt safely at its rated voltage. Common miniature breakers are 10 kA; molded-case breakers range from 10 kA to 200 kA. A breaker applied above its interrupting rating can fail to open, or fail violently.' },
+          { term: 'Frame and trip unit', def: 'On molded-case breakers, the frame sets the physical size and maximum rating; the trip unit sets the actual rating and, on electronic trip units, the adjustable settings.' },
+          { term: 'Poles', def: 'One, two, or three, with common trip matching the circuit. A three-phase motor circuit requires common trip on all three poles.' },
+        ],
+      },
+      { t: 'h2', text: 'Trip curves' },
+      {
+        t: 'p',
+        text: 'A breaker has two trip mechanisms. The thermal element responds to sustained overload with an inverse time characteristic: a small overload takes minutes, a large one takes seconds. The magnetic or instantaneous element responds to fault current with no intentional delay. The trip curve plots both against current, and for miniature breakers the curve letter names the instantaneous trip range.',
+      },
+      {
+        t: 'table',
+        head: ['Curve', 'Instantaneous trip', 'Use'],
+        rows: [
+          ['B', '3 to 5 times rated current', 'Resistive loads, long circuits where fault current is low, lighting and receptacles'],
+          ['C', '5 to 10 times rated current', 'General purpose; control transformers with modest inrush, small motors, most control circuits'],
+          ['D', '10 to 20 times rated current', 'High inrush: transformers, drives with large DC bus capacitors, motors with high starting current'],
+        ],
+      },
+      {
+        t: 'p',
+        text: 'A C-curve breaker on a control transformer primary that trips at every power-up is not defective; the transformer inrush is above its instantaneous trip point, and a D-curve breaker or a time-delay fuse is the answer. The reverse error, a D-curve breaker on a long circuit with low available fault current, may never see enough current to trip instantaneously and clears a fault on the slow thermal element instead.',
+      },
+      { t: 'h2', text: 'Breakers and the panel SCCR' },
+      {
+        t: 'p',
+        text: 'The short-circuit current rating of an industrial control panel under UL 508A Supplement SB is limited by the lowest-rated device in the power circuit, and the interrupting rating of a breaker is one of those numbers. A panel built with 10 kA miniature breakers has a 10 kA SCCR at best, whatever else is in it. Raising it means breakers with a higher interrupting rating, or a tested series combination in which an upstream breaker or fuse lets a downstream device be applied above its own rating, or current-limiting fuses ahead of the low-rated devices. The combinations must be published by the manufacturer; a series rating is never assumed. The SCCR page walks through the method.',
+      },
+      { t: 'h2', text: 'Selection notes' },
+      {
+        t: 'ul',
+        items: [
+          'Drives: the drive manufacturer publishes the required upstream protection and the SCCR that results. Use the listed combination. Many drives require specific breakers or semiconductor fuses to achieve their published rating.',
+          'Control transformers: primary protection per NEC 450.3 and the transformer inrush; a D-curve breaker or a time-delay fuse. Secondary protection sized for the secondary conductor.',
+          'DC distribution: a 24 V DC circuit is protected by a device rated for DC. Many miniature breakers are rated for DC at reduced voltage; supplementary protectors are the common choice downstream of the power supply, and electronic circuit protectors that trip faster than a switch-mode supply current-limits are the better one.',
+          'Coordination: a fault on one branch should trip that branch, not the main. Selective coordination is a curve overlay exercise, and on small panels it is usually achieved by a large enough ratio between the main and the branches.',
+          'Auxiliary contacts: a breaker feeding a critical circuit should report its state to the controller. Alarming a tripped breaker is cheaper than finding it at a site visit.',
+          'Lockout: the main breaker in a panel is the disconnect that is locked out for service. It needs a lockable handle, and the panel needs to be arranged so it is the only source, or every source is identified.',
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Interrupting rating is not a place to save money',
+        text: 'A breaker that is asked to interrupt more current than its rating may not open at all, and the arc can destroy the breaker and the panel and injure the person standing in front of it. Determine the available fault current at the panel, mark the SCCR on the panel, and never install a breaker whose interrupting rating is below the available fault current without a listed series combination that covers it.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Can I use a supplementary protector on a transformer primary?',
+        a: 'Not as the branch circuit protection. A UL 1077 device can be used to subdivide a circuit that already has branch protection upstream, so a supplementary protector on a transformer primary is acceptable only if a UL 489 breaker or a fuse ahead of it provides the protection the code requires, and the supplementary device is then redundant.',
+      },
+      {
+        q: 'Why does the breaker on my drive trip at power-up?',
+        a: 'The drive charges its DC bus capacitors at power-up and the inrush exceeds the breaker instantaneous trip. Most drives have a precharge circuit that limits it; if the breaker still trips, it is the wrong curve, the wrong rating, or not the device the drive manufacturer specified.',
+      },
+      {
+        q: 'Fuse or breaker?',
+        a: 'Fuses interrupt higher fault currents, limit current more effectively, and are less expensive for a high SCCR. Breakers are resettable, report their state, and are easier to operate. Many panels use both: current-limiting fuses at the main for the SCCR, breakers on the branches for operation.',
+      },
+      {
+        q: 'How do I find the available fault current at my panel?',
+        a: 'From the utility at the service, then calculated through the transformers and conductors to the panel. The utility provides the value at the service; a short-circuit calculation, done by the engineer or with the transformer impedance and conductor data, gives the value at the panel. The NEC requires the value to be marked on service equipment and the SCCR on industrial control panels.',
+      },
+    ],
+    related: [
+      '/controls/control-panels/panel-design/sccr',
+      '/controls/control-panels/panel-design/ul-508a',
+      '/controls/control-panels/panel-components/fuses',
+      '/controls/control-panels/pump-panels/vfd',
+      '/how-to/panel-how-to/size-a-power-supply',
+      '/controls/control-panels/panel-design/component-layout',
+    ],
+  },
+  {
+    path: '/controls/control-panels/panel-components/fuses',
+    kind: 'reference',
+    title: 'Fuses in Control Panels',
+    summary:
+      'Fuse classes, time-delay and fast-acting types, current limitation and what it does for the panel short-circuit rating, semiconductor fuses for drives, control circuit and DC fusing, and the habits that make a blown fuse a diagnosis instead of a mystery.',
+    answer:
+      'A fuse is a one-time overcurrent device whose class defines its physical form, voltage and interrupting rating, and current-limiting performance. Class J, CC, and RK current-limiting fuses interrupt up to 200 kA and limit the let-through current, which is how a control panel achieves a high short-circuit current rating with ordinary components downstream. Time-delay types ride through motor and transformer inrush; fast-acting and semiconductor types protect drives and electronics. A fuse is sized to the conductor and load, replaced only with the same class and rating, and its blowing is recorded as a symptom.',
+    keyPoints: [
+      'The class sets the form, the interrupting rating, and the let-through. Rejection features stop the wrong class fitting.',
+      'Current-limiting fuses are the least expensive route to a high panel SCCR.',
+      'Time-delay for motors and transformers; fast-acting for electronics; semiconductor for drives.',
+      'Fuse the ungrounded conductor, and fuse DC with a DC-rated fuse.',
+      'A fuse that blew had a reason. Replace it once; if it blows again, find the reason.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['Panels', 'UL 508A', 'NEC', 'Power'],
+    blocks: [
+      { t: 'h2', text: 'Why fuses are still everywhere' },
+      {
+        t: 'p',
+        text: 'A fuse is a calibrated link that melts on overcurrent. It has no mechanism, no springs, and no contacts to wear, which makes it the most reliable overcurrent device available, and the current-limiting types clear a fault so fast that the peak current is cut off before it reaches its prospective value. That last property, current limitation, is why fuses dominate at the top of a control panel: they protect everything downstream from a fault current the downstream devices could never interrupt on their own.',
+      },
+      {
+        t: 'p',
+        text: 'The price is that a fuse is used once. It cannot be reset, it does not report its state unless a blown-fuse indicator or a monitoring relay is added, and a technician without the right replacement in the truck leaves the station down. Those trade-offs decide where fuses go and where breakers go.',
+      },
+      { t: 'h2', text: 'Classes' },
+      {
+        t: 'table',
+        head: ['Class', 'Voltage and interrupting rating', 'Character', 'Where it is used'],
+        rows: [
+          ['Class J', '600 V AC; 200 kA', 'Current-limiting; time-delay and fast-acting versions; rejection dimensions', 'Panel mains and motor branch circuits where a high SCCR is needed; feeders to drives'],
+          ['Class CC', '600 V AC; 200 kA', 'Current-limiting; small, 13/32 by 1-1/2 in, with a rejection pin; time-delay and fast-acting', 'Control transformers, small motors, and control circuits up to 30 A; the workhorse of UL 508A panels'],
+          ['Class RK1 and RK5', '250 and 600 V AC; 200 kA', 'Current-limiting with a rejection slot; RK1 limits more than RK5; RK5 is the common time-delay motor fuse', 'Disconnect switches, motor circuits, older panels; fits Class H holders unless rejection clips are used'],
+          ['Class H and K', '250 and 600 V AC; 10 kA (H), up to 200 kA (K)', 'Not current-limiting (H); K is limiting but has no rejection feature', 'Legacy; H fuses hold a panel SCCR at 10 kA'],
+          ['Class T', '300 and 600 V AC; 200 kA', 'Very fast, very compact, current-limiting', 'Where space is tight and current limitation matters'],
+          ['Class L', '600 V AC; 200 kA; 601 A and up', 'Bolt-in, large', 'Large feeders and services'],
+          ['Semiconductor (high speed)', 'Per manufacturer; very fast', 'Extremely low let-through energy', 'Drives and soft starters where the manufacturer requires them for the listed SCCR'],
+          ['Midget and glass (supplementary)', 'Low', 'No branch circuit listing', 'Instrument and electronics protection downstream of branch protection only'],
+        ],
+      },
+      {
+        t: 'p',
+        text: 'Rejection features matter. A Class J fuse will not fit an H holder and an H fuse will not fit a J holder, so a panel built with Class J holders cannot be downgraded by a replacement from the wrong bin. Class R holders with rejection clips accept only R fuses; the same holders without clips accept Class H, and a 10 kA fuse in a 200 kA position takes the panel SCCR down with it.',
+      },
+      { t: 'h2', text: 'Time-delay and fast-acting' },
+      {
+        t: 'p',
+        text: 'A time-delay fuse carries a defined overload for a defined time, typically 500 percent for ten seconds, without opening. That rides through motor starting and transformer inrush while still clearing a fault quickly, and it is the type on nearly every motor and transformer circuit. A fast-acting fuse opens on a small overload in a fraction of a second and is used where the load has no inrush and the downstream device is sensitive: electronics, some rectifiers, and instrument circuits. A semiconductor fuse is faster still and is chosen by the let-through energy against what the drive or thyristor can survive.',
+      },
+      {
+        t: 'table',
+        head: ['Load', 'Fuse type', 'Sizing basis'],
+        rows: [
+          ['Motor branch circuit', 'Time-delay (Class J, CC, or RK5)', 'NEC 430.52: up to 175 percent of motor full-load current for time-delay fuses, with the next size up allowed if needed for starting'],
+          ['Control transformer primary', 'Time-delay (Class CC common)', 'NEC 450.3 and the transformer inrush; commonly 125 to 300 percent of primary current depending on size'],
+          ['Drive input', 'Class J, CC, or semiconductor as the drive manufacturer lists', 'The listed combination, for the published SCCR'],
+          ['Control circuit', 'Class CC or a supplementary fuse', 'Conductor ampacity per UL 508A, and the smallest wire in the circuit'],
+          ['24 V DC branches', 'DC-rated fuse or electronic protector', 'Load plus the wire, and the ability of the supply to clear it'],
+          ['Instrument loops', 'Small fast-acting', 'A fraction of an amp; protects the wiring more than the device'],
+        ],
+      },
+      { t: 'h2', text: 'Current limitation and the panel SCCR' },
+      {
+        t: 'p',
+        text: 'A current-limiting fuse clears a large fault within the first quarter cycle, before the current reaches its peak, and the manufacturer publishes the peak let-through current for each fuse at each prospective fault level. UL 508A Supplement SB allows the SCCR of the power circuit downstream of a current-limiting fuse to be raised in defined cases, and allows tested series combinations of fuses with breakers, contactors, and overload relays to be applied at the fuse rating. In practice, a set of Class J fuses at the main is the least expensive way to get a control panel from a 5 or 10 kA rating to 65 or 100 kA, and it is the reason so many panels have fuses ahead of breakers.',
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'Use the published combination',
+        text: 'A series or let-through rating exists only where the manufacturer of the downstream device has tested and published it with that fuse class and size. The panel builder documents the combination in the SCCR calculation. Substituting a different class or a larger fuse breaks the rating, even if the fuse is physically interchangeable.',
+      },
+      { t: 'h2', text: 'Control and DC circuits' },
+      {
+        t: 'ul',
+        items: [
+          'Fuse the ungrounded conductor only. A fuse in the grounded conductor of a control circuit can open and leave the circuit energized through ground.',
+          'The fuse protects the wire. A 1 A control circuit on 16 AWG wire can have a 10 A fuse under UL 508A; the wire, not the load, sets the maximum.',
+          'DC fuses are rated for DC. An AC fuse on a 125 V DC circuit may not extinguish the arc. At 24 V DC most fuses are fine, but check the DC rating on anything above 60 V.',
+          'A switch-mode power supply current-limits rather than delivering a large fault current, so a fuse downstream may never see enough current to open quickly. Electronic protectors that trip on a small overcurrent in milliseconds, or a supply with adequate peak current capability, are the answer on 24 V DC distribution.',
+          'Blown-fuse indicators and fuse-monitoring relays on critical circuits bring the state to the controller. A blown control fuse at a remote station that reports itself is a phone call instead of an overflow.',
+        ],
+      },
+      { t: 'h2', text: 'When a fuse blows' },
+      {
+        t: 'p',
+        text: 'A fuse opens because the current through it exceeded its rating for longer than its curve allows. That is a fact about the circuit, not about the fuse. Replace it once, with the same class, rating, and type. If it opens again, the circuit has a fault, an overload, or a load with more inrush than the fuse was chosen for, and the fix is finding which, not a bigger fuse. Keep spares of every fuse in the panel, in the panel, with the fuse schedule on the drawing so the next person knows what goes where.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Can I replace a Class J fuse with a Class RK5 of the same amperage?',
+        a: 'They do not physically interchange, which is by design. Even where two classes fit the same holder, such as Class H in an unclipped Class R holder, the interrupting rating and let-through differ, and the panel SCCR calculation was done with the class on the drawing. Replace with the class specified.',
+      },
+      {
+        q: 'Why does my panel have fuses and breakers both?',
+        a: 'The fuses at the main provide the interrupting rating and the current limitation that give the panel its SCCR. The breakers on the branches give resettable, reportable protection for daily operation. It is a common and sensible arrangement.',
+      },
+      {
+        q: 'Is a fuse holder with a blown-fuse light worth it?',
+        a: 'On any circuit whose loss matters and is not otherwise alarmed, yes. The light shows the technician which fuse opened without pulling each one, and a version with a contact tells the controller. On a 24 V DC distribution block feeding a dozen loops, indicated fuses save an hour per event.',
+      },
+      {
+        q: 'How do I size the fuse for a control transformer?',
+        a: 'From the transformer nameplate primary current and the NEC 450.3 table, using a time-delay fuse to ride through the inrush, which can be 20 to 30 times rated current for the first half cycle on a small transformer. Most transformer manufacturers publish a fuse recommendation by kVA and voltage; use it, and use Class CC in a UL 508A panel.',
+      },
+    ],
+    related: [
+      '/controls/control-panels/panel-components/circuit-breakers',
+      '/controls/control-panels/panel-design/sccr',
+      '/controls/control-panels/panel-design/ul-508a',
+      '/how-to/panel-how-to/size-a-power-supply',
+      '/controls/plc-systems/plc-fundamentals/power-supplies',
+      '/controls/control-panels/pump-panels/vfd',
+    ],
+  },
 ];

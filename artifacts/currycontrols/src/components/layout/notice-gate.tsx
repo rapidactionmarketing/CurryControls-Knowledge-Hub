@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Check, ShieldCheck } from 'lucide-react';
-import { OWNERSHIP_NOTICE } from '@/data/site';
+import { Link } from 'wouter';
+import { DISCLAIMERS, OWNERSHIP_NOTICE } from '@/data/site';
 
 /**
  * Ownership and affiliation notice.
@@ -99,6 +100,15 @@ export function NoticeGate() {
             </p>
           ))}
         </div>
+
+        {/* Kept outside the ownership text so the original notice stays verbatim. Following
+            the link counts as proceeding, so it accepts before it navigates. */}
+        <p className="mt-4 text-[0.85rem] leading-6 text-[hsl(var(--ink-2))]" data-testid="notice-risk">
+          {DISCLAIMERS.risk}{' '}
+          <Link href="/disclaimer" className="cc-link" onClick={accept}>
+            Read the full disclaimer.
+          </Link>
+        </p>
 
         <div className="mt-6 border-t border-[hsl(var(--rule))] pt-5">
           <p className="text-[0.78rem] leading-5 text-[hsl(var(--ink-2))]">

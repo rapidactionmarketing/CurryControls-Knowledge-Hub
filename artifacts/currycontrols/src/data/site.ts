@@ -54,6 +54,14 @@ export const DISCLAIMERS = {
     'CurryControls.com is independently owned by Eric Sullivan and is not affiliated with Curry Controls Company.',
   projects: 'A Personal Project of Eric Sullivan',
 
+  /** One line, used wherever there is room for only one: the notice, the footer, compact blocks. */
+  risk:
+    'Everything on this site, including the calculators and tools, is general reference information used entirely at your own risk.',
+
+  /** The liability sentence, shown with every calculator and reference table. */
+  liability:
+    'To the fullest extent permitted by law, CurryControls.com, Eric Sullivan, and any contributors accept no responsibility or liability for any loss, damage, injury, system failure, business interruption, or other consequence arising from the use of, or reliance on, anything provided here.',
+
   /**
    * Shown on every calculator. Calculators are the highest-consequence
    * content on this site: a wrong conductor size or a wrong overcurrent
@@ -74,6 +82,20 @@ export const DISCLAIMERS = {
   /** Reinforces that code compliance is determined by the AHJ, not by a website. */
   codeAuthority:
     'Code compliance is determined by the authority having jurisdiction and by the edition of the code adopted where the work is performed. Nothing on this site determines compliance, approves an installation, or substitutes for a design prepared and sealed by a qualified engineer where one is required.',
+} as const;
+
+/**
+ * The site disclaimer, shown first on /disclaimer. Condensed from the owner's
+ * wording without dropping any of its substance: reference purposes only, no
+ * guarantee, the reader verifies, use at own risk, no liability.
+ */
+export const SITE_DISCLAIMER = {
+  title: 'Disclaimer',
+  paragraphs: [
+    'Everything on CurryControls.com, including articles, calculations, examples, diagrams, and software tools, is provided for general educational and reference purposes only. Reasonable effort goes into accuracy, but nothing here is guaranteed to be accurate, complete, current, or suitable for any purpose, and calculators and tools may contain errors, assumptions, approximations, or omissions. None of it should be the sole basis for an engineering, design, safety, regulatory, financial, or operational decision.',
+    'You are responsible for independently verifying all information and calculations against current codes, standards, project requirements, manufacturer documentation, and qualified professional judgment before applying them to any real system.',
+    'Use of this website and its information is entirely at your own risk. To the fullest extent permitted by law, CurryControls.com, Eric Sullivan, and any contributors disclaim all responsibility and liability for any loss, damage, injury, system failure, business interruption, or other consequence arising from the use of, or reliance on, information or tools provided here.',
+  ],
 } as const;
 
 /** Topic options shared by the contact page form and the contact CTA. */

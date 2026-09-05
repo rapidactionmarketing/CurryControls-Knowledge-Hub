@@ -1875,4 +1875,406 @@ export const SCADA_ENTRIES: Entry[] = [
       '/controls/scada-hmi/hmi-design/trends',
     ],
   },
+  {
+    path: '/controls/scada-hmi/historian-data/historian-architecture',
+    kind: 'reference',
+    title: 'Historian Architecture',
+    summary:
+      'How process history is collected, stored, and served: the collector, the archive, and the client layers, where the historian sits relative to SCADA and the DMZ, single-server and tiered designs for a utility, the store-and-forward buffer that survives outages, and the sizing that decides how many years fit on a disk.',
+    answer:
+      'A historian is a time-series database built for process data, with a collector that reads tags from SCADA or directly from controllers, an archive that stores the values compactly by time, and a server that answers queries from trends, reports, and analysis tools. In a utility it usually runs on the SCADA server or beside it in the control zone, replicates to a read-only copy in the DMZ for business users, buffers data locally at collectors so an outage does not lose history, and is sized by tag count, collection rate, and retention. The architecture decides whether the data is complete, whether it is available where people need it, and whether it survives the server it lives on.',
+    keyPoints: [
+      'Three layers: collectors that read, an archive that stores, a server that answers queries.',
+      'Collect at the source. A historian fed only through SCADA inherits every SCADA gap.',
+      'Store-and-forward at every collector, so an outage delays data instead of losing it.',
+      'One historian in the control zone; a replica in the DMZ for everyone else.',
+      'Size it by tags, rate, and retention, and plan the archive for years, not months.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['SCADA', 'Design', 'Networking', 'Documentation'],
+    blocks: [
+      { t: 'h2', text: 'The three layers' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Collectors', def: 'Software that reads values from a source and sends them to the archive: an OPC or a native driver reading the SCADA tag database, a driver reading controllers directly, a calculation engine producing derived tags, a manual entry interface for lab results. Each collector runs where it can see its source and buffers what it reads until the archive acknowledges it.' },
+          { term: 'The archive', def: 'The time-series store: for each tag, a sequence of timestamp, value, and quality, compressed and indexed by time. Not a general relational database, although some historians sit on one; the access pattern, append at the end and read ranges by time, is what the store is built for.' },
+          { term: 'The server', def: 'The service that answers queries: raw values in a range, interpolated or sampled values at an interval, aggregates such as averages and totals, and event frames. Trend clients, reports, spreadsheets, and analysis tools all talk to it, and it is the layer that is exposed to users.' },
+        ],
+      },
+      { t: 'h2', text: 'Where it sits' },
+      {
+        t: 'p',
+        text: 'In the Purdue and zone models the historian is a control zone system, because it reads from controllers and SCADA and because its data is operational. Business users need the data too, and they do not get into the control zone to read it. The standard arrangement is a primary historian in the control zone collecting everything, and a replica or a relay in the industrial DMZ that the primary pushes data to, which the business network reads. The DMZ copy is read-only, holds whatever subset the business needs, and can be rebuilt from the primary. The push is outbound from the control zone, never a pull from the DMZ, and the DMZ design page explains why.',
+      },
+      {
+        t: 'table',
+        head: ['Design', 'Where the pieces run', 'Fits', 'Watch for'],
+        rows: [
+          ['Historian on the SCADA server', 'Collector, archive, and server on the same machine as SCADA', 'Small utilities; a single-server SCADA', 'One machine to lose; disk and CPU shared with SCADA; a SCADA rebuild must restore the archive too'],
+          ['Dedicated historian server', 'Collectors on the SCADA servers; archive and server on their own machine', 'Mid-size utilities; redundant SCADA', 'The archive machine needs its own backup and its own redundancy decision'],
+          ['Tiered', 'Site historians at plants collecting locally; a central historian aggregating', 'Multi-plant utilities; sites with intermittent links', 'Two configurations to maintain; tag naming consistent across tiers'],
+          ['Cloud or hosted tier', 'The control zone historian pushes to a hosted service for analytics and business access', 'Utilities wanting analytics without building it', 'Outbound only; the control zone keeps the authoritative copy; what the contract says about data ownership'],
+        ],
+      },
+      { t: 'h2', text: 'Collecting at the source' },
+      {
+        t: 'p',
+        text: 'A historian can collect from the SCADA tag database, which is convenient, because every tag is already there with its description and scaling. It inherits every gap SCADA has: a driver outage, a SCADA server failover, a tag that SCADA polls slowly, a value SCADA clamps or rounds. For the tags that matter most, compliance values, flow totals, and anything analyzed later, a collector reading the controller directly, with its own poll and its own buffer, is more complete. Many utilities collect the bulk through SCADA and the critical few at the source; the data collection page covers rates and deadbands.',
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Store-and-forward is not optional',
+        text: 'A collector that sends values to the archive and discards them if the archive does not answer loses data on every network hiccup, server restart, and failover. Every collector buffers locally, to disk, for at least as long as the longest outage the design anticipates, and forwards when the archive is back. The buffer size is a design parameter and is tested by stopping the archive and confirming the data arrives afterward.',
+      },
+      { t: 'h2', text: 'Redundancy and backup' },
+      {
+        t: 'p',
+        text: 'The historian archive is the utility memory: the compliance record, the trend that explains an incident, the year of data behind a capacity decision. Its redundancy decision is separate from the SCADA redundancy decision. Options range from a single server with nightly backups of the archive files, which loses a day on a disk failure, through a mirrored pair of historians fed by the same collectors, to the tiered design where the central historian is the backup for each site. Whatever the choice, the archive files are on the backup list, the backup is restored on a test schedule, and the restore is timed.',
+      },
+      { t: 'h2', text: 'Sizing' },
+      {
+        t: 'p',
+        text: 'The archive grows by the number of values stored per day, which is the tag count times the rate at which each tag changes enough to be stored, times the bytes per value after compression. A utility with 5,000 tags, most on deadband collection storing a few values a minute, stores on the order of a few hundred megabytes a day and a hundred gigabytes a year, which fits on ordinary disks for a decade. The numbers move fast with collection rate: 5,000 tags at one-second full collection is fifty times that. The design sets the rate per tag from what the value is for, keeps the compliance tags at the rate the rule requires, and plans the disk for the retention policy plus growth.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Do we need a historian if SCADA keeps trends?',
+        a: 'SCADA trend buffers are usually short, a few days to a few weeks, on the SCADA server, in a format only SCADA reads. A historian keeps years, serves reports and spreadsheets, survives the SCADA server, and is where compliance records live. Any utility that reports to a regulator from its data needs one, and most SCADA platforms include one.',
+      },
+      {
+        q: 'Should the historian collect from the PLCs or from SCADA?',
+        a: 'From SCADA for the bulk, because the tags are already named and scaled there. From the controllers directly for the tags where completeness matters, so a SCADA problem does not become a data gap. Direct collection adds a driver connection to each controller; count it against the controller connection limits.',
+      },
+      {
+        q: 'How do business users get the data?',
+        a: 'From the DMZ replica, through the historian client tools, a web portal, or a spreadsheet add-in that queries the DMZ server. Never by a connection into the control zone, and never by the SCADA client on an office computer.',
+      },
+      {
+        q: 'What happens to the historian when the SCADA server is rebuilt?',
+        a: 'If the historian is on the SCADA server, its archive is restored from backup as part of the rebuild, and every collector has been buffering in the meantime. If it is on its own server, nothing happens to it, and the collectors on the rebuilt SCADA server reconnect. The second answer is the reason for the dedicated server.',
+      },
+    ],
+    related: [
+      '/controls/scada-hmi/scada-fundamentals/historians',
+      '/controls/scada-hmi/historian-data/data-collection',
+      '/controls/scada-hmi/historian-data/compression',
+      '/cybersecurity/network-segmentation/dmz-design',
+      '/controls/scada-hmi/scada-fundamentals/redundancy',
+      '/cybersecurity/backups/what-to-back-up',
+    ],
+  },
+  {
+    path: '/controls/scada-hmi/historian-data/data-collection',
+    kind: 'reference',
+    title: 'Historian Data Collection',
+    summary:
+      'Deciding what the historian stores and how often: polled versus exception collection, the deadband per tag, rates for control loops, levels, totals, and compliance values, timestamps at the source, quality codes, calculated tags, and the tag list review that keeps a historian from filling with noise and missing what matters.',
+    answer:
+      'Historian data collection is configured per tag: the source, the collection mode, the rate or the deadband, and how the timestamp and quality are handled. Fast-changing control values are collected at a rate matched to the loop; slow values on a deadband that stores a new point only when the value moves; compliance values at the interval the rule requires regardless of change; and digital states on every change. The timestamp comes from the source where the source has a clock, quality is stored with every value so a gap is a gap and not a zero, and the tag list is reviewed on a schedule against what the trends and the reports actually use.',
+    keyPoints: [
+      'Configure per tag, from what the value is for. One rate for everything is wrong for most of them.',
+      'Deadband collection stores changes; polled collection stores samples. Use both, deliberately.',
+      'Compliance values are collected at the required interval whether or not they changed.',
+      'Quality is stored with the value. A gap must read as a gap, never as zero or as the last value.',
+      'Review the tag list against the trends and reports. Add what is missing, and stop collecting what nobody reads.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['SCADA', 'Design', 'Documentation', 'Analog'],
+    blocks: [
+      { t: 'h2', text: 'Two collection modes' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Polled or periodic', def: 'The collector samples the value at a fixed interval and stores every sample. Simple, predictable, and the right mode for a compliance value that must exist at every interval. Wasteful for a value that does not move: a tank level sampled every second stores 86,400 nearly identical points a day.' },
+          { term: 'Exception or deadband', def: 'The collector watches the value and stores a new point when it changes by more than a deadband from the last stored point. A steady value stores nothing; a moving one stores every meaningful step. Efficient, and the mode most tags use. Its risk is a deadband set so wide that real movement is lost, or so narrow that noise is stored.' },
+          { term: 'Hybrid', def: 'Deadband with a maximum interval, so a steady value still stores a point every few minutes as proof of life. The usual configuration.' },
+        ],
+      },
+      { t: 'h2', text: 'Rates and deadbands by value type' },
+      {
+        t: 'table',
+        head: ['Value', 'Mode', 'Rate or deadband', 'Why'],
+        rows: [
+          ['Pressure or flow in a control loop', 'Polled, or deadband with a small band', '1 to 5 s', 'Loop tuning and oscillation analysis need the dynamics'],
+          ['Wet well or tank level', 'Deadband with a maximum interval', 'A fraction of an inch; a maximum interval of a minute', 'Cycles and rates of change matter; the value moves slowly'],
+          ['Chlorine residual, turbidity, pH', 'Polled at the compliance interval, plus deadband', 'Every 15 minutes for compliance; deadband between for the trend', 'The rule requires a value at the interval regardless of change'],
+          ['Flow totals', 'Polled', 'Every minute or every hour, plus a daily snapshot', 'Totals are read at fixed times; a missing sample breaks the arithmetic'],
+          ['Motor current, speed, power', 'Deadband', 'A percent of range', 'Wear trends and clog detection'],
+          ['Digital states: run, fault, mode, valve position', 'Every change', 'No deadband', 'Events; every transition is a fact'],
+          ['Alarm states', 'Every change', 'Through the alarm journal', 'Alarm analysis needs every event'],
+          ['Setpoints and tuning', 'Every change', 'No deadband', 'Who changed what and when; rarely changes'],
+          ['Communication status, poll success', 'Every change plus a periodic', 'A minute', 'Telemetry health'],
+          ['Weather, rain gauge', 'Polled', 'Every minute for rain; every 15 minutes otherwise', 'Correlation with inflow'],
+        ],
+      },
+      { t: 'h2', text: 'Timestamps' },
+      {
+        t: 'p',
+        text: 'A value has a time at which it was true, and the historian stores that time. Where the source has a synchronized clock, a controller or an RTU with time, the timestamp travels with the value and the historian keeps it, so a value that was buffered through an outage lands at the time it happened, not the time it arrived. Where the source has no clock, the collector timestamps it on receipt, and the collection latency is the error. Every clock in the system, controllers, SCADA servers, historian, is synchronized to one time source. A historian with values timestamped by three unsynchronized clocks cannot say which of two events came first.',
+      },
+      { t: 'h2', text: 'Quality' },
+      {
+        t: 'p',
+        text: 'Every stored value carries a quality: good, bad, uncertain, with a reason. When the driver loses the device, the collector stores a bad-quality marker at the time of the loss, and the trend shows a gap. When the device returns, a good value resumes. A historian that stores the last good value through an outage, or a zero, produces a trend that shows a steady level while the station was unreachable, and the report that comes from it is wrong. Collectors are configured to store quality transitions, trend clients draw gaps for bad quality, and reports exclude or flag bad-quality intervals.',
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'A flat line is not a steady process',
+        text: 'The most common historian misreading is a flat trend interpreted as a stable value when it is a frozen tag, a lost connection, or a collector that stopped. Quality markers make the gap visible. A trend of a wet well level that has not moved an inch in six hours is either a dry station or a dead collector, and the quality says which.',
+      },
+      { t: 'h2', text: 'Calculated tags' },
+      {
+        t: 'p',
+        text: 'Historians compute derived values from stored ones: a daily flow total from a rate, a pump run time from the run status, a starts count, a specific capacity from level and flow, a CT from residual and flow, a rolling average. Calculations run in the historian rather than the controller when they are for reporting rather than control, when they need history to compute, or when the controller has no spare capacity. Each calculation is documented as a tag with its formula and its inputs, so that a report reader can trace a number to its sources.',
+      },
+      { t: 'h2', text: 'The tag list review' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Export the collection configuration', text: 'Every tag with its mode, rate, deadband, and source.' },
+          { title: 'Compare with what is used', text: 'The historian usage log, the trend groups, the reports, and the compliance list. A tag collected at one second that no trend or report reads is a candidate for a slower rate or removal; a value that operators keep asking for and cannot find is a candidate to add.' },
+          { title: 'Check the deadbands against the trends', text: 'A trend that looks stepped is a deadband too wide; one that is fuzzy is a deadband narrower than the noise.' },
+          { title: 'Check the compliance tags', text: 'Every value the permit requires is collected at or faster than the required interval, in polled mode, with quality.' },
+          { title: 'Check the gaps', text: 'The bad-quality intervals over the period, by tag, and their causes. A tag with frequent gaps has a collection or a communication problem.' },
+          { title: 'Record the changes', text: 'The collection configuration is a document under change control; the review updates it.' },
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'What deadband should I use?',
+        a: 'Larger than the measurement noise and smaller than the change that matters. For a level in feet with an inch of noise, a deadband of a couple of inches stores the cycles and ignores the ripple. Look at the raw trend, note the noise band, and set the deadband above it. Then look at the stored trend and confirm nothing meaningful is missing.',
+      },
+      {
+        q: 'Should I collect everything at one second and sort it out later?',
+        a: 'No. The archive fills with noise, the trends of slow values become unreadable without resampling, and the queries slow down. Collect each tag for its purpose. Storage is cheap, but a historian that stores fifty times more than it needs is harder to back up, to replicate, and to query.',
+      },
+      {
+        q: 'How do I know the historian is collecting?',
+        a: 'A collector status tag per collector, alarmed, and a daily check that the compliance tags have values at every interval. A calculated tag that counts stored points per hour for a critical tag, alarmed when it drops, catches a stalled collector before the monthly report does.',
+      },
+      {
+        q: 'What about data from the lab and manual readings?',
+        a: 'Manual entry tags in the historian, with the sample time as the timestamp and the person as an attribute, so that lab results sit beside the online values on the same trend. Many historians provide a manual entry interface; where they do not, a spreadsheet import on a schedule does the job.',
+      },
+    ],
+    related: [
+      '/controls/scada-hmi/historian-data/historian-architecture',
+      '/controls/scada-hmi/historian-data/compression',
+      '/controls/scada-hmi/hmi-design/trends',
+      '/controls/scada-hmi/scada-fundamentals/historians',
+      '/troubleshooting/scada-troubleshooting/values-frozen-on-screen',
+    ],
+  },
+  {
+    path: '/controls/scada-hmi/historian-data/compression',
+    kind: 'reference',
+    title: 'Historian Compression',
+    summary:
+      'How historians store years of data on a disk: exception deadbands at the collector, swinging door compression at the archive, what each discards and what it keeps, the settings that turn a trend into a staircase, lossless alternatives, and how to check that the compressed data still tells the truth.',
+    answer:
+      'Historian compression reduces stored data by keeping only the points needed to reconstruct the signal within a tolerance: an exception deadband at the collector drops values that have not moved, and a swinging door algorithm at the archive drops values that lie on a straight line between kept points, within a compression deviation. Both are lossy by design, the loss is the deviation setting, and a deviation set wider than the process detail turns a trend into a sequence of straight segments. Modern storage makes aggressive compression unnecessary for most utilities; the settings are chosen per tag from what the trend must show, and checked by comparing raw and stored data on the tags that matter.',
+    keyPoints: [
+      'Two stages: exception at the collector, compression at the archive. Each has a deviation setting.',
+      'Swinging door keeps the points that a straight line cannot predict within the deviation.',
+      'The deviation is the loss. Set it below the detail the trend must show.',
+      'Storage is cheap now. Aggressive compression solves a problem most utilities no longer have.',
+      'Verify by trending raw against stored on a critical tag. If they differ visibly, the setting is wrong.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['SCADA', 'Design', 'Analog'],
+    blocks: [
+      { t: 'h2', text: 'Why compress at all' },
+      {
+        t: 'p',
+        text: 'Historians were designed when disk was expensive and a plant had tens of thousands of tags. Storing every sample of every tag was impossible; storing only what was needed to redraw the signal was the solution, and the algorithms that do it are still in every historian. Disk is now cheap and a utility has thousands of tags, not hundreds of thousands, so the pressure is gone. What remains is that compression, well set, produces a cleaner archive and faster queries, and, badly set, produces a record that has lost the thing someone will later need to see. The settings deserve the same attention as the collection rates.',
+      },
+      { t: 'h2', text: 'Exception and compression' },
+      {
+        t: 'table',
+        head: ['Stage', 'Where', 'Rule', 'Setting', 'What it removes'],
+        rows: [
+          ['Exception', 'At the collector, before sending', 'Send a value only if it differs from the last sent value by more than the exception deviation, or if the maximum time has passed', 'Exception deviation and maximum interval', 'Repeats of the same value; noise within the deviation'],
+          ['Compression', 'At the archive, before storing', 'Store a value only if a straight line from the last stored point cannot pass within the compression deviation of every value since; the swinging door', 'Compression deviation and maximum interval', 'Points that lie on a straight trend within the deviation'],
+        ],
+      },
+      {
+        t: 'p',
+        text: 'The two work together: exception thins the stream from the source, compression thins it again at the archive. Typical guidance sets the exception deviation to a little more than the measurement noise and the compression deviation to about twice the exception deviation. Both have a maximum interval, so that a perfectly steady value still stores a point periodically.',
+      },
+      { t: 'h2', text: 'Swinging door' },
+      {
+        t: 'p',
+        text: 'The compression algorithm most historians use is swinging door trending. When a value arrives, the archive asks whether a single straight line could be drawn from the last stored point through all the values received since, staying within the compression deviation of each. If yes, the newest value is held as a candidate and nothing is stored. If no, the previous candidate is stored as a new anchor and the line starts again from it. The result is a set of stored points from which the original signal can be reconstructed by straight-line interpolation within the deviation, and the count of stored points depends on how often the signal changes direction, not on how often it was sampled.',
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'What is lost is the shape between anchors',
+        text: 'Swinging door preserves the values at the anchors and guarantees the interpolated line stays within the deviation of every original value. It does not preserve the fine shape: a small oscillation within the deviation band disappears, a brief spike narrower than the band may be reduced, and a curve becomes a chord. For a level trend that is fine. For a pressure loop being tuned, where the oscillation is the signal, it is not, and the deviation for that tag is set to zero or the tag is exempted.',
+      },
+      { t: 'h2', text: 'Settings by tag' },
+      {
+        t: 'table',
+        head: ['Tag', 'Exception', 'Compression', 'Note'],
+        rows: [
+          ['Control loop PV, during tuning or analysis', 'Small, at the noise level', 'Zero, or off', 'The dynamics are the point'],
+          ['Level', 'A fraction of an inch', 'An inch or so', 'The cycles survive; the ripple does not'],
+          ['Compliance analyzer value', 'Small', 'Zero or very small', 'The record should be the measurement, not a reconstruction'],
+          ['Flow rate', 'A percent of range', 'Two percent', 'Totals come from a separate totalizer tag, not from integrating compressed rate'],
+          ['Motor current', 'A percent of range', 'Two percent', 'Wear trends are slow'],
+          ['Digital states', 'None', 'None', 'Every transition is stored'],
+          ['Setpoints', 'None', 'None', 'Every change is stored'],
+          ['Totalizers', 'None', 'None', 'A total is a fact at a time; never compress'],
+        ],
+      },
+      { t: 'h2', text: 'The staircase and the flat line' },
+      {
+        t: 'p',
+        text: 'Two symptoms say the settings are wrong. A trend that looks like a staircase, flat segments joined by steps, has an exception deviation wider than the movement of the value; the historian only stored the value when it had moved a whole step. A trend that is a straight line across hours while the value was moving has a compression deviation wider than the movement. Both are found by trending the live value from SCADA beside the stored value from the historian on the same chart. The live one is the truth; the stored one should match it as closely as the deviation allows.',
+      },
+      { t: 'h2', text: 'Lossless and modern alternatives' },
+      {
+        t: 'p',
+        text: 'Some historians and time-series databases now offer lossless compression, encoding the raw samples compactly without discarding any, at storage costs that are acceptable for utility tag counts. Where the platform offers it, a utility can store every sample of its critical tags losslessly and use deviation compression only on the bulk. The choice is per tag, and the compliance and the control analysis tags are the first candidates for lossless.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'What compression deviation should I use?',
+        a: 'For most analog tags, about twice the exception deviation, which is itself a little above the noise: for a level with an inch of noise, an exception of one and a half inches and a compression of three. Then trend live against stored and adjust. For anything analyzed later, tighter, down to zero.',
+      },
+      {
+        q: 'Does compression affect totals and averages?',
+        a: 'Averages and totals computed from compressed data are approximations within the deviation, which is usually fine for a daily average level and not fine for a billing or a compliance total. Totals come from a totalizer tag in the controller stored uncompressed, never from integrating a compressed rate.',
+      },
+      {
+        q: 'Can I turn compression off?',
+        a: 'Yes, for a tag or for the archive, and with modern storage many utilities do for their critical tags. The archive grows faster and queries return more points; the platform documentation gives the storage estimate. A middle path is a small deviation, which removes the noise and little else.',
+      },
+      {
+        q: 'Why does the historian trend not match the SCADA trend?',
+        a: 'The historian is showing compressed data and the SCADA buffer is showing raw samples, or the two are drawn at different sampling. A visible difference on a value that matters means the deviation is too wide; a small smoothing on a noisy value is expected.',
+      },
+    ],
+    related: [
+      '/controls/scada-hmi/historian-data/data-collection',
+      '/controls/scada-hmi/historian-data/historian-architecture',
+      '/controls/scada-hmi/hmi-design/trends',
+      '/controls/plc-systems/analog-control/deadband',
+      '/controls/plc-systems/analog-control/filtering',
+    ],
+  },
+  {
+    path: '/controls/scada-hmi/historian-data/reporting',
+    kind: 'reference',
+    title: 'Reporting from the Historian',
+    summary:
+      'Turning history into the reports a utility must produce: the monthly operating report, compliance reports for the regulator, daily operator summaries, pump run and energy reports, the calculations behind daily minimums, maximums, and totals, handling bad quality and gaps, and building reports once so they run every month without an engineer.',
+    answer:
+      'Historian reporting produces the daily, monthly, and compliance documents a utility owes its regulator and its management from the data the historian holds: totals from totalizer tags, daily minimums and maximums and averages from continuous values, run hours and starts from digital states, and compliance values at required intervals with any gaps flagged. Reports are built once as templates against a documented tag list, scheduled to run automatically, reviewed by an operator before submission, and archived with the data behind them. The calculations and the treatment of bad quality are written down, because a compliance number has to be defensible.',
+    keyPoints: [
+      'Every report number traces to a tag, a calculation, and a time window that are written down.',
+      'Totals come from totalizers; averages and extremes come from continuous values with quality respected.',
+      'Gaps are reported as gaps, with the reason, never filled silently.',
+      'Build the report as a template that runs on a schedule. A report that needs an engineer each month will be late.',
+      'An operator reviews and signs before a compliance report leaves the utility.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['SCADA', 'Documentation', 'Water', 'Wastewater'],
+    blocks: [
+      { t: 'h2', text: 'The reports a utility makes' },
+      {
+        t: 'table',
+        head: ['Report', 'Content', 'Frequency', 'Reader'],
+        rows: [
+          ['Daily operating summary', 'Flows, levels, residuals, chemical usage, pump run times, alarms, for the previous day', 'Daily, automatic, at shift start', 'Operators and the superintendent'],
+          ['Monthly operating report', 'Daily values for the month in the form the regulator prescribes: flows, treatment parameters, chemical feeds, with monthly totals, averages, and extremes', 'Monthly', 'The regulator; management'],
+          ['Compliance reports', 'The specific values the permit requires at the specific intervals: turbidity, residual, CT, discharge parameters, with exceedances and gaps', 'Monthly, or as the permit says', 'The regulator'],
+          ['Pump and equipment reports', 'Run hours, starts, energy, capacity trends per pump; alternation balance', 'Monthly', 'Maintenance'],
+          ['Energy report', 'Power and energy by facility and by pump, with cost where tariffs are known', 'Monthly', 'Management'],
+          ['Alarm reports', 'Alarm rates, the most frequent alarms, standing alarms, floods', 'Weekly or monthly', 'The alarm management review'],
+          ['Event and incident reports', 'The trend and event record for a period, for an investigation', 'On demand', 'The engineer; the regulator when asked'],
+        ],
+      },
+      { t: 'h2', text: 'The calculations' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Totals', def: 'From a totalizer tag in the controller, stored uncompressed, read at the report boundaries: the value at midnight minus the value at the previous midnight, with rollover handled. Never from integrating a stored flow rate, which is compressed and gapped.' },
+          { term: 'Daily minimum, maximum, and average', def: 'From the continuous tag over the day, using only good-quality values, with the count of good samples reported beside the result. A daily minimum residual from a day with a six-hour gap is a minimum of eighteen hours and the report says so.' },
+          { term: 'Values at an interval', def: 'For compliance tags collected at the required interval: the value at each interval, or the interval marked missing. The historian interpolates by default on many queries; compliance queries ask for the actual sample.' },
+          { term: 'Run hours and starts', def: 'From the digital run status: the sum of on durations, and the count of off-to-on transitions, in the period. A state that was on at the boundary is split correctly.' },
+          { term: 'Exceedances', def: 'Each interval where a value was above or below a permit limit, with the duration and the peak. Counted, listed, and matched to the alarm journal.' },
+          { term: 'Chemical usage', def: 'From day tank levels and deliveries, or from feeder totalizers, with strength corrections where the dose depends on it.' },
+        ],
+      },
+      { t: 'h2', text: 'Bad quality and gaps' },
+      {
+        t: 'p',
+        text: 'A report that fills a gap with the last value, with zero, or with an interpolation, without saying so, produces a compliance record that is wrong in a way an inspector can find. The rule is that a gap is reported as a gap: the interval is marked missing, the reason is given where known, a collector outage, a communication loss, an instrument out of service for calibration, and the statistic that depends on it is computed from what remains and labeled with the coverage. The permit usually says what a missing interval means and what must be done; the report follows it.',
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Interpolation is not data',
+        text: 'Historian query tools interpolate between stored points by default, which is right for a trend and wrong for a compliance report. A query for the residual at 02:15 returns a value on the line between the points at 02:00 and 02:30 even if the analyzer was offline at 02:15. Compliance reports query actual samples with quality, and the report template says so in its documentation.',
+      },
+      { t: 'h2', text: 'Building a report once' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Write the specification', text: 'Each number on the report: the tag, the calculation, the time window, the quality rule, the units and rounding, and the source of the permit requirement where there is one. This page is the report documentation and it goes with the template.' },
+          { title: 'Build the template', text: 'In the historian reporting tool, a spreadsheet with the historian add-in, or a reporting package, against the specification. Tags by name, not by copying values.' },
+          { title: 'Test against a known period', text: 'Run the report for a past month and compare every number with the previous method or a hand calculation. Differences are explained before the template is trusted.' },
+          { title: 'Schedule it', text: 'Automatic generation on the schedule, to a folder and an email, with the operator review step before anything is submitted.' },
+          { title: 'Version it', text: 'The template is a document under change control. A tag renamed in SCADA breaks it, and the change process catches that.' },
+          { title: 'Archive it', text: 'Every generated report is kept with the period it covers, alongside the calibration records and the data, for the retention period.' },
+        ],
+      },
+      { t: 'h2', text: 'Review and sign-off' },
+      {
+        t: 'p',
+        text: 'A compliance report is a statement by the utility. An operator or the operator in charge reads it before submission, checks the numbers that look wrong against the trend, notes the gaps and their reasons, and signs. Automatic generation removes the transcription errors that used to fill these reports; it does not remove the need for someone who understands the plant to look at the result. A report that says the residual was zero for a day because a collector stopped should be caught at review, not at the regulator.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Can the regulator accept a report generated from the historian?',
+        a: 'Yes, in the form the regulator prescribes, and increasingly by electronic submission. What the regulator expects is that the numbers are traceable, that gaps are reported as the rules require, and that the instruments behind them are calibrated and verified with records. The historian report is easier to defend than a handwritten log if the specification exists.',
+      },
+      {
+        q: 'Our daily average residual from the historian differs from the operator log. Why?',
+        a: 'The log records grab samples or readings at shift times; the historian averages every good sample over the day. Both are right and they answer different questions. The permit says which it wants. If it wants the continuous average, the historian; if it wants readings at times, the report takes samples at those times.',
+      },
+      {
+        q: 'How should exceedances be counted?',
+        a: 'The permit defines the limit, the averaging period, and what counts as an exceedance. The report implements that definition exactly, in the specification, and counts from the historian data at the permit interval. An alarm count from SCADA is not the same thing, because alarm setpoints usually sit below the limit.',
+      },
+      {
+        q: 'What if a tag was renamed and the report shows blanks?',
+        a: 'The template references the old name. The change process for SCADA tag renames includes the report templates; when it is missed, the fix is the template, and the blanks for the period are recovered by re-running the report after the fix, since the data was collected under the new name.',
+      },
+    ],
+    related: [
+      '/controls/scada-hmi/historian-data/data-collection',
+      '/controls/scada-hmi/historian-data/historian-architecture',
+      '/controls/scada-hmi/historian-data/compression',
+      '/controls/instrumentation/calibration/calibration-documentation',
+      '/controls/instrumentation/analytical/turbidity',
+      '/controls/scada-hmi/alarm-management/rationalization',
+    ],
+  },
 ];

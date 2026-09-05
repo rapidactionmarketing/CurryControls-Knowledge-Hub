@@ -438,4 +438,411 @@ export const TROUBLESHOOTING_ENTRIES: Entry[] = [
       '/controls/plc-systems/communications/ethernet-ip',
     ],
   },
+  {
+    path: '/troubleshooting/plc-troubleshooting/processor-faulted',
+    kind: 'troubleshooting',
+    title: 'Processor Faulted',
+    summary:
+      'A PLC with its fault light on and no logic running. How to read what it is telling you, the causes in order of likelihood, and how to restart it without repeating the fault.',
+    answer:
+      'A faulted processor has stopped executing logic on purpose, driven its outputs to their configured fault state, and recorded a fault code that says why. Read the code before doing anything else; it names the cause, and often the routine and the instruction. The usual causes are a watchdog timeout, a missing or wrong I/O module, a program error such as an array index out of range, a power dip, or a lost memory backup. Clearing the fault without fixing the cause restarts the clock on the next one.',
+    symptom:
+      'The fault indicator on the processor is lit or flashing red, the run light is off, the HMI shows stale values or a communication loss, and equipment has gone to whatever state its outputs fault to.',
+    keyPoints: [
+      'The fault code is the diagnosis. Read it from the programming software or the front panel display before clearing anything.',
+      'A recoverable fault can be cleared and the processor returned to run; an unrecoverable one needs a power cycle or a download.',
+      'Look at what changed: a module replaced, an online edit, a power event, or a new device on the network.',
+      'Outputs went to their configured fault state, and the process is wherever that left it. Deal with the process first.',
+      'A fault that recurs at intervals is usually a watchdog or a communication timeout, and the interval is a clue.',
+    ],
+    causes: [
+      { cause: 'Watchdog timeout from a scan that ran too long', check: 'The fault code names the watchdog. Look for a loop in logic, a large copy or search instruction, or a message instruction that blocks. The watchdog fault page covers it.' },
+      { cause: 'I/O module missing, wrong type, or failed', check: 'The I/O light flashes and the fault code names a slot or a connection. Compare the chassis against the I/O configuration. A module swapped for a different part number faults the processor on some platforms.' },
+      { cause: 'Remote rack or network connection lost', check: 'The connection to a remote rack, a drive, or a distributed I/O block is configured to fault the processor when it drops. Check the network light on the adapter and the switch port.' },
+      { cause: 'Program error', check: 'An array index out of range, a jump to a missing label, or an arithmetic overflow on platforms that fault on it. The code gives the routine and rung. Look at what data drove it there.' },
+      { cause: 'Power dip or brownout', check: 'The fault log shows a power-up event, and other equipment on the same feed logged it too. Check the panel supply and whether the controller has any backup.' },
+      { cause: 'Memory backup lost', check: 'The battery or energy storage light is on. The program may be gone entirely, and the processor is faulted because it has nothing to run. Restore from the nonvolatile card or a download.' },
+      { cause: 'Firmware mismatch after a replacement', check: 'A replacement processor or module with a different firmware revision than the project expects. The fault code or the software connection dialog says so.' },
+      { cause: 'Hardware failure', check: 'Repeated unrecoverable faults with no other cause, especially after heat or a lightning event. Swap the processor.' },
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['Troubleshooting', 'PLC'],
+    blocks: [
+      { t: 'h2', text: 'Before anything else' },
+      {
+        t: 'p',
+        text: 'The process is wherever the fault left it. Outputs went to hold, off, or a defined value depending on how each was configured, and that may have left a pump running or a valve closed. Put the equipment in a safe state by hand if it needs it, and only then start on the controller. The fault will still be there.',
+      },
+      {
+        t: 'callout',
+        kind: 'safety',
+        title: 'Equipment can move when the fault clears',
+        text: 'When the processor returns to run, every output takes the state the logic commands on the first scan. A pump that was called for before the fault starts. Clear a fault only with the equipment in a state where that is acceptable and with anyone near it warned.',
+      },
+      { t: 'h2', text: 'Read the fault' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Note the lights.', text: 'Fault flashing or solid, run off, I/O flashing or solid, battery lit or not. Photograph the front of the processor. That pattern is the first evidence and it is lost the moment someone cycles power.' },
+          { title: 'Connect and read the fault code.', text: 'The programming software shows the fault type, the code, and usually the routine and instruction. Some processors show the code on a front display. Write it down verbatim.' },
+          { title: 'Read the fault log.', text: 'Most platforms keep a log of the last several faults with timestamps. A pattern in the log, the same fault every few hours, or a fault at the same time each day, points at a cause the single code does not.' },
+          { title: 'Ask what changed.', text: 'A module replaced, an online edit, a new device on the network, a power event, a storm. The fault almost always follows a change, and the change is usually known to someone.' },
+        ],
+      },
+      { t: 'h2', text: 'Match the code to the cause' },
+      {
+        t: 'table',
+        caption: 'Reading the fault',
+        head: ['What the code or lights say', 'Likely cause', 'Where to look'],
+        rows: [
+          ['Watchdog, scan time, or task overlap', 'A scan ran too long', 'A loop, a large instruction, a blocking message; the watchdog fault page'],
+          ['I/O fault with a slot number', 'Module missing, wrong, or failed', 'The chassis and the I/O configuration'],
+          ['I/O fault with a connection or node', 'Remote rack or device connection lost', 'The network link lights and the switch'],
+          ['Program fault with a routine and rung', 'Array index, missing label, overflow', 'The data that drove the instruction there'],
+          ['Power-up or power loss in the log', 'Brownout or outage', 'The panel supply and backup'],
+          ['Memory or battery', 'Retention lost, program possibly gone', 'The backup card and the last download'],
+          ['Firmware or revision', 'Mismatch after a replacement', 'The firmware revision against the project'],
+        ],
+      },
+      { t: 'h2', text: 'Clear and restart' },
+      {
+        t: 'p',
+        text: 'A recoverable fault is cleared from the software or by cycling the keyswitch from program to run. If the cause has not been fixed, the processor faults again, sometimes within one scan, which is itself useful information. An unrecoverable fault needs a power cycle, and if the program did not survive it, a download from the last saved project or a restore from the nonvolatile card.',
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Know which copy of the program is current before you download',
+        text: 'If online edits were made since the last save and the processor lost its memory, the saved project is out of date. A download restores the old logic and the site runs on it without anyone noticing. Upload from a healthy processor regularly, and keep the saved project current.',
+      },
+      { t: 'h2', text: 'When it keeps happening' },
+      {
+        t: 'p',
+        text: 'A processor that faults every few days with the same code is not faulting at random. Faults that arrive at the same time of day follow a scheduled load, a backup, or a report that stalls a communication task. Faults that follow storms are power or lightning. Faults that follow a technician visit are online edits. The fault log with timestamps, laid beside the operations log, usually names it.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Can I just clear the fault and put it back in run?',
+        a: 'You can, and it is often the right first move to get the process running, provided the equipment is in a state where outputs coming back is safe. But clear it having read and recorded the code, because if the cause is still there the fault comes back and you have lost the evidence.',
+      },
+      {
+        q: 'What is the difference between a recoverable and an unrecoverable fault?',
+        a: 'A recoverable fault can be cleared and the processor returned to run without a power cycle. An unrecoverable fault needs a power cycle, and sometimes a download, because the processor cannot trust its own state.',
+      },
+      {
+        q: 'The processor faulted after I replaced an I/O module. Why?',
+        a: 'The replacement is a different part number or revision than the I/O configuration expects, or it was inserted with the chassis powered on a platform that does not allow it. Match the part number exactly, or update the configuration and download.',
+      },
+      {
+        q: 'Why do the outputs behave strangely when the processor is faulted?',
+        a: 'They are at their configured fault state, which is set per module or per channel: hold last state, turn off, or go to a value. That configuration is a design decision and it may not be what the process needs. Review it.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/plc-fundamentals/cpu',
+      '/controls/plc-systems/plc-fundamentals/watchdog',
+      '/controls/plc-systems/plc-fundamentals/retentive-memory',
+      '/troubleshooting/plc-troubleshooting/retentive-data-lost',
+      '/troubleshooting/power-troubleshooting/loss-of-control-voltage',
+    ],
+  },
+  {
+    path: '/troubleshooting/plc-troubleshooting/outputs-not-energizing',
+    kind: 'troubleshooting',
+    title: 'Outputs Not Energizing',
+    summary:
+      'The program says the output is on and the equipment is not running. Where the signal gets lost between the output image and the field device, and how to find the point in a few measurements.',
+    answer:
+      'Between the bit in the program and the load in the field there is a chain: the logic, the output image, the module, the module fuse and field power, the wiring, the interposing relay, and the load itself. Find where the chain breaks by working from the panel outward: is the rung true, is the output bit on, is the module indicator lit, is there voltage at the module terminal, is there voltage at the relay coil and at the load. The break is between the last good measurement and the first bad one.',
+    symptom:
+      'A motor, valve, light, or solenoid does not operate when the program calls for it. The output may show on in the software, on the module indicator, or neither.',
+    keyPoints: [
+      'Confirm the rung is actually true and the output bit is on before touching hardware; a false rung is the most common cause.',
+      'The module indicator lit with no voltage at the terminal means a blown module fuse or no field power to that common.',
+      'Voltage at the module terminal and none at the load means wiring or the interposing relay.',
+      'A forced output, or the processor in program mode, overrides the logic and looks like a failure.',
+      'A remote rack with a lost connection holds its outputs at their fault state no matter what the program says.',
+    ],
+    causes: [
+      { cause: 'The rung is not true', check: 'Look at the rung online. A permissive, an interlock, or a mode selector that is not satisfied is the usual reason. The output bit is off, and the module is doing what it was told.' },
+      { cause: 'Output forced off, or a force table active', check: 'The software shows forces installed. A force left from commissioning holds the output regardless of logic.' },
+      { cause: 'Processor not in run', check: 'The run light is off. In program or test mode outputs are not written. Check the keyswitch and the mode.' },
+      { cause: 'Blown fuse on the output module or group', check: 'The module indicator is lit but there is no voltage at the terminal. Many modules have a fuse per group and a blown-fuse indicator. Find why it blew before replacing it.' },
+      { cause: 'No field power to the output common', check: 'The output group has no supply on its common, because a branch fuse opened or the field supply is off. Measure the common against DC negative.' },
+      { cause: 'Interposing relay not pulling in', check: 'Voltage at the relay coil and no click. A failed coil, a wrong voltage relay, or a relay base with a bent pin.' },
+      { cause: 'Wiring open between the panel and the load', check: 'Voltage at the panel terminal and none at the load. A broken wire, a loose terminal, or a disconnect in the path.' },
+      { cause: 'Remote I/O connection lost', check: 'The outputs on a remote rack sit at their fault state while the connection is down. The I/O light flashes and the connection shows faulted.' },
+      { cause: 'The load itself', check: 'Voltage at the load and no operation. An open coil, a tripped overload, a motor starter with its own problem. The controller has done its job.' },
+      { cause: 'Output module failed', check: 'The bit is on, the indicator may or may not be lit, and there is no output. Move the load to a spare point; if it works there the module point is dead.' },
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['Troubleshooting', 'PLC'],
+    blocks: [
+      { t: 'h2', text: 'Work outward from the bit' },
+      {
+        t: 'p',
+        text: 'The most efficient order is the order of the signal: program, module, wiring, load. Each step is one look or one measurement, and each one halves the problem.',
+      },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Is the rung true?', text: 'Go online and look at the rung that drives the output. If any condition on it is false, the output is off by design, and the problem is upstream of the output entirely. Find which condition and why.' },
+          { title: 'Is the output bit on?', text: 'If the rung is true and the bit is off, look for a force, a second rung writing the same bit later in the scan, or a mode that is not writing outputs. The last rung to write a bit wins.' },
+          { title: 'Is the module indicator lit?', text: 'The LED on the module point follows the output image. Lit means the processor delivered the command to the module. Not lit with the bit on means a module, backplane, or connection problem.' },
+          { title: 'Is there voltage at the module terminal?', text: 'Measure between the output terminal and the return for that group. Indicator lit and no voltage means the group fuse or the field supply to that common.' },
+          { title: 'Is there voltage at the interposing relay coil, and does it pull in?', text: 'Voltage present and no click is the relay. Voltage absent is the wire between the module and the relay.' },
+          { title: 'Is there voltage at the load?', text: 'Measure at the starter coil, the solenoid, or the lamp. Voltage present and no action is the load or its own protection, and the controller is not the problem.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'safety',
+        title: 'Measuring live outputs',
+        text: 'Output commons carry the field voltage, which may be 120 VAC on a relay module. Measure with the appropriate meter category and personal protective equipment, and do not bridge a terminal with a probe to make a load operate. If something needs to be operated for a test, do it from the program or from hand mode.',
+      },
+      { t: 'h2', text: 'The fuse blew for a reason' },
+      {
+        t: 'p',
+        text: 'A blown output fuse is a symptom. The usual reasons are a shorted coil, a shorted field cable, a load that draws more than the module point can supply, or an inductive load without suppression that has been pitting contacts until one welded. Replacing the fuse without finding the cause blows the new one, sometimes on the first switch. Measure the load resistance and check the wiring insulation before powering it again.',
+      },
+      { t: 'h2', text: 'Two ways the program can fool you' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Duplicate outputs', def: 'The same output bit written by two rungs. The last one in the scan decides, and the first one, the one being looked at, is true and apparently ignored. Search the program for every reference to the bit.' },
+          { term: 'Forces', def: 'A force installed on an output overrides the logic silently. Most software shows a force indicator on the status bar, and it is easy to miss. Check for installed forces early, and remove the ones left over from commissioning.' },
+        ],
+      },
+      { t: 'h2', text: 'Remote and distributed I/O' },
+      {
+        t: 'p',
+        text: 'When the output is on a remote rack or a distributed block, one more thing can be wrong: the connection. A remote adapter that has lost its connection to the processor holds its outputs at their configured fault state and ignores the program until the connection returns. The processor may or may not fault, depending on how the connection is configured. The I/O status light, the connection status in the software, and the link light on the adapter tell the story.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'The output shows on in the program but the light on the module is off. What does that mean?',
+        a: 'The processor is not delivering the output image to the module: a force, a mode that is not writing outputs, a lost remote connection, or a failed module or backplane slot. Check forces and mode first, then the I/O status.',
+      },
+      {
+        q: 'The module light is on but there is no voltage at the terminal.',
+        a: 'The module fuse for that group is open or the field supply to that group common is missing. Measure the common against the supply return, then check the group fuse and the branch fuse feeding it.',
+      },
+      {
+        q: 'Why would a new fuse blow immediately?',
+        a: 'The fault that blew the first one is still there: a shorted coil or cable, an overloaded point, or an unsuppressed inductive load that has damaged the output. Measure the load and the wiring before replacing the fuse again.',
+      },
+      {
+        q: 'Can a PLC output drive a motor starter coil directly?',
+        a: 'Some can, within the point rating, but it is poor practice. An interposing relay keeps the coil current and voltage off the module, provides isolation, and fails cheaply. Most panels use one.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/plc-fundamentals/io-systems',
+      '/troubleshooting/plc-troubleshooting/inputs-not-reading',
+      '/troubleshooting/plc-troubleshooting/logic-not-executing-as-expected',
+      '/troubleshooting/control-panel-troubleshooting/fuse-blows-repeatedly',
+      '/troubleshooting/pump-troubleshooting/pump-will-not-start',
+    ],
+  },
+  {
+    path: '/troubleshooting/plc-troubleshooting/inputs-not-reading',
+    kind: 'troubleshooting',
+    title: 'Inputs Not Reading',
+    summary:
+      'A switch closes in the field and the program never sees it. How the wetting voltage, the common, sinking and sourcing, and the wiring each lose the signal, and how to find which one did.',
+    answer:
+      'A discrete input reads when the field contact lets the wetting voltage through to the module and the module has a common to return it to. The input fails to read when the contact does not close, the wire is open, the wetting voltage or common is missing, the module and the device disagree about sinking and sourcing, or the module point is dead. Measure at the field device, at the panel terminal, and at the module, and the break is between the last place the voltage was present and the first place it was not.',
+    symptom:
+      'A float, limit switch, pressure switch, or auxiliary contact operates in the field but the input bit in the program stays off, the module indicator stays dark, or both.',
+    keyPoints: [
+      'Confirm the field device is actually operating with a meter at its terminals; a stuck float is not a controller problem.',
+      'The module indicator follows the voltage at the terminal. Dark with the contact closed means no voltage arrived.',
+      'No wetting voltage on the field side, or a missing common, takes out a whole group at once.',
+      'A sink and source mismatch reads never, or always, and looks like a dead module.',
+      'The program can filter, invert, or force the input; check those before condemning hardware.',
+    ],
+    causes: [
+      { cause: 'The field device is not operating', check: 'Measure across the device contacts with it in both states. A float hung on a cable or a limit switch out of adjustment never closes.' },
+      { cause: 'Open wire between the device and the panel', check: 'Voltage at the device with the contact closed and none at the panel terminal. Ring the conductors out with the circuit isolated.' },
+      { cause: 'Missing wetting voltage', check: 'No voltage on the supply side of the field contact. A branch fuse for the field supply has opened, or the supply is off. Usually a group of inputs fails together.' },
+      { cause: 'Missing or open common', check: 'Voltage reaches the input terminal and the indicator stays dark. Measure between the terminal and the module common; if the common is missing the module cannot complete the circuit.' },
+      { cause: 'Sink and source mismatch', check: 'A sensor or a wiring change that connects the input to the wrong polarity. The input never reads, or reads constantly. Compare the wiring against the module datasheet diagram.' },
+      { cause: 'Input filter time too long', check: 'A short pulse from a fast contact or a flow switch is filtered out. Check the module input filter setting against the pulse width.' },
+      { cause: 'Forced or inverted in the program', check: 'A force on the input, or logic that reads the bit with the wrong instruction for the wiring convention. The bit may be on and the program still not act on it.' },
+      { cause: 'Wrong address or mapping', check: 'The wire is on point 7 and the program reads point 6. Compare the drawing, the terminal, and the tag.' },
+      { cause: 'Remote rack connection lost', check: 'Inputs on a disconnected rack are stale. The I/O status light and the connection status show it.' },
+      { cause: 'Module point failed', check: 'Voltage at the terminal, common good, indicator dark. Move the wire to a spare point; if it reads there the point is dead.' },
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['Troubleshooting', 'PLC'],
+    blocks: [
+      { t: 'h2', text: 'Start at the device' },
+      {
+        t: 'p',
+        text: 'The temptation is to start at the software. Start at the field device, because a float that has hung up on a cable, a limit switch that has been knocked out of adjustment, or a pressure switch with a plugged sensing line produces exactly the same symptom as a dead input module, and it is far more common. Operate the device by hand where that is safe, and measure across its contacts.',
+      },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Measure at the device.', text: 'Across the contact terminals. Wetting voltage present with the contact open, near zero with it closed, means the device and its supply are fine and the problem is toward the panel. Nothing across the contacts in either state means no wetting voltage is reaching the device.' },
+          { title: 'Measure at the panel terminal.', text: 'Between the input terminal and the module common. Voltage that appears when the device closes means the wire is good. Voltage missing means an open wire or a missing supply.' },
+          { title: 'Check the common.', text: 'Between the module common terminal and the supply return. A missing common takes out every point on that group, and it is the cause that gets found last because nobody measures it.' },
+          { title: 'Watch the module indicator.', text: 'Lit when voltage is at the terminal and the common is present. Lit indicator and an off bit is a program, mapping, force, or connection problem, not a wiring problem.' },
+          { title: 'Look at the bit online.', text: 'If the bit follows the indicator, the hardware is doing its job and the logic is the question. If the bit does not follow the indicator, check forces, the I/O configuration, and the address.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'A whole group failing is a supply or common problem',
+        text: 'One input failing is a device, a wire, or a point. Eight or sixteen failing together is the wetting voltage or the common for that group. Look at the group fuse and the common terminal before anything else.',
+      },
+      { t: 'h2', text: 'Sinking and sourcing' },
+      {
+        t: 'p',
+        text: 'A sinking input expects the field device to connect it to the positive supply; a sourcing input expects the device to connect it to the return. Two-wire contacts do not care, but three-wire sensors do, and so does any wiring that was drawn for one convention and installed for the other. The symptom of a mismatch is an input that never turns on, or one that is on all the time, with everything measuring plausibly. The module datasheet has the diagram, and the fix is to wire to it.',
+      },
+      { t: 'h2', text: 'The program side' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Wiring convention', def: 'A fail-safe contact wired normally closed reads as a bit that is on in the normal state. Logic written as if the bit were normally off inverts the meaning. Agree the convention on the drawing and read the bit accordingly.' },
+          { term: 'Filter time', def: 'Discrete input modules filter short pulses to reject noise. A filter set for milliseconds swallows a pulse from a fast switch. Check the filter against the pulse width of the device.' },
+          { term: 'Forces', def: 'A force on an input holds the bit regardless of the terminal. Check for installed forces early.' },
+          { term: 'Addressing', def: 'The tag points at a slot and a point. A module moved to another slot, or a wire landed one terminal over, puts the signal somewhere the program is not looking.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'safety',
+        title: 'Input terminals are live',
+        text: 'Input modules at 120 VAC carry line voltage at every terminal that has a closed contact, whatever mode the processor is in. Isolate the field supply before working on the wiring, and measure with the meter and the protection the voltage calls for.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'The module light is on but the program bit is off. What is wrong?',
+        a: 'The module sees the voltage and the processor is not reading the module, or is reading it and something in the program is masking it: a force, a wrong address, a remote connection that is stale, or logic that reads the bit with the wrong instruction for the wiring convention. Check those in that order.',
+      },
+      {
+        q: 'Why did a whole group of inputs stop reading at once?',
+        a: 'The wetting voltage or the common for that group is gone. A branch fuse for the field supply has opened, or the common terminal has come loose. One point failing is a device or a wire; a group is a supply.',
+      },
+      {
+        q: 'What is a wetting voltage?',
+        a: 'The voltage that a closed field contact lets through to the input module. It comes from a supply in the panel, 24 VDC or 120 VAC depending on the module, and without it a closed contact delivers nothing to the input.',
+      },
+      {
+        q: 'Can I test an input by shorting the terminal to the supply?',
+        a: 'Jumpering the input terminal to the wetting supply, with the field wire lifted, is a legitimate way to prove the module point, provided the voltage and the polarity are right for the module and the circuit is one where making that input true is safe. Know what the input does in the program first.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/plc-fundamentals/io-systems',
+      '/troubleshooting/plc-troubleshooting/outputs-not-energizing',
+      '/troubleshooting/plc-troubleshooting/logic-not-executing-as-expected',
+      '/controls/instrumentation/level/wet-well-level',
+      '/troubleshooting/power-troubleshooting/loss-of-control-voltage',
+    ],
+  },
+  {
+    path: '/troubleshooting/plc-troubleshooting/program-will-not-download',
+    kind: 'troubleshooting',
+    title: 'Program Will Not Download',
+    summary:
+      'The software refuses to download, or the download starts and fails. The version, path, mode, memory, and protection problems behind it, and the order to check them in.',
+    answer:
+      'A download fails for one of a handful of reasons: the software cannot reach the processor, the processor is in run mode with the key preventing a download, the project was built for a different processor type or firmware revision, the program is larger than the memory, the processor is protected, or the connection drops partway through. The error message names the category more often than people give it credit for. Read it, check the path and the mode, then the revisions, then the memory.',
+    symptom:
+      'The download command is greyed out, the software reports that it cannot connect or that the controller is the wrong type or revision, the download begins and stops with an error, or it completes and the processor faults immediately.',
+    keyPoints: [
+      'A download is refused in run mode unless the key or the mode permits it; the mode is the first thing to check.',
+      'The project targets a processor type and a firmware revision, and both must match the hardware in the chassis.',
+      'The communication path has to reach the processor: right driver, right address, right slot, on a network the laptop can actually see.',
+      'A processor that faults immediately after a download is usually an I/O configuration that does not match the chassis.',
+      'Downloading replaces what is running. Upload first if there is any doubt about which copy is current.',
+    ],
+    causes: [
+      { cause: 'Processor in run mode with the key in run', check: 'The download option is unavailable or refused. Turn the key to remote or program, or set program mode from the software if the key is in remote.' },
+      { cause: 'No communication path', check: 'The software cannot connect at all. Check the cable, the link light, the laptop address on the right subnet, the driver, and the slot number in the path.' },
+      { cause: 'Wrong processor type in the project', check: 'The error names a type mismatch. The project was created for a different controller. Change the controller type in the project properties, and review what that changes.' },
+      { cause: 'Firmware revision mismatch', check: 'The error names a revision. The processor firmware is older or newer than the project. Flash the processor to the project revision, or change the project revision, according to what the site standard says.' },
+      { cause: 'Program too large for memory', check: 'The download starts and fails with a memory error, or the software warns before starting. Reduce the program, or the data table, or use a processor with more memory.' },
+      { cause: 'Processor protected', check: 'A password, a source protection scheme, or a security authority that the laptop is not part of. The error says so; the owner of the credentials is the fix.' },
+      { cause: 'Connection drops during the download', check: 'A poor Ethernet link, a wireless connection, or a serial cable with a marginal connector. Use a wired link directly to the processor for downloads.' },
+      { cause: 'Download succeeds and the processor faults', check: 'The I/O configuration in the project does not match the chassis. Compare the configured modules and revisions against what is installed.' },
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 7,
+    tags: ['Troubleshooting', 'PLC', 'Programming'],
+    blocks: [
+      { t: 'h2', text: 'Before you download at all' },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'A download replaces the running program',
+        text: 'If anyone has made online edits since the project on the laptop was saved, the download erases them and the site runs the older logic. Upload from the processor first and compare, or confirm with whoever last worked on it. And a download in program mode stops the process: the outputs go to their configured state for as long as it takes. Plan it.',
+      },
+      { t: 'h2', text: 'Work through it in order' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Can the software see the processor?', text: 'Browse the network from the software. If the processor does not appear, the problem is the path: cable, link light, the laptop address and subnet, the driver configuration, or a firewall on the laptop. A processor you cannot browse to cannot be downloaded to.' },
+          { title: 'What mode is it in?', text: 'Run with the key in run refuses downloads on most platforms. Remote lets the software change the mode. Program accepts a download. The key position at the panel decides which of these is available from the laptop.' },
+          { title: 'Does the project match the hardware?', text: 'Open the project properties and compare the controller type and the firmware revision against what is written on the processor and shown when browsing. A mismatch in either is refused, and the message says which.' },
+          { title: 'Is there room?', text: 'The software reports the program and data sizes and the processor reports its capacity. A program at the limit fails partway through.' },
+          { title: 'Is it protected?', text: 'Passwords, source protection, and security authorities all refuse downloads from a laptop that lacks the credentials. The message names it. Do not try to work around it; find the credentials.' },
+          { title: 'Is the link stable?', text: 'A download over a wireless bridge or a marginal serial cable fails partway. Plug in directly to the processor for the download.' },
+        ],
+      },
+      { t: 'h2', text: 'Revisions' },
+      {
+        t: 'p',
+        text: 'The project file, the programming software, and the processor firmware each carry a major revision, and the three have to agree. The usual way this goes wrong is a replacement processor from stock carrying a different firmware than the one it replaced, or a laptop with a newer software version that has silently upgraded the project. The site standard should say which revision the site runs on and the rack drawing should record it, so that the choice between flashing the processor and changing the project is made deliberately rather than at two in the morning.',
+      },
+      { t: 'h2', text: 'The download that works and then faults' },
+      {
+        t: 'p',
+        text: 'A download that completes and leaves the processor faulted with an I/O error is almost always a configuration mismatch: a module in the project that is not in the chassis, a module in the chassis of a different part number than the project expects, or a remote connection to something that is not there. Compare the I/O tree in the project against the physical chassis slot by slot. On platforms that check module revisions, a compatible newer module can still be refused by a configuration set to exact match.',
+      },
+      { t: 'h2', text: 'Afterward' },
+      {
+        t: 'p',
+        text: 'Verify the processor is in run, the I/O light is solid, and the process has resumed. Save the project with a note of what changed and where the copy lives. A download is a change to the plant, and the next person needs to know it happened.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Why is the download option greyed out?',
+        a: 'The software is not connected to a processor that will accept one. Either there is no connection, or the processor is in run with the key in run. Connect, then change the mode.',
+      },
+      {
+        q: 'The software says the controller is the wrong revision. Should I flash it?',
+        a: 'Only if the site standard says that revision is the target. Flashing changes the processor firmware for everything that runs on it. The alternative is to change the project revision to match the processor, which may be the right answer if the processor is the one that was already running the plant.',
+      },
+      {
+        q: 'Can I download while the plant is running?',
+        a: 'A full download requires program mode, which stops logic and drives outputs to their configured state for the duration. Online edits change logic while running and are the tool for small changes. A full download is planned with the process in a state that can tolerate the stop.',
+      },
+      {
+        q: 'Should I upload before I download?',
+        a: 'Yes, whenever there is any doubt that the saved project is current. Online edits made since the last save exist only in the processor, and a download erases them.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/plc-fundamentals/cpu',
+      '/troubleshooting/plc-troubleshooting/processor-faulted',
+      '/controls/plc-systems/programming/program-organization',
+      '/troubleshooting/plc-troubleshooting/retentive-data-lost',
+    ],
+  },
 ];

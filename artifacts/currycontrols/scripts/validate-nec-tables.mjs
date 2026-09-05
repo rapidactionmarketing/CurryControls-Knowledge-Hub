@@ -257,7 +257,9 @@ if (!flcFails) pass(`${flcChecked} motor full-load current rows match the publis
 
 console.log('\nTable 430.250: structure');
 structFails = 0;
-const hpOrder = Object.keys(PUBLISHED_430_250);
+// Object key order puts integer-like keys first, which would compare 200 hp
+// against 0.5 hp. Sort numerically so the walk goes up the table.
+const hpOrder = Object.keys(PUBLISHED_430_250).sort((a, b) => Number(a) - Number(b));
 let prevRow = [0, 0, 0, 0, 0];
 for (const hp of hpOrder) {
   const row = MOTOR_FLC_3PH[hp];

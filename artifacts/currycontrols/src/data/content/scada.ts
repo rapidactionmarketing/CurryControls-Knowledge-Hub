@@ -3238,4 +3238,1081 @@ export const SCADA_ENTRIES: Entry[] = [
       '/troubleshooting/scada-troubleshooting/values-frozen-on-screen',
     ],
   },
+  {
+    path: '/controls/scada-hmi/scada-troubleshooting/frozen-values',
+    kind: 'reference',
+    title: 'Frozen Values',
+    summary:
+      'Why a SCADA value stops changing while looking normal: the five layers where it can freeze, from a transmitter holding its output to a client that lost its server, how to find the layer by comparing each, and the heartbeat that makes a freeze announce itself.',
+    answer:
+      'A value can freeze at any layer between the sensor and the screen: a transmitter that holds its last output, a controller whose logic stopped writing the tag, a driver or server whose poll stopped while it kept the last value, a historian whose collection stopped, or a client that lost its connection to the server. The diagnosis is to read the same value at each layer, from the device display through the controller online, the server tag browser, the historian trend, and the client, and the first layer that disagrees with the one before it is where the freeze is. The prevention is design: a heartbeat counter from every controller that the server alarms on when it stops changing, quality that goes bad when updates stop, and displays that show communication status so that a frozen value is never a plausible one.',
+    keyPoints: [
+      'A frozen value is more dangerous than a bad one; it looks like the process is stable.',
+      'Five layers can freeze: sensor, controller, server, historian, client. Compare the value at each and find the first mismatch.',
+      'A heartbeat counter from every controller, alarmed when it stops, catches most freezes at the source.',
+      'Quality must go bad when updates stop; a driver that retains the last value with good quality is misconfigured.',
+      'Every display shows communication status; a value without a status is a value the operator cannot trust.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['SCADA', 'Troubleshooting', 'Communications', 'HMI', 'PLC'],
+    blocks: [
+      { t: 'h2', text: 'Where values freeze' },
+      {
+        t: 'table',
+        head: ['Layer', 'How it freezes', 'How to tell', 'Prevention'],
+        rows: [
+          ['Transmitter or sensor', 'Output held at last value on failure; plugged line; a failed sensor with a fixed output', 'Device display against a reference; loop current against the display', 'Fail-safe output configuration; validation against a second measurement'],
+          ['Controller', 'Logic stopped writing the tag: a task that is not running, a rung no longer executing, a forced value, an I/O connection faulted with the last state held', 'Controller online: is the input changing, is the logic writing the tag, are there forces', 'Heartbeat counter; I/O fault handling that marks data bad; force logging'],
+          ['Driver or server', 'Polling stopped or the device went offline and the driver kept the last value; a license limit; a hung driver; an OPC subscription that died', 'Server tag browser: timestamp of last update, quality, driver statistics', 'Stale-value handling configured to set bad quality; communication alarms; driver watchdogs'],
+          ['Historian', 'Collection stopped, buffer full, tag deleted at the source, clock jump', 'Trend flat while the live value on the server changes', 'Collector monitoring; queue depth alarms; store and forward'],
+          ['Client', 'Client disconnected from the server and displaying its last state; a display script hung', 'Live value on another client or on the server; a clock or a status indicator on the display', 'Connection status on every display; clients that mark data stale on disconnect'],
+        ],
+      },
+      { t: 'h2', text: 'Finding the layer' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Confirm it is frozen', text: 'Compare with something that should move: a nearby value, the process itself, a trend over the last hour. A tank level that is exactly the same to three decimals for an hour is frozen; a steady pressure may just be steady.' },
+          { title: 'Read the device', text: 'The transmitter display or the loop current. If the device is changing and the screen is not, the freeze is downstream.' },
+          { title: 'Read the controller', text: 'Online with the controller: the input tag, the scaled tag, and the tag the SCADA reads. Note any forces and the state of the task that writes the tag. If the controller value is changing, the freeze is at the server or later.' },
+          { title: 'Read the server', text: 'The tag in the server tag browser with its timestamp and quality, and the driver statistics for the device: last successful poll, error count. A timestamp that stopped is a poll that stopped.' },
+          { title: 'Read the historian and the client', text: 'If the server value is changing and the trend is flat, the historian collection has stopped. If the server value is changing and the display is not, the client has lost its connection or its display is hung.' },
+          { title: 'Fix and prevent', text: 'Restart what stopped, then ask why the freeze was not alarmed, and fix that too.' },
+        ],
+      },
+      { t: 'h2', text: 'The heartbeat' },
+      {
+        t: 'p',
+        text: 'A counter in every controller that increments every scan, or every second, and is read by the server like any other tag, is the simplest freeze detector there is. The server alarms if the counter has not changed in a set time. That one alarm catches a stopped controller, a stopped task, a stopped driver, and a stopped poll, because any of them stops the counter from changing at the server. A second form is a handshake: the server writes a value, the controller echoes it, and the server alarms if the echo stops. Either costs one tag per controller and finds the class of problem that otherwise goes unnoticed until someone asks why the tank has read 12.3 feet since Tuesday.',
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Stale with good quality',
+        text: 'Some drivers can be configured to keep the last value when a device stops responding, and to leave its quality good. That setting turns every communication failure into a frozen value that looks healthy. Set every driver to mark data bad when the device stops responding, and confirm on the display that the value changes to a bad-quality marker when a cable is pulled.',
+      },
+      { t: 'h2', text: 'Design that makes freezes visible' },
+      {
+        t: 'ul',
+        items: [
+          'Communication status on every display, for every controller the display shows, as a symbol that changes.',
+          'Quality shown on every value: a marker replaces the number when quality is bad.',
+          'A last-update timestamp available on the faceplate for any value.',
+          'Heartbeat counters alarmed per controller.',
+          'Historian collector status and queue depth alarmed.',
+          'A clock on every display that stops when the client stops updating.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'The value is frozen on one display and moving on another. What is that?',
+        a: 'The client with the frozen display has lost its connection to the server, or the display is hung. Restart the client display; if it recurs, look at the network between that client and the server and at the client resources. The other client proves the server is fine.',
+      },
+      {
+        q: 'The controller shows the value changing but the server does not. Where do I look?',
+        a: 'At the driver: the device statistics, the last successful poll, the error count, and the license and tag count limits. A driver that hit a license limit stops updating some tags and not others; a device that went offline stops all of its tags at once.',
+      },
+      {
+        q: 'Why did the level read the same for a day with no alarm?',
+        a: 'Because nothing was watching for the absence of change. Levels change; a level that does not is either a frozen value or a broken process, and both deserve an alarm. A rate-of-change-too-low alarm on key analog values, or the heartbeat approach at the controller, covers it.',
+      },
+      {
+        q: 'Is a frozen value from a transmitter always a failure?',
+        a: 'Not always; a level in a full tank with the inlet closed is constant. But most process values move a little all the time, and a transmitter whose output is exactly constant to the last digit has usually failed or been isolated. Compare with the device and the process before deciding.',
+      },
+    ],
+    related: [
+      '/troubleshooting/scada-troubleshooting/values-frozen-on-screen',
+      '/how-to/scada-how-to/diagnose-bad-quality',
+      '/controls/plc-systems/plc-troubleshooting/i-o-not-updating',
+      '/controls/scada-hmi/scada-troubleshooting/bad-quality',
+      '/controls/scada-hmi/scada-troubleshooting/lost-communications',
+      '/controls/plc-systems/analog-control/signal-validation',
+    ],
+  },
+  {
+    path: '/controls/scada-hmi/scada-troubleshooting/lost-communications',
+    kind: 'reference',
+    title: 'Lost Communications',
+    summary:
+      'What should happen when SCADA loses a device, a site, or everything, how the pattern tells which, the diagnostic order from the server outward through network, firewall, medium, and site, and the design that makes a lost link an alarm rather than an incident.',
+    answer:
+      'A lost communication event is diagnosed by its scope: one device, one site, every site on one channel or medium, or everything, and each scope points to a different layer. One device is its cable, port, address, or the device itself; one site is its radio, modem, power, or controller; one channel is the master radio, the cellular carrier, or the server driver for that channel; everything is the server, its network connection, the firewall, or the core switch. The system should respond to any of them by raising a communication alarm, marking the affected data bad, showing the status on the displays, and letting the site run on local control while remote controllers buffer their history, and the diagnosis works outward from the server with the driver statistics, the network tools, the radio or modem diagnostics, and finally the site.',
+    keyPoints: [
+      'Scope first: one device, one site, one channel, or everything. Each scope has its own short list.',
+      'The server driver statistics say when the last good response was and what failed; start there.',
+      'Work outward: server, network, firewall, medium, remote controller, device.',
+      'A lost link must raise an alarm and mark data bad; a lost link that looks like a stable site is the failure to design out.',
+      'The site runs on local control while the link is down; the design says how, and the commissioning tested it.',
+      'Two paths for the sites that cannot afford to be lost, and store and forward for the history.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['SCADA', 'Communications', 'Troubleshooting', 'Telemetry', 'Networking'],
+    blocks: [
+      { t: 'h2', text: 'What should happen' },
+      {
+        t: 'p',
+        text: 'Communication is lost regularly in any system with remote sites, and the measure of a good design is that the loss is an alarm and nothing worse. The server declares the device offline after its timeout and retries, raises a communication alarm at the priority the philosophy assigns, marks every tag from the device bad, and the displays show the status and replace the values with bad-quality markers. Alarms from the site that depend on the lost data are suppressed by the parent communication alarm so that one event produces one alarm. At the site, the controller continues on local control: the wet well is pumped on level, the pressure is held on the local transmitter, chemical feed follows local flow, and the history is buffered for delivery when the link returns. When the link returns, the tags go good, the buffered history is backfilled, and the alarm clears. Any part of that which does not happen is a finding for the design, separate from the cause of the loss.',
+      },
+      { t: 'h2', text: 'Scope tells the story' },
+      {
+        t: 'table',
+        head: ['Scope', 'Likely causes', 'First checks'],
+        rows: [
+          ['One device at a site', 'Its cable, switch port, address, a device reset or fault, a changed configuration', 'Other devices at the site are fine; ping the device from the site controller; the device display'],
+          ['One site', 'Site power, radio or modem, antenna and coax, the site controller stopped, a lightning event', 'Radio or modem status if reachable; power fail alarm if it arrived; other sites on the same channel fine'],
+          ['All sites on one radio channel', 'Master radio, its antenna, its power, or the server serial or Ethernet port for that channel; interference on the channel', 'Master radio indicators; the server driver for the channel; other channels fine'],
+          ['All cellular sites', 'Carrier outage, VPN concentrator, private network gateway, an expired certificate or account', 'Carrier status; the VPN server; one modem checked directly'],
+          ['All sites and the plant', 'The server itself, its network interface, the core switch, the firewall, a driver or license failure', 'Server driver status; ping from the server to a plant controller; firewall and switch status'],
+          ['Intermittent, many sites', 'Poll cycle too long for the timeout, a radio path degrading, a noisy channel, an overloaded server', 'Success rates and response times per site over time; the ones getting worse'],
+        ],
+      },
+      { t: 'h2', text: 'Working outward' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Server', text: 'Driver diagnostics: which devices are offline, since when, the error counts, and the last good response time. Service status and license status. The server network interface and its link.' },
+          { title: 'Network', text: 'Ping from the server to the gateway, to the firewall, to a plant controller, to the master radio or the VPN gateway. Switch port status for the server and the radio.' },
+          { title: 'Firewall', text: 'Rules unchanged; logs for denied traffic on the polling ports; VPN tunnels up.' },
+          { title: 'Medium', text: 'Master radio: power, status, signal, transmit indication. Cellular: the VPN gateway, the carrier, one modem reached directly. Leased line: the circuit status from the carrier.' },
+          { title: 'Remote site', text: 'Power and generator status if any alarm arrived before the loss; the radio or modem, antenna, and coax; the site controller running; the site switch.' },
+          { title: 'Device', text: 'Cable, port, address, configuration, and the device itself.' },
+        ],
+      },
+      { t: 'h2', text: 'Tools' },
+      {
+        t: 'ul',
+        items: [
+          'Driver statistics and the communication diagnostic display in the SCADA.',
+          'Ping and traceroute from the server and from a laptop at the site.',
+          'Radio diagnostics: received signal strength, signal-to-noise ratio, packet error rate, at both ends, compared with the commissioning record.',
+          'Cellular modem status pages: signal, registration, IP address, VPN state, data usage.',
+          'Firewall logs and VPN concentrator status.',
+          'The site controller online: is it running, what does its communication module report.',
+          'A protocol test tool to poll a device directly, bypassing the server, to separate the device from the server.',
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'The commissioning record',
+        text: 'A radio path that worked at commissioning with a recorded signal strength and error rate is diagnosed by comparing today with that record. A path with no record is diagnosed by guessing. Record signal strength, noise, error rate, and response time for every site at commissioning and once a year, and trend them where the system allows.',
+      },
+      { t: 'h2', text: 'Designing for loss' },
+      {
+        t: 'ul',
+        items: [
+          'Local control at every site that does not need the link to keep the process safe, tested by disconnecting the link.',
+          'Timeouts and retries that declare loss promptly, and quality that goes bad when they do.',
+          'Communication alarms with priority, and parent-child suppression of the site alarms that follow.',
+          'Store and forward in the remote controller for the history that the utility needs continuous.',
+          'A second path for sites whose loss is a public health or overflow risk.',
+          'Diagnostics historized and alarmed on degradation, so that the path is fixed before it fails.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'How long should the server wait before declaring a site lost?',
+        a: 'Longer than the worst normal poll cycle including retries, and shorter than the time in which the loss matters. On a radio channel with a 20-second cycle, a minute or two is common; on plant Ethernet, seconds. The alarm delay can be longer than the quality change: mark the data bad at the first failure and alarm after a short confirmation.',
+      },
+      {
+        q: 'The site is lost but its power fail alarm never arrived. Is that possible?',
+        a: 'Yes: if the power failed and the radio lost power at the same instant, nothing was sent. A UPS on the radio and the controller, sized for a few minutes, lets the site report the power failure before it goes dark, which is worth the cost of the UPS for the information alone.',
+      },
+      {
+        q: 'Everything went down at once. Where do I look first?',
+        a: 'At the server and its immediate network: the driver services, the network interface, the switch port, and the firewall. A single point that takes everything down is almost always within a few feet of the server, or is the server itself. Check whether the plant controllers on the local network are also lost; if they are, it is not the radios.',
+      },
+      {
+        q: 'Should lost communication stop the pumps at a remote site?',
+        a: 'No. The site controller runs the process on local measurements, and losing the link changes nothing at the site except that the operator cannot see it. A site that stops when the link fails has a design problem; a site that needs the link for its setpoints holds the last ones or reverts to a local default.',
+      },
+    ],
+    related: [
+      '/controls/scada-hmi/scada-fundamentals/scada-communications',
+      '/troubleshooting/communications-troubleshooting/device-times-out',
+      '/troubleshooting/network-troubleshooting/ethernet-device-drops-offline',
+      '/controls/scada-hmi/scada-troubleshooting/bad-quality',
+      '/water-wastewater/wastewater-systems/lift-stations/backup-control',
+      '/how-to/network-how-to/diagnose-packet-loss',
+    ],
+  },
+  {
+    path: '/controls/scada-hmi/scada-troubleshooting/bad-quality',
+    kind: 'reference',
+    title: 'Bad Quality',
+    summary:
+      'What a quality flag means and where it comes from: good, uncertain, and bad with substatus codes, how quality propagates from device through driver, tag, display, alarm, and historian, the causes by layer, and the rule that a bad value is never a number.',
+    answer:
+      'Every value in a SCADA system carries a quality that says whether it can be trusted: good, uncertain, or bad, with a substatus that says why, such as communication failure, configuration error, device failure, sensor failure, or last known value. Quality originates at the driver from the device response, or from the device itself where the protocol carries it, and it propagates through every tag, calculation, display, alarm, and historian record that uses the value. Bad quality is caused by lost communication, a wrong address or data type in the tag configuration, a license or tag limit, a script error, a device reporting a sensor failure, or a value out of range, and the rules are that a bad value is never shown or used as a number, that alarms on bad quality are distinct from process alarms, and that the historian stores the quality with the value.',
+    keyPoints: [
+      'Quality is part of the value: good, uncertain, or bad, with a reason. A number without quality is incomplete.',
+      'Quality propagates: a bad input makes every calculation, display, alarm, and record that uses it bad.',
+      'Communication failure is the usual cause; configuration errors are the usual cause on one tag among many.',
+      'A bad value is shown as a marker, never as a number, and never used by a controller or a script as if it were good.',
+      'Alarm on bad quality separately from the process alarm, and suppress the process alarm while quality is bad.',
+      'The historian stores quality with the value so that a gap or a bad period is visible in the trend.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['SCADA', 'Troubleshooting', 'Communications', 'HMI', 'Signals'],
+    blocks: [
+      { t: 'h2', text: 'What quality means' },
+      {
+        t: 'table',
+        caption: 'Derived from the OPC quality model most platforms use; names vary',
+        head: ['Class', 'Common substatus', 'Meaning'],
+        rows: [
+          ['Good', 'Good; local override', 'The value is current and trusted; an override means a person substituted it'],
+          ['Uncertain', 'Last usable value; sensor not accurate; engineering units exceeded; sub-normal', 'The value may be usable with care; the device or driver has doubts'],
+          ['Bad', 'Communication failure; not connected; configuration error; device failure; sensor failure; last known value; out of service; waiting for initial data', 'The value cannot be trusted; the reason says where to look'],
+        ],
+      },
+      {
+        t: 'p',
+        text: 'The class is what displays, alarms, and logic act on. The substatus is what the technician uses. A tag with bad quality and a communication failure substatus is a lost link; one with configuration error is a wrong address; one with device failure or sensor failure is the device telling the system that its own measurement is not valid, which a smart transmitter or a protocol such as DNP3 can do.',
+      },
+      { t: 'h2', text: 'Where quality comes from and where it goes' },
+      {
+        t: 'p',
+        text: 'The driver assigns quality from the outcome of each poll: a response sets good, a timeout after retries sets bad with communication failure, an exception from the device sets bad with configuration error or device failure. Protocols that carry quality from the device, such as OPC UA and DNP3 with its flags, pass the device quality through. The tag holds the value with its quality. A calculated tag or a script that uses the tag inherits the worst quality of its inputs, if the platform is configured to propagate it, and a display that shows the tag shows the quality as a marker. An alarm on the tag is suppressed or replaced by a bad-quality alarm. The historian stores the quality with the sample, so that a trend can show a bad period as a gap or a marked segment rather than a line.',
+      },
+      { t: 'h2', text: 'Causes by layer' },
+      {
+        t: 'table',
+        head: ['Layer', 'Cause', 'Pattern'],
+        rows: [
+          ['Device', 'Sensor failure, out of range, device fault, not initialized after power up', 'One tag or a group from one device; substatus device or sensor failure'],
+          ['Link', 'Lost communication, timeouts, retries exhausted', 'Every tag from the device at once; substatus communication failure'],
+          ['Driver configuration', 'Wrong address, register, data type, or unit ID; a register that does not exist; a block request that includes one bad register', 'One tag or one request block bad while the device is otherwise fine; substatus configuration error'],
+          ['Server', 'License tag limit reached, driver stopped, OPC server down, a subscription dropped', 'Many tags across devices; the ones added most recently, or everything through one driver'],
+          ['Calculation and script', 'Division by zero, a missing input tag, a script error, a renamed tag', 'Derived tags bad while their inputs are good'],
+          ['Client', 'Display bound to a tag that no longer exists, a project version mismatch', 'Bad on one client or one display, good elsewhere'],
+        ],
+      },
+      { t: 'h2', text: 'Rules' },
+      {
+        t: 'ul',
+        items: [
+          'Never show a bad value as a number. The display replaces it with a marker and a color, and the trend shows a gap.',
+          'Never use a bad value in control. A controller reading a remote setpoint checks its status and holds or reverts; a script that computes a total skips bad samples and flags the total.',
+          'Alarm on bad quality as its own alarm, with a priority that reflects what the value is for, and suppress the process alarms on the tag while it is bad.',
+          'Propagate quality through calculations; a platform setting usually controls it, and it should be on.',
+          'Store quality in the historian and show it in trends; a reporting query filters on it.',
+          'Trend the fraction of time each critical tag is bad; a tag that is bad five percent of the time has a link or a device that needs attention.',
+        ],
+      },
+      { t: 'h2', text: 'Diagnosing one bad tag' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Read the substatus', text: 'Communication failure, configuration error, device failure, or something else. It halves the search.' },
+          { title: 'Check the scope', text: 'Every tag from the device bad, or one? Every device through one driver, or one device? The scope points at the layer.' },
+          { title: 'Configuration error: check the address', text: 'Register or tag name, data type, unit ID, and whether the register exists on the device. A request block that includes one register the device lacks fails the whole block.' },
+          { title: 'Communication failure: check the link', text: 'Driver statistics, then the network, the medium, and the device, as for any lost communication.' },
+          { title: 'Device failure: read the device', text: 'Its own diagnostics say what is wrong: a sensor fault, an out-of-range input, a module fault.' },
+          { title: 'Derived tags: check the inputs', text: 'A calculated tag bad with good inputs is a script or expression error; look at the calculation log.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Bad quality is information',
+        text: 'A system that hides bad quality behind a stale number has thrown away the most useful thing the driver told it. A system that shows it, alarms it, and records it lets the technician find the cause in minutes and lets the operator know what not to trust. Configure for the second one.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'The tag shows bad quality but the device is responding to other tags. Why?',
+        a: 'Configuration error on that tag: the address, data type, or unit ID is wrong, or the register does not exist. If the tag is part of a block request, one bad register fails the block and every tag in it. Check the substatus and the address against the device register map.',
+      },
+      {
+        q: 'Can a value be bad quality at the server and good on the display?',
+        a: 'Only if the display is not showing quality, which is a display design fault. Every value on a display should carry a quality marker. Check the display configuration; a value that ignores quality will show the last number forever.',
+      },
+      {
+        q: 'What should a controller do with a bad remote value?',
+        a: 'Not use it. The controller receives a status bit or a quality with the value, or derives one from a heartbeat, and its logic holds the last good value for a limited time, then reverts to a local default or a safe state, and alarms. A controller that uses whatever number arrives will act on a zero the day the link fails.',
+      },
+      {
+        q: 'Why does the tag go bad briefly every few minutes?',
+        a: 'A poll cycle that occasionally exceeds the timeout, a device that is slow to answer under load, or a link with intermittent loss. Look at the driver statistics for response time and error counts; lengthen the timeout if the response time is close to it, and fix the link if the errors are real.',
+      },
+    ],
+    related: [
+      '/how-to/scada-how-to/diagnose-bad-quality',
+      '/troubleshooting/scada-troubleshooting/tag-shows-bad-quality',
+      '/controls/scada-hmi/scada-troubleshooting/lost-communications',
+      '/controls/scada-hmi/scada-troubleshooting/frozen-values',
+      '/controls/plc-systems/analog-control/signal-validation',
+      '/controls/scada-hmi/historian-data/data-collection',
+    ],
+  },
+  {
+    path: '/controls/scada-hmi/scada-troubleshooting/server-failure',
+    kind: 'reference',
+    title: 'Server Failure',
+    summary:
+      'How SCADA servers fail and what to do when one does: failure modes from a full disk to a dead hypervisor host, what the plant experiences with and without redundancy, the recovery sequence from restore to alarm verification, and the monitoring that warns.',
+    answer:
+      'SCADA servers fail through hardware faults, operating system problems, application service crashes, expired licenses, full disks, memory exhaustion, network interface or switch faults, and failures of the virtualization host or storage under them, and the most common of these announce themselves for days in monitoring that nobody watched. With redundancy the standby takes over and the failure is a repair; without it the plant runs on local control while operators lose visibility, alarms, and notification. Recovery restores the server from an image or a backup, reactivates licenses, restarts services in order, reconnects clients, backfills the historian from remote buffers, and verifies alarm states and acknowledgments. A written recovery procedure with a target recovery time, a tested restore, and monitoring of disk, memory, services, and backups are what turn a failure into an inconvenience.',
+    keyPoints: [
+      'Full disks, expired licenses, and unpatched crashes cause more outages than dead hardware, and all three give warning.',
+      'Without redundancy the plant runs blind: local control continues, alarms and notification stop. Know which sites cannot tolerate that.',
+      'Recovery order: restore, license, services, clients, historian backfill, alarm state verification.',
+      'A restore that has never been tested is a hope, not a plan.',
+      'Monitor disk, memory, services, backup completion, license expiry, and time; alarm them like process alarms.',
+      'Write the recovery procedure with the recovery time objective, and keep it where it can be read with the server down.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['SCADA', 'Troubleshooting', 'Cybersecurity', 'Documentation', 'Design'],
+    blocks: [
+      { t: 'h2', text: 'How servers fail' },
+      {
+        t: 'table',
+        head: ['Failure', 'Symptom', 'Warning available', 'Prevention'],
+        rows: [
+          ['Disk full', 'Services stop, historian stops, database errors, logins fail', 'Weeks of disk usage trend', 'Disk alarms; log rotation; retention limits; historian sizing'],
+          ['License expired or lost', 'Runtime stops or goes to demo mode on a restart or at midnight', 'Expiry date in the license record', 'License calendar; keys and activation files in the backup'],
+          ['Application service crash', 'One function stops: polling, alarms, history, clients', 'Event logs, memory growth over days', 'Patching; service watchdogs; scheduled restarts where the vendor advises'],
+          ['Operating system fault or forced update reboot', 'Server reboots or hangs', 'Update settings', 'Managed patching; updates never automatic on a control server'],
+          ['Hardware: disk, power supply, memory', 'Crashes, errors in the hardware log, a dead server', 'Hardware monitoring, RAID alerts', 'Redundant disks and supplies; hardware alerts to the alarm system; lifecycle replacement'],
+          ['Network interface or switch port', 'Server up, nothing can reach it', 'Link errors', 'Dual interfaces; switch monitoring'],
+          ['Hypervisor host or storage', 'Every virtual machine on it stops', 'Host alerts, storage alerts', 'Two hosts with the redundant pair split; storage redundancy'],
+          ['Database full or corrupt', 'Alarm journal and audit trail stop; the application may stop', 'Database size trend', 'Retention and purge jobs; database backups'],
+          ['Malware or intrusion', 'Anything, including a ransom note', 'Security monitoring', 'Segmentation, hardening, backups off the network'],
+        ],
+      },
+      { t: 'h2', text: 'What the plant experiences' },
+      {
+        t: 'p',
+        text: 'With a redundant pair, the standby becomes active, clients reconnect, and operators see a brief interruption; the failed server is repaired and resynchronized. The event is still investigated, because a pair with one dead member has no redundancy. With a single server, the controllers continue to run the process on their own logic, which is why local control is designed to need nothing from the server. What stops is visibility, alarming, notification, and history. A lift station that overflows during the outage does so silently; a chlorine feed that fails is not called out. The utility should know, in advance, which sites and processes cannot go unwatched for the length of a server recovery, and what the manual procedure is: an operator visiting sites, a local alarm dialer independent of the server, a second small system for the critical points.',
+      },
+      { t: 'h2', text: 'Recovery' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Stabilize the plant', text: 'Confirm local control is working at critical sites; dispatch someone to watch what cannot be seen. This comes before any server work.' },
+          { title: 'Diagnose', text: 'Hardware alive? Operating system booting? Services running? Disk full? License valid? Network reachable? The failure table says what to look at; the event logs say what happened.' },
+          { title: 'Repair or restore', text: 'A full disk is cleared and its cause fixed. A crashed service is restarted. A dead server is rebuilt from the image backup onto the spare hardware or a new virtual machine, or the application is reinstalled and the project restored from the application backup.' },
+          { title: 'License', text: 'Reactivate or reinstall the license, which for many products is tied to the hardware or the virtual machine identity and needs the vendor. Keep the activation records with the backup.' },
+          { title: 'Services in order', text: 'Database, then tag server and drivers, then alarm and historian, then client services. Confirm each is running and connected before the next.' },
+          { title: 'Clients', text: 'Reconnect the operator stations and confirm the displays are live, with communication status good.' },
+          { title: 'Historian backfill', text: 'Trigger or verify the backfill from remote controllers with buffers; note the gap for the record.' },
+          { title: 'Alarms', text: 'Review the active alarm list against the plant: alarms that should be active but are not, acknowledgments lost, shelved and out-of-service states restored.' },
+          { title: 'Record', text: 'What failed, when, how long, what was done, what was lost, and what will prevent it. The recovery procedure is updated from this.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'The restore that does not work',
+        text: 'An image backup restored to different hardware may not boot; an application backup may be from a version the reinstalled software cannot read; a license may refuse a new machine identity; a database backup may be older than the alarm journal expects. Every one of these is discovered during a real outage unless a restore is practiced once a year on a spare machine, timed, and the procedure corrected.',
+      },
+      { t: 'h2', text: 'The monitoring that gives warning' },
+      {
+        t: 'ul',
+        items: [
+          'Disk free space on every volume, alarmed at a threshold weeks before full.',
+          'Memory and CPU trends; a service whose memory grows daily is a leak with a date.',
+          'Service status for every SCADA service, alarmed on stop.',
+          'Backup job completion and age of the last good backup.',
+          'License expiry date, with a reminder a month out.',
+          'Hardware and hypervisor alerts routed to the alarm system.',
+          'Time synchronization status.',
+          'Poll success rates and historian queue depth, which fall before a driver or collector dies.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'The server is fine but nobody can log in. Is that a server failure?',
+        a: 'From the plant point of view, yes: visibility is lost. Common causes are a full disk, an authentication service or domain controller unreachable, an expired certificate, or a client license count exceeded. Check the disk first, then authentication; the server event log usually names it.',
+      },
+      {
+        q: 'How long should recovery take?',
+        a: 'As long as the recovery time objective the utility has decided it can tolerate, which depends on what runs unwatched. A few hours is achievable with a tested image restore and a spare virtual machine; days is what happens without them. Decide the objective, then buy and practice the recovery that meets it.',
+      },
+      {
+        q: 'What is the minimum for a small utility with one server?',
+        a: 'An image backup on a schedule kept off the server, the application project exported and kept with the license records, a spare machine or a hypervisor that can host a restore, a documented procedure, one practiced restore a year, and disk and service monitoring. That set costs little and covers most outages.',
+      },
+      {
+        q: 'Should the alarm dialer depend on the SCADA server?',
+        a: 'Not entirely. A dialer or notification system that takes its alarms only from the server stops when the server does. A hardware dialer at critical sites, wired to local alarm contacts, or a second small notification path that watches the server itself, is the layer that calls someone when the SCADA cannot.',
+      },
+    ],
+    related: [
+      '/controls/scada-hmi/scada-fundamentals/servers',
+      '/controls/scada-hmi/scada-fundamentals/redundancy',
+      '/cybersecurity/backups/what-to-back-up',
+      '/cybersecurity/incident-response/ot-incident-response-plan',
+      '/controls/scada-hmi/scada-troubleshooting/historian-problems',
+      '/controls/scada-hmi/alarm-management/notification',
+    ],
+  },
+  {
+    path: '/controls/scada-hmi/scada-troubleshooting/client-problems',
+    kind: 'reference',
+    title: 'Client Problems',
+    summary:
+      'Diagnosing the operator station rather than the system: a client that will not connect, shows nothing, runs slowly, freezes, or stays silent on an alarm, with the causes, the order of checks, and the standard build and spare that make the fix a swap.',
+    answer:
+      'Client problems are diagnosed by separating the client from the server: if another client works, the server is fine and the problem is the client, its network path, its login, or its display files. A client that will not connect has a name resolution, network, firewall, license count, version, or certificate problem; one that connects but shows nothing has a permissions or project version problem; a slow client has too many tags or scripts on a display, a resource problem on the machine, or a slow path to the server; a silent client has a sound configuration or a notification setting problem. A standard client build kept as an image, and a spare workstation, turn most client failures into a replacement rather than a repair.',
+    keyPoints: [
+      'Another client working proves the server; the problem is then the client, its path, its login, or its files.',
+      'Cannot connect: name, network, firewall, license count, version, certificate, in that order.',
+      'Connects but wrong or empty: role and permissions, project version, cached displays.',
+      'Slow: the display, the machine, or the path. Measure which before changing anything.',
+      'Silent on alarms: sound device, mute, alarm configuration for that station.',
+      'A standard image and a spare workstation make the fix a swap; keep both current.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['SCADA', 'HMI', 'Troubleshooting', 'Networking', 'Documentation'],
+    blocks: [
+      { t: 'h2', text: 'First question' },
+      {
+        t: 'p',
+        text: 'Is any other client working? If the second operator station shows live data and the first does not, the servers, drivers, and controllers are eliminated in one look and the search is on the client side. If no client works, the problem is the server or the network between the servers and every client, and the client itself is the wrong place to spend time. Every troubleshooting session on a client starts by checking another one.',
+      },
+      { t: 'h2', text: 'By symptom' },
+      {
+        t: 'table',
+        head: ['Symptom', 'Causes', 'Checks'],
+        rows: [
+          ['Will not connect to the server', 'Server name not resolving, wrong address after a server change, network or firewall between client and server, client license count exceeded, client and server versions mismatched after an upgrade, an expired or untrusted certificate', 'Ping the server by name and address; the client log; license status on the server; versions; certificate dates'],
+          ['Connects, displays empty or partly populated', 'User role without permission to the displays or tags, a project version on the client older than the server, cached display files, tags renamed', 'Log in as a known-good user; redeploy or refresh the project; clear the cache'],
+          ['Slow displays or slow navigation', 'A display with thousands of tags or heavy scripts, a client with too little memory or a failing disk, a slow or lossy network path, a server under load serving many clients', 'Time the same display on another client; task manager on the client; ping times to the server; server load'],
+          ['Freezes or crashes', 'Client software fault, graphics driver, memory leak in a long-running session, a script in a loop', 'Client and application logs; restart and observe; compare with the standard build'],
+          ['No audible alarm', 'Sound device disabled or muted, the station not configured to annunciate, an alarm filter on that client, the audio cable', 'Play a test sound; alarm configuration for the station; another client sounds'],
+          ['Wrong values on one client', 'Bound to a different server, a test server, or an old redundant partner; a display cached from another project', 'The server the client is connected to; the project version'],
+          ['Login fails', 'Expired password, locked account, domain controller unreachable, clock too far off for authentication', 'Log in on another client; the account status; the client clock'],
+          ['Cannot control, can view', 'Role is view-only, station is not permitted control, session timed out to view-only, a control lock held elsewhere', 'Role and station settings; re-authenticate'],
+        ],
+      },
+      { t: 'h2', text: 'Order of checks' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Another client', text: 'Confirm the system is working from a second station. If it is not, stop and go to the server.' },
+          { title: 'The path', text: 'Ping the server by name and by address from the client. Name failing and address working is name resolution; both failing is network or firewall.' },
+          { title: 'The login', text: 'Log in as a known-good user, or the same user on another client. A user problem follows the user; a client problem stays with the client.' },
+          { title: 'The versions', text: 'Client software version against the server, and the project version deployed to the client. Upgrades that reach the servers and not every client are a common cause of a partly working client.' },
+          { title: 'The machine', text: 'Memory, disk, CPU, graphics, the event log. A client that has run for a year without a restart has accumulated something.' },
+          { title: 'The build', text: 'Compare with the standard client build. Anything different is a suspect. Reimage if the difference is not obvious.' },
+        ],
+      },
+      { t: 'h2', text: 'The standard build' },
+      {
+        t: 'p',
+        text: 'Every operator station is built from one image: operating system, patches, SCADA client, project deployment, security configuration, sound and display settings, and nothing else. The image is kept current with the deployed system, and a spare workstation with the image on it sits in the control room. A client that fails is swapped for the spare in minutes, and the failed one is diagnosed at leisure or reimaged. A control room whose clients were each built by hand over the years has a different problem on each one.',
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Restart before you diagnose',
+        text: 'A client that has been running for months and is now slow or odd is often fixed by a restart, and the restart costs a minute. Do it first on a station that is not the only one in the room, then look for the cause if it recurs. Restarts are not a diagnosis, but they are a cheap first step on a machine that runs one program forever.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'After the server upgrade, one client shows old displays. Why?',
+        a: 'Its project deployment did not update, or it is using cached display files. Redeploy the project to that client, clear its cache, and confirm the version on every client after any upgrade; the ones that were off or disconnected during the deployment are the ones that miss it.',
+      },
+      {
+        q: 'The web client works on one browser and not another.',
+        a: 'Browser compatibility, a blocked script or plugin, a certificate the browser does not trust, or a security setting. Use the browser the vendor supports, import the certificate, and standardize; a web client that must work on every browser is a support burden.',
+      },
+      {
+        q: 'How many clients can the server support?',
+        a: 'The license says one number and the load says another. Each client adds display rendering, script, and subscription load; a server serving twenty web clients with heavy displays slows for all of them. Watch server load as clients are added, and separate the client-serving role to its own server before the control room notices.',
+      },
+      {
+        q: 'Should operators be able to reboot the client?',
+        a: 'Yes, and they should know how, and there should be a second client so that the plant is not blind while they do it. Restarting a client is a normal operator action; restarting a server is not.',
+      },
+    ],
+    related: [
+      '/controls/scada-hmi/scada-fundamentals/clients',
+      '/controls/scada-hmi/scada-fundamentals/servers',
+      '/controls/scada-hmi/scada-troubleshooting/server-failure',
+      '/how-to/network-how-to/troubleshoot-ethernet',
+      '/controls/scada-hmi/scada-troubleshooting/time-synchronization',
+      '/troubleshooting/scada-troubleshooting/alarms-not-annunciating',
+    ],
+  },
+  {
+    path: '/controls/scada-hmi/scada-troubleshooting/historian-problems',
+    kind: 'reference',
+    title: 'Historian Problems',
+    summary:
+      'How a historian goes wrong and how to find each fault: gaps, wrong values, detail never stored, disks that fill, slow queries, backfill that never arrives, and unreadable archives, with the collector, queue, configuration, and storage checks that locate it.',
+    answer:
+      'Historian problems fall into a few families: gaps, from a collector that stopped, a buffer that overflowed during an outage, a tag renamed or deleted at the source, a license limit, or a clock jump; wrong values, from a scaling or unit change at the source, a tag pointed at the wrong address, or a change in engineering range; missing detail, from compression and deadband settings coarser than the question being asked; storage growth, from retention, tag count, and collection rate; slow queries, from raw data over long ranges and archives on slow storage; and failed backfill or unreadable archives, from time synchronization and archive file management. Each is located with the collector status, the queue depth, the tag configuration audit, the storage utilization, and the archive file list, and prevented with monitoring and a configuration standard for what is collected and how.',
+    keyPoints: [
+      'A gap is a collector, a buffer, a tag change, a license, or a clock; the gap pattern says which.',
+      'Wrong values in the historian are almost always right values from a changed source; check the tag and the scaling history.',
+      'Detail that was never stored cannot be recovered; set compression for the questions the data must answer.',
+      'Disk growth is retention times tag count times rate; the historian tells you which tag is the largest.',
+      'Backfill depends on time synchronization and buffer sizing at the remote controller.',
+      'Archive files are the data; back them up, register them after a restore, and test a read from an old one.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['SCADA', 'Troubleshooting', 'Documentation', 'Communications', 'Design'],
+    blocks: [
+      { t: 'h2', text: 'By symptom' },
+      {
+        t: 'table',
+        head: ['Symptom', 'Likely causes', 'Where to look'],
+        rows: [
+          ['Gap on every tag at once', 'Collector or historian service stopped; server outage; disk full; license expired', 'Service status and event log for the period; disk; license'],
+          ['Gap on every tag from one site or controller', 'Communication lost with no store and forward; remote buffer overflowed; backfill failed', 'Communication alarm history; remote controller buffer configuration; backfill status'],
+          ['Gap on one tag', 'Tag renamed, deleted, or re-addressed at the source; collection disabled; tag beyond the license count', 'Tag configuration change history; collector tag list; license usage'],
+          ['Gap at a fixed time daily or weekly', 'A scheduled job: backup, archive roll, restart, a maintenance script', 'Schedules on the server; the job log'],
+          ['Gap or overlap of an hour twice a year', 'Daylight saving time handled in local time instead of universal time', 'Historian time base setting; server time zone'],
+          ['Values wrong by a factor', 'Scaling or engineering units changed at the source; a range change; a tag pointed at a different register', 'Source tag configuration and its change history; the date the values changed'],
+          ['Values flat where they should move', 'Compression deadband too wide; a value frozen at the source', 'Compression settings for the tag; the source'],
+          ['Spikes that never happened', 'Bad quality stored as a number; a communication glitch; a transition captured mid-write of a multi-register value', 'Quality of the samples; the driver statistics at the time'],
+          ['Disk filling faster than planned', 'Tags added; collection rate increased; compression turned off; retention not enforced', 'Historian storage report by tag; retention settings'],
+          ['Trends slow to open', 'Raw data over long ranges; archives on slow storage; too many pens; a query without an aggregate', 'Query type; archive location; client trend configuration'],
+          ['Old data unreadable', 'Archive files moved, deleted, or not registered after a restore; a version change', 'Archive file list against the storage; the restore procedure'],
+        ],
+      },
+      { t: 'h2', text: 'The checks' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Collector status', text: 'Every collector running, connected to its source, and the time of its last write. A stopped collector is the most common cause of a system-wide gap.' },
+          { title: 'Queue depth', text: 'The buffer between the collector and the storage. A queue that grows is storage that cannot keep up or a link to the storage that is slow, and it overflows into a gap.' },
+          { title: 'Tag audit', text: 'The historian tag list against the source tag list: tags renamed, deleted, or re-addressed, and tags added that are not collected. Run it after every source change.' },
+          { title: 'Configuration', text: 'Collection rate, deadband, compression, and retention for the tags in question, against the standard for their class.' },
+          { title: 'Storage', text: 'Free space, the growth rate, and the largest tags. Retention enforced and the purge job running.' },
+          { title: 'Time', text: 'Server, collector, and source clocks synchronized, and the historian storing in universal time.' },
+          { title: 'Archives', text: 'The archive file list, the backup of the archives, and a test read from an archive older than a year.' },
+        ],
+      },
+      { t: 'h2', text: 'Detail that was never stored' },
+      {
+        t: 'p',
+        text: 'Compression saves disk by discarding samples that fall within a tolerance of a line between the samples it keeps, and deadband collection discards changes smaller than a threshold. Both are set per tag, and both decide, forever, what questions the data can answer. A level compressed at one percent cannot show a half-percent oscillation; a flow collected at a one-minute average cannot show a ten-second surge. When someone asks the historian for detail it does not have, the answer is not a historian problem but a configuration decision, and the fix is to change the settings for the future and to look elsewhere, the controller or the device, for the past. The configuration standard says what each class of tag needs: fast and raw for control diagnostics, averaged for reporting, and it is reviewed when a new question arrives.',
+      },
+      { t: 'h2', text: 'Backfill' },
+      {
+        t: 'p',
+        text: 'A remote controller with a buffer keeps its history while the link is down and sends it when the link returns; the historian then has to accept samples with old timestamps and put them in place. That works when the controller clock is synchronized, the buffer is large enough for the outage, the protocol carries the timestamps, and the historian is configured to accept out-of-order data. Any one of those missing leaves a gap that the site did not have to have. Test it at commissioning by disconnecting the link for an hour and looking at the trend the next day.',
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Archives are the data',
+        text: 'A historian stores its data in archive files that it manages itself, and those files are the only copy of years of history. They are backed up on a schedule, kept off the server, and re-registered with the historian after any restore. A restore that brings back the application and not the archives brings back an empty historian. Check the archive list after every restore, and open an archive from three years ago once a year to prove it can be read.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'The trend shows a value that changed by a factor of ten on a certain date. Was the historian corrupted?',
+        a: 'Almost certainly not. The source changed: a scaling, a range, an engineering unit, or the tag was re-addressed. Find the change in the source configuration history on that date. The historian stored what it was given; the fix is either a correction factor in reports for the earlier period or, on some historians, a rescaling of the stored values with a record of what was done.',
+      },
+      {
+        q: 'How much disk should the historian have?',
+        a: 'Bytes per sample times samples per day per tag times tags times retention days, computed from the historian storage report for the actual system rather than from estimates, doubled for growth, plus the archives that are kept beyond the online retention. Then alarm at a threshold that gives months of warning.',
+      },
+      {
+        q: 'Why do the totals from the historian differ from the totalizer in the controller?',
+        a: 'The historian integrates sampled values; the controller integrates every scan. Sampling, compression, and gaps all reduce the historian total, and bad-quality samples treated as zero reduce it further. Use the controller totalizer for the official total and historize it as a tag; use the historian integral for analysis.',
+      },
+      {
+        q: 'Can I delete old tags to free space?',
+        a: 'Deleting a tag usually removes its history, which may be a regulatory record. Stop collecting it and leave the history, or archive the tag history to a file before deleting. Check the retention requirement for the data before anything is removed.',
+      },
+    ],
+    related: [
+      '/controls/scada-hmi/historian-data/data-collection',
+      '/controls/scada-hmi/historian-data/compression',
+      '/controls/scada-hmi/historian-data/historian-architecture',
+      '/controls/scada-hmi/historian-data/long-term-storage',
+      '/controls/scada-hmi/scada-troubleshooting/time-synchronization',
+      '/controls/scada-hmi/scada-troubleshooting/server-failure',
+    ],
+  },
+  {
+    path: '/controls/scada-hmi/scada-troubleshooting/alarm-problems',
+    kind: 'reference',
+    title: 'Alarm Problems',
+    summary:
+      'How an alarm system fails: alarms that never raise, raise unheard, stick, chatter, or flood, acknowledgments that do not propagate, and notifications that never arrive, with the causes by layer and the end-to-end test that proves the whole chain.',
+    answer:
+      'Alarm problems occur at every layer from detection to notification: an alarm never raises because the condition is not detected, the bit is not mapped, the limit is wrong, the tag is bad quality, or the alarm is disabled, suppressed, or out of service; it raises silently because the client sound, the alarm display filter, or the notification service is misconfigured; it sticks because it is latched and needs a reset, the deadband keeps the condition true, or the value is stale; it chatters because it has no deadband or delay; it floods because nothing suppresses the consequences of one event; acknowledgments fail to propagate because the redundant pair does not synchronize them; the journal stops because the database is full; and notifications fail because of the modem, the gateway, the contact list, or the escalation logic. The end-to-end test, forcing the condition in the field and following it to the display, the journal, and the phone, is how each alarm is proven and how most of these are found.',
+    keyPoints: [
+      'An alarm has a chain: condition, detection, mapping, evaluation, display, sound, journal, notification. Any link can fail silently.',
+      'Never raised: detection, mapping, limit, quality, or a suppression, shelve, or out-of-service state that stuck.',
+      'Raised but unheard: client sound, display filter, notification service, contact list.',
+      'Stuck, chattering, and flooding are configuration: latching, deadband, delay, and suppression logic.',
+      'Acknowledgment and journal failures are server problems: redundancy synchronization and database space.',
+      'Prove every critical alarm end to end on a schedule; the test finds what the design review missed.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['Alarms', 'SCADA', 'Troubleshooting', 'ISA', 'HMI'],
+    blocks: [
+      { t: 'h2', text: 'The chain' },
+      {
+        t: 'p',
+        text: 'An alarm starts as a condition in the process, is detected by a controller or a server evaluation, is mapped from a bit or a limit to an alarm record, is evaluated through its deadband and delays, appears on the alarm display with its priority and color, sounds at the client, is written to the journal, and is sent to whoever is on call. Each step is configured separately, often by different people at different times, and any one of them can be wrong without the others noticing. That is why alarm problems are found by walking the chain, and why the proof of an alarm is a test that exercises every link.',
+      },
+      { t: 'h2', text: 'By symptom' },
+      {
+        t: 'table',
+        head: ['Symptom', 'Causes', 'Checks'],
+        rows: [
+          ['Alarm never raised', 'Condition not detected in the controller; alarm bit not mapped to a SCADA alarm; limit set outside the range the value reaches; tag bad quality suppressing the alarm; alarm disabled, suppressed by a stuck state, shelved, or out of service; server-evaluated alarm on a tag polled too slowly to catch a brief condition', 'Controller bit while the condition is forced; alarm configuration for the tag; the suppressed, shelved, and out-of-service lists; the tag quality; the poll rate'],
+          ['Raised, nobody heard it', 'Client sound off or muted; alarm display filtered to another area or priority; notification service stopped; contact on the roster wrong; escalation waiting on an acknowledgment that never came', 'Test sound on the client; display filter settings; notification service status and log; the roster'],
+          ['Stuck active', 'Latched alarm awaiting reset; deadband holding the condition true; stale value keeping the condition; a state-based suppression that ended with the condition still true', 'The alarm type; the live value against the limit and deadband; the tag timestamp'],
+          ['Chattering', 'No deadband; no on or off delay; a noisy signal at the limit; a discrete input bouncing', 'The alarm configuration; a trend of the value at the limit'],
+          ['Flooding', 'One event producing many alarms with no parent-child suppression; a plant state change without state-based alarming; a communication loss without suppression of the site alarms', 'The journal for the event; the suppression design'],
+          ['Acknowledgment does not propagate', 'Redundant pair not synchronizing acknowledgments; clients connected to different servers; a client with a stale alarm list', 'Which server each client is on; the redundancy configuration'],
+          ['Journal stopped', 'Database full or unreachable; journal service stopped; retention job failed', 'Database size and status; service status'],
+          ['Notification never arrives', 'Modem or gateway failure; carrier or account problem; wrong number or address; escalation logic waiting; the alarm below the notification priority threshold', 'The notification log; a test notification; the roster and the priority filter'],
+          ['Wrong priority or color', 'Priority assigned wrongly; display color mapping different on one client; a priority changed without rationalization', 'The alarm record; the display configuration'],
+        ],
+      },
+      { t: 'h2', text: 'The end-to-end test' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Choose the alarm', text: 'Critical alarms on a schedule, every alarm at commissioning and after any change to its chain.' },
+          { title: 'Force the condition at the source', text: 'Trip the float, simulate the transmitter, open the contact, or force the input at the controller with a record that it was forced.' },
+          { title: 'Watch the controller', text: 'The alarm bit sets after the configured delay. If it does not, the detection logic is the problem.' },
+          { title: 'Watch the display', text: 'The alarm appears on the alarm list and on the process display with the right priority, color, and text, and the client sounds.' },
+          { title: 'Check the journal', text: 'The entry with the right timestamp, tag, priority, and value.' },
+          { title: 'Check the notification', text: 'The on-call phone receives it within the configured time; the escalation proceeds if it is not acknowledged.' },
+          { title: 'Clear and confirm', text: 'Remove the condition; the alarm returns to normal after the off delay; the display, the journal, and the notification reflect it.' },
+          { title: 'Record', text: 'The test, the date, the result, and any correction, in the alarm record.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'The alarm that was tested at commissioning and never again',
+        text: 'Chains change: a controller program is edited, a tag is renamed, a notification gateway is replaced, a roster changes, a suppression is added. Each change can break an alarm that was proven years ago. Critical alarms, the ones whose failure has a public health or overflow consequence, are tested on a schedule, and any change to any link in their chain triggers a retest.',
+      },
+      { t: 'h2', text: 'Using the reports' },
+      {
+        t: 'p',
+        text: 'The alarm performance reports from the alarm server, the rate, the most frequent, the standing, the chattering, the shelved and suppressed counts, are the routine way to find alarm problems before an incident does. A chattering alarm on the report is a missing deadband; a standing alarm is a stuck condition or a broken instrument; a frequent alarm is a bad limit or a real recurring problem; a growing suppressed list is a state bit that never released. A weekly look at the report, and a fix for the top few items, keeps the system healthy with very little effort.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'The alarm bit is on in the controller but nothing shows on the SCADA. Why?',
+        a: 'The bit is not mapped to an alarm, the alarm is disabled or in a suppressed, shelved, or out-of-service state, the tag is bad quality, or the display is filtered. Look at the alarm configuration for the tag first, then the three lists, then the tag quality, then the display filter on that client.',
+      },
+      {
+        q: 'The notification went to the wrong person.',
+        a: 'The roster or the escalation schedule is stale, or the alarm is assigned to the wrong group. Rosters change with staff and shifts, and a roster that nobody owns is wrong within months. Assign an owner, review it monthly, and send a test notification to each person on it.',
+      },
+      {
+        q: 'An alarm cleared on its own with nobody acting. Is that a fault?',
+        a: 'It is normal for a momentary alarm whose condition cleared, and the returned-to-normal-unacknowledged state exists so that the operator sees it happened. If the condition should not have cleared without action, the alarm belongs latched, and if it cleared because the value went bad quality, the bad-quality handling is wrong.',
+      },
+      {
+        q: 'How often should critical alarms be tested?',
+        a: 'At least annually, and after any change to their chain; some utilities test the highest priority alarms quarterly. The test takes minutes per alarm and is the only proof that the chain still works. Record every test.',
+      },
+    ],
+    related: [
+      '/troubleshooting/scada-troubleshooting/alarms-not-annunciating',
+      '/controls/scada-hmi/scada-fundamentals/alarm-servers',
+      '/controls/scada-hmi/alarm-management/notification',
+      '/controls/scada-hmi/alarm-management/suppression',
+      '/controls/scada-hmi/alarm-management/alarm-floods',
+      '/controls/scada-hmi/alarm-management/rationalization',
+    ],
+  },
+  {
+    path: '/controls/scada-hmi/scada-troubleshooting/time-synchronization',
+    kind: 'reference',
+    title: 'Time Synchronization',
+    summary:
+      'Why every clock in a control system must agree and what happens when they do not: out-of-order events, historian gaps at daylight saving, authentication failures, wrong totals. The time source and hierarchy, how each device is synchronized, and the checks.',
+    answer:
+      'Every alarm, event, history sample, log entry, and certificate check in a control system depends on a timestamp, and the system works only if the servers, clients, controllers, remote units, network devices, and historian agree on the time. One trusted source, a GPS-disciplined clock or a network time server reached through the DMZ, feeds a hierarchy: the time server synchronizes the hypervisor and the servers, the servers synchronize the clients and the network equipment, and the controllers are synchronized by network time where they support it or by the SCADA writing the time over the protocol where they do not. Data is stored in universal time and displayed in local time so that daylight saving does not produce gaps and overlaps, virtual machines take time from one source rather than two, and every device clock is compared with the source and alarmed on drift.',
+    keyPoints: [
+      'Timestamps are the glue: events, history, logs, and authentication all fail quietly when clocks disagree.',
+      'One source, one hierarchy: the time server, then the servers, then the clients, network gear, and controllers.',
+      'Controllers get time by network time protocol where they can and by a periodic write from the SCADA where they cannot.',
+      'Store in universal time, display in local; daylight saving handled in local time produces an hour of gap and an hour of overlap.',
+      'A virtual machine synchronized by both the hypervisor and a time server fights itself; pick one.',
+      'Compare every clock with the source and alarm on drift; authentication fails at a few minutes of error.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['SCADA', 'Networking', 'Troubleshooting', 'Cybersecurity', 'PLC'],
+    blocks: [
+      { t: 'h2', text: 'What goes wrong' },
+      {
+        t: 'table',
+        head: ['Symptom', 'Cause'],
+        rows: [
+          ['Alarm from a remote site appears before the event that caused it at the plant', 'Remote controller clock ahead of the server; timestamps from two sources'],
+          ['Historian trend has a gap of an hour in spring and an hour of overlapping data in autumn', 'Local time storage across a daylight saving change'],
+          ['Operators cannot log in; the error mentions time or Kerberos', 'Client or server clock more than a few minutes from the domain controller'],
+          ['Certificate errors on OPC UA or web clients', 'A clock outside the certificate validity period, often a device reset to its default date'],
+          ['Backfilled history lands in the wrong place or is rejected', 'Remote controller clock wrong while it buffered'],
+          ['Daily reports show totals that belong to the wrong day', 'Report server, historian, and controller disagree on midnight'],
+          ['Sequence of events after a trip cannot be reconstructed', 'Controllers not synchronized; events stamped by server arrival time'],
+          ['Security logs from the firewall, the server, and the controllers cannot be correlated', 'Different time sources or time zones on each'],
+        ],
+      },
+      { t: 'h2', text: 'The hierarchy' },
+      {
+        t: 'table',
+        head: ['Device class', 'Synchronized by', 'Notes'],
+        rows: [
+          ['Time source', 'A GPS-disciplined clock on the control network, or a network time server in the DMZ that takes time from the internet or the enterprise', 'Two sources for a large system; the control network never reaches the internet directly for time'],
+          ['Hypervisor hosts', 'Network time protocol from the source', 'The host provides the hardware clock for every virtual machine'],
+          ['SCADA servers and historian', 'Network time protocol from the source, or from the hypervisor, not both', 'The server is often the time server for everything below it'],
+          ['Clients and workstations', 'Domain time or network time protocol from the servers', 'Authentication depends on it'],
+          ['Switches, firewalls, radios', 'Network time protocol from the source', 'Their logs are useless without it'],
+          ['Modern controllers', 'Network time protocol client in the controller, from the source or the server', 'Configured once; check that it is enabled'],
+          ['Older controllers and remote units', 'The SCADA writes the time on a schedule: DNP3 time synchronization, or a write to the clock registers over Modbus or the vendor protocol', 'Daily at least; hourly on units that drift; the write is logged'],
+          ['Panel HMIs and standalone devices', 'Network time protocol where supported; otherwise from the controller or set by hand and checked', 'The ones set by hand are the ones that are wrong'],
+        ],
+      },
+      { t: 'h2', text: 'Universal and local' },
+      {
+        t: 'p',
+        text: 'Local time changes twice a year where daylight saving is observed, and a historian or a journal that stores local timestamps records an hour that does not exist in spring and an hour that occurs twice in autumn. Trends across those hours show a gap or a fold, reports that sum a day get the wrong day, and events cannot be ordered. The remedy is to store every timestamp in universal time, which never changes, and convert to local time only for display. Every serious historian and SCADA platform supports this; the setting has to be chosen at installation, and changing it later means converting the existing data. Controllers that keep local time are synchronized by the SCADA with the conversion done at the server.',
+      },
+      { t: 'h2', text: 'Virtual machines' },
+      {
+        t: 'p',
+        text: 'A virtual machine can take its time from the hypervisor, which is convenient, or from a time server over the network, which is standard. Both at once means two authorities adjusting the same clock, and the result is a clock that jumps. Choose one: usually the hypervisor is synchronized to the source and the virtual machines take time from the network like physical servers, with hypervisor time synchronization disabled for them. A snapshot restored from weeks ago brings its old time with it until synchronization corrects it, which is a reason to synchronize on startup.',
+      },
+      { t: 'h2', text: 'Checking' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Compare each clock with the source', text: 'Servers, clients, controllers, remote units, network devices, on a list, with the offset recorded. Most platforms can display the controller clock next to the server clock.' },
+          { title: 'Confirm each device is synchronizing', text: 'Not just that it is right now: the time client enabled and pointed at the source, or the SCADA time write scheduled and succeeding.' },
+          { title: 'Check the time base', text: 'Historian, journal, and database storing in universal time, displays showing local, and the server time zone set correctly.' },
+          { title: 'Look for drift', text: 'Trend the offset of the controllers that the SCADA synchronizes; a unit that drifts a minute a day has a failing clock and needs a more frequent write or a repair.' },
+          { title: 'Alarm', text: 'Time source lost, server not synchronized, controller offset above a threshold. These are alarms like any other.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Sequence of events',
+        text: 'After a trip, the question is what happened first, and the answer depends on timestamps from controllers that were synchronized to within a fraction of a second. Where the protocol carries source timestamps, such as DNP3, the controller clock is the record. Where it does not, the server stamps events on arrival, and a poll interval of seconds is the resolution. Know which applies to each site before an investigation depends on it.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'How accurate does synchronization need to be?',
+        a: 'For alarm ordering across sites and historian consistency, a second or so is adequate; network time protocol delivers far better than that on a local network. For sequence of events within a plant, tens of milliseconds, which network time on a good network provides and which precision time protocol provides where needed. For authentication, the domain tolerates a few minutes, which is why a badly drifted clock shows up as a login failure.',
+      },
+      {
+        q: 'Can the control network get time from the internet?',
+        a: 'Not directly. A time server in the DMZ can take time from the enterprise or from internet time servers and serve it inward, or a GPS clock on the control network can provide it with no outside connection at all. The firewall rule is one direction, one port, one server.',
+      },
+      {
+        q: 'The remote unit clock is always wrong on Monday morning. Why?',
+        a: 'The unit loses time over the weekend when something that synchronizes it is not running, or it was power cycled and reset to a default date. Check the synchronization schedule, the unit battery or capacitor that keeps its clock through outages, and the log of time writes.',
+      },
+      {
+        q: 'Should timestamps come from the controller or the server?',
+        a: 'From the controller when the protocol carries them and the controller is synchronized, because they say when the event happened rather than when the server heard about it. From the server otherwise, with the understanding that the resolution is the poll interval. The alarm philosophy records which applies.',
+      },
+    ],
+    related: [
+      '/controls/scada-hmi/scada-fundamentals/servers',
+      '/controls/scada-hmi/scada-fundamentals/scada-communications',
+      '/controls/plc-systems/communications/dnp3',
+      '/controls/scada-hmi/scada-troubleshooting/historian-problems',
+      '/controls/scada-hmi/scada-fundamentals/alarm-servers',
+      '/cybersecurity/network-segmentation/dmz-design',
+    ],
+  },
+  {
+    path: '/controls/scada-hmi/historian-data/long-term-storage',
+    kind: 'reference',
+    title: 'Long-Term Storage',
+    summary:
+      'Keeping historian data for years: a retention policy by data class that follows the record rules, tiered storage from online to offline copies, downsampling, archive management, exports that outlive the historian, and the annual proof that old data reads.',
+    answer:
+      'Long-term storage starts with a retention policy that says, for each class of data, how long it is kept and at what resolution, driven by the record-keeping rules that apply to a water system and by the operational value of history for trending and investigation. The historian keeps recent data online at full resolution, rolls older archives to cheaper storage, and may downsample very old data to aggregates while keeping raw data for the tags that regulations or investigations need. Archive files are backed up off the server and off site, re-registered after any restore, and exported periodically in a plain format so that the data survives a change of historian vendor or version. Once a year someone reads an archive from the beginning of the retention period and confirms it opens.',
+    keyPoints: [
+      'Retention is a policy per data class, written down, that the historian configuration implements.',
+      'Regulatory records for a water system run five to ten years; keep the tags that back them at least that long.',
+      'Tier the storage: recent data fast and online, old data cheap and slower, a copy off site.',
+      'Downsample old data only where the policy allows, and never the compliance tags.',
+      'Archive files are the data; back them up and re-register them after a restore.',
+      'Export compliance data in a plain format on a schedule; the historian will be replaced one day.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['SCADA', 'Documentation', 'Standards', 'Design', 'Water'],
+    blocks: [
+      { t: 'h2', text: 'Retention by class' },
+      {
+        t: 'table',
+        caption: 'Check the federal and state record rules that apply to the system; the policy cites them',
+        head: ['Data class', 'Examples', 'Retention', 'Resolution'],
+        rows: [
+          ['Compliance measurements', 'Turbidity per filter and combined effluent, chlorine residual, pH, flows reported to the regulator', 'The regulatory record period, commonly five years for turbidity and microbiological records and ten for chemical, longer where the state requires; treat it as permanent', 'Full resolution as collected; never downsampled'],
+          ['Process values', 'Levels, pressures, flows, analyzer readings used for operation', 'Two to five years online, longer in archive', 'Full resolution online; aggregates acceptable beyond the online period if the policy says so'],
+          ['Equipment data', 'Run times, starts, currents, vibration, drive data', 'Life of the equipment', 'Aggregates and events'],
+          ['Alarm and event journal', 'Alarms, acknowledgments, operator actions', 'Five years or longer; small in size', 'Every record'],
+          ['Diagnostics', 'Communication statistics, server health, scan times', 'One to two years', 'Aggregates'],
+          ['Audit and security logs', 'Logins, configuration changes, firewall logs', 'As the security policy requires, often a year or more', 'Every record'],
+        ],
+      },
+      {
+        t: 'p',
+        text: 'The policy is a document, owned by the utility, that names each class, the retention, the resolution, the storage tier, and the regulation or reason behind it. The historian configuration is derived from it, and an audit compares the two. Without the document, retention is whatever the integrator set at installation, and nobody knows whether the turbidity from ten years ago is still there until the regulator asks.',
+      },
+      { t: 'h2', text: 'Tiers' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Online', def: 'Recent archives on the historian server storage, fast, full resolution, the data trends and reports use daily. One to a few years.' },
+          { term: 'Near-line', def: 'Older archive files moved to larger, slower, cheaper storage that the historian can still read, attached when needed. Several years.' },
+          { term: 'Offline copy', def: 'A backup of every archive file, off the server and off site, on media or a service that will still be readable in ten years. The whole retention period.' },
+          { term: 'Exported records', def: 'The compliance data, and anything else the policy names, exported to a plain format such as comma-separated text on a schedule and kept with the offline copy, independent of any historian software.' },
+        ],
+      },
+      { t: 'h2', text: 'Downsampling' },
+      {
+        t: 'p',
+        text: 'Very old process data is rarely examined sample by sample; a trend of a tank level five years ago is looked at by the day, not by the minute. Downsampling stores hourly or daily averages, minimums, and maximums for old data and discards the raw samples, which cuts storage by orders of magnitude. It is a policy decision per class, and it is never applied to the compliance tags or to anything whose raw record might be needed in an investigation. Where it is applied, the aggregates are computed before the raw data is removed, stored as their own tags, and checked against the raw data on a sample before the raw data goes.',
+      },
+      { t: 'h2', text: 'Archive files' },
+      {
+        t: 'p',
+        text: 'A historian stores its data in archive files that it creates, fills, closes, and indexes itself, and the files are the only place the data lives. They are backed up as files on a schedule, kept off the server, and copied off site. When a historian is restored from backup, the application comes back with its configuration and its list of archives, and the archives themselves have to be present at the paths it expects or be registered with it; a restore that forgets the archives is a working historian with no past. The procedure for a restore includes the archive step, and the annual restore test includes opening a trend from the oldest archive.',
+      },
+      { t: 'h2', text: 'Outliving the software' },
+      {
+        t: 'p',
+        text: 'Historians are replaced: a vendor discontinues a product, a utility changes platforms, a version upgrade cannot read the old files. Data that exists only in a proprietary archive format is at the mercy of that. The defense is export: the compliance data and whatever else the policy names, written on a schedule to a plain, documented format with the tag names, timestamps in universal time, values, units, and quality, and kept with the offline copies. When the historian is migrated, the vendor tools move what they can, the export covers the rest, and the retention clock does not restart.',
+      },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Write the policy', text: 'Classes, retention, resolution, tier, and the rule behind each, signed by the utility.' },
+          { title: 'Configure the historian to it', text: 'Retention, archive roll, storage locations, downsampling jobs, and export jobs.' },
+          { title: 'Back up the archives', text: 'Scheduled file backup off the server and off site, monitored for completion.' },
+          { title: 'Export the records', text: 'Compliance data to plain files on a schedule, checked for completeness.' },
+          { title: 'Test annually', text: 'Restore an archive from the oldest year to a test historian and open a trend. Read an exported file with a spreadsheet.' },
+          { title: 'Audit', text: 'Compare the configuration with the policy and the storage with the retention; correct the drift.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'The record the regulator asked for',
+        text: 'A request for three years of individual filter turbidity data at fifteen-minute resolution is a routine regulatory event, and the answer has to come from the historian or the exported records. A utility that cannot produce it has a compliance problem regardless of how well the filters ran. Know where those records are, prove they can be read, and keep them longer than the rule requires.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'How long must turbidity records be kept?',
+        a: 'Federal drinking water record rules require turbidity and microbiological analysis records to be kept for at least five years and chemical analysis records for ten, and states may require longer. Treat the historian tags that back those records as permanent, at full resolution, with an exported copy.',
+      },
+      {
+        q: 'Is cloud storage acceptable for archives?',
+        a: 'For the offline copy and the exported records, cloud object storage is a reasonable off-site tier, subject to the utility security policy and to keeping a local copy as well. The online historian and its live archives stay on the control network; the cloud receives a copy through the DMZ, one direction.',
+      },
+      {
+        q: 'Can old data be deleted to save disk?',
+        a: 'Only what the policy says can be deleted, after its retention has passed, and never the compliance classes. Storage is cheap compared with the cost of a missing record. If disk is short, add disk or move old archives to near-line storage; do not purge.',
+      },
+      {
+        q: 'What format should the export use?',
+        a: 'One that a person can read with common tools in ten years: comma-separated text with a header, one file per tag or per period, timestamps in universal time in a standard format, values, units, and quality flags. Compressed if large. Document the layout in the policy.',
+      },
+    ],
+    related: [
+      '/controls/scada-hmi/historian-data/historian-architecture',
+      '/controls/scada-hmi/historian-data/compression',
+      '/controls/scada-hmi/historian-data/reporting',
+      '/controls/scada-hmi/scada-troubleshooting/historian-problems',
+      '/cybersecurity/backups/what-to-back-up',
+      '/controls/scada-hmi/historian-data/sql-integration',
+    ],
+  },
+  {
+    path: '/controls/scada-hmi/historian-data/sql-integration',
+    kind: 'reference',
+    title: 'SQL Integration',
+    summary:
+      'Connecting SCADA and historian data to relational databases: why a utility does it, the methods, a schema that handles time series, the query patterns for totals and reports, the mistakes that flood a database or stall a server, and security.',
+    answer:
+      'SQL integration puts control system data where reports, regulatory submissions, maintenance systems, laboratory systems, and dashboards can reach it, and brings the occasional external value, such as a laboratory result or a work order, back. The methods are a historian query interface that answers time-series questions directly, SCADA logging that writes selected values and events to tables on a schedule or on change, a publish-subscribe path through a broker, or an export to a reporting database in the DMZ. The database schema stores tag, timestamp, value, and quality in a narrow table indexed by tag and time, with reference tables for tag metadata, and the writes are asynchronous and buffered so that an unavailable database never blocks the SCADA. The database that the office reads is a replica in the DMZ with read-only accounts, and no connection from the office reaches the control network.',
+    keyPoints: [
+      'The historian answers time-series questions; SQL answers reporting and integration questions. Use each for its job.',
+      'Write summaries and events to SQL, not every scan of every tag; the historian keeps the raw data.',
+      'A narrow table of tag, time, value, quality, indexed by tag and time, is the schema that survives growth.',
+      'Writes are asynchronous with store and forward; a database that is down must never stall the SCADA.',
+      'The office reads a replica in the DMZ through read-only accounts; nothing in the office connects inward.',
+      'Universal time in the database, local time in the report.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['SCADA', 'Documentation', 'Cybersecurity', 'Design', 'Programming'],
+    blocks: [
+      { t: 'h2', text: 'Why' },
+      {
+        t: 'ul',
+        items: [
+          'Regulatory reports: monthly operating reports built from daily totals, maximums, minimums, and compliance measurements.',
+          'Maintenance: run hours and start counts to the maintenance management system, which schedules work from them, and work orders back to the SCADA for display.',
+          'Laboratory: sample results from the laboratory system alongside the online analyzers, for comparison and calibration.',
+          'Dashboards and management reporting: production, energy, chemical use, and cost, in tools the office already uses.',
+          'Billing and wholesale accounting: totalized flows at meters shared with other systems.',
+          'Asset and event records: alarm history, operator actions, and equipment events in a form that can be queried by anyone with a report tool.',
+        ],
+      },
+      { t: 'h2', text: 'Methods' },
+      {
+        t: 'table',
+        head: ['Method', 'How it works', 'Best for', 'Limits'],
+        rows: [
+          ['Historian query interface', 'The historian exposes a SQL-like interface or a connector that returns time-series data with aggregation and interpolation', 'Reports and analysis directly from the historian without copying data', 'Load on the historian; query language specific to the product'],
+          ['SCADA logging groups', 'The SCADA writes selected tags to database tables on a schedule, on change, or on an event trigger', 'Daily totals, shift reports, event records, batch records', 'Configuration per group; the volume must be designed, not defaulted'],
+          ['Historian to reporting database', 'A scheduled job aggregates historian data into a relational reporting database', 'Office reporting from a database in the DMZ with no load on the control system', 'Latency of the schedule; another database to maintain'],
+          ['Publish-subscribe through a broker', 'The SCADA or edge device publishes values and events; a subscriber on the enterprise side writes them to a database', 'Modern architectures, cloud and enterprise integration, one-way data flow', 'A broker and a subscriber to run; the design of topics and payloads'],
+          ['Direct database writes from a controller', 'A controller module writes to a database', 'Rarely; a specialized need', 'Credentials in the controller, a database on the control network, no buffering; avoid'],
+        ],
+      },
+      { t: 'h2', text: 'A schema that lasts' },
+      {
+        t: 'p',
+        text: 'Time-series data in a relational database is stored one row per sample in a narrow table, with the tag identified by a key into a metadata table, the timestamp in universal time, the value, and the quality. A wide table with a column per tag looks convenient and breaks the first time a tag is added, renamed, or has a different sample rate. The narrow table is indexed on the tag key and the timestamp, partitioned by time on large systems, and its rows are inserted in batches. Aggregates that reports use repeatedly, such as daily totals, are computed once by a scheduled job into their own table rather than recomputed from raw rows on every report.',
+      },
+      {
+        t: 'code',
+        lang: 'sql',
+        caption: 'A narrow sample table with metadata and a precomputed daily aggregate',
+        code: `CREATE TABLE tag (
+  tag_id      INT PRIMARY KEY,
+  tag_name    VARCHAR(120) NOT NULL UNIQUE,
+  description VARCHAR(255),
+  units       VARCHAR(32),
+  site        VARCHAR(64)
+);
+
+CREATE TABLE sample (
+  tag_id   INT      NOT NULL REFERENCES tag(tag_id),
+  ts_utc   DATETIME NOT NULL,
+  value    FLOAT,
+  quality  SMALLINT NOT NULL,   -- 0 bad, 1 uncertain, 2 good
+  PRIMARY KEY (tag_id, ts_utc)
+);
+
+CREATE TABLE daily_total (
+  tag_id     INT  NOT NULL REFERENCES tag(tag_id),
+  day_local  DATE NOT NULL,
+  total      FLOAT,
+  min_value  FLOAT,
+  max_value  FLOAT,
+  good_pct   FLOAT,               -- share of samples with good quality
+  PRIMARY KEY (tag_id, day_local)
+);`,
+      },
+      {
+        t: 'code',
+        lang: 'sql',
+        caption: 'A report query against the aggregate table, not the raw samples',
+        code: `-- Daily flow total for the plant effluent meter, last 31 days,
+-- computed from a totalizer tag that the controller integrates every scan
+SELECT d.day_local, d.total, d.good_pct
+FROM daily_total d
+JOIN tag t ON t.tag_id = d.tag_id
+WHERE t.tag_name = 'FIT-401_TOTAL'
+  AND d.day_local >= DATEADD(day, -31, CAST(GETDATE() AS DATE))
+ORDER BY d.day_local;`,
+      },
+      {
+        t: 'p',
+        text: 'The daily total in that example comes from a controller totalizer, which counts every scan, rather than from an integral of sampled flow, which misses whatever fell between samples. The job that fills the aggregate table reads the totalizer value at the day boundary in local time, converts it from universal time correctly across daylight saving changes, and records what fraction of the day the tag had good quality so that a report can flag a day that is incomplete.',
+      },
+      { t: 'h2', text: 'Mistakes' },
+      {
+        t: 'ul',
+        items: [
+          'Writing every tag every scan. A thousand tags at one second is 86 million rows a day; the database fills, the inserts fall behind, and the SCADA logging queue overflows. Log summaries and events; the historian keeps the raw data.',
+          'Synchronous writes. A logging path that waits for the database blocks the SCADA when the database is slow or down. Writes are queued, buffered to disk, and retried.',
+          'The database on the control network with office users connected to it. Every report tool in the office then has a path into the control zone. The office reads a replica in the DMZ.',
+          'Credentials in scripts and controllers. Service accounts with minimum rights, stored in the platform credential store, rotated.',
+          'Local time in the database. Stored data in universal time; conversion in the report.',
+          'Floating point money. Totals for billing computed with appropriate precision and rounding rules, agreed with the billing system.',
+          'No quality column. A report that cannot tell a zero from a bad sample produces wrong totals with confidence.',
+        ],
+      },
+      { t: 'h2', text: 'Security' },
+      {
+        t: 'table',
+        head: ['Rule', 'Why'],
+        rows: [
+          ['Data flows outward: control network to DMZ to office', 'A compromised office system cannot reach the control network through the database path'],
+          ['The office reads a replica in the DMZ', 'Load and access are isolated from the database the SCADA writes'],
+          ['Read-only accounts for reporting; a write account only for the SCADA logging service', 'A report tool cannot alter or delete control records'],
+          ['Inbound values, such as laboratory results, arrive through a controlled path and are validated before display', 'Data from the office is untrusted until checked'],
+          ['Database patched, backed up, and monitored like the SCADA servers', 'It holds regulatory records'],
+          ['Encrypted connections and no default accounts', 'The database is a target'],
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Start with the report',
+        text: 'Before designing tables, write the report that someone needs: the columns, the period, the totals, the rules for a missing day. The report defines the aggregates, the aggregates define the logging, and the logging defines the load. Integration designed from the data outward logs everything and reports nothing.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Should the historian be replaced by a SQL database?',
+        a: 'No. A historian is built for millions of samples a day with compression and fast time-range queries; a relational database is built for structured records and joins. Keep the raw time series in the historian and put summaries, events, and integration data in SQL. Some products combine both; the division of work still applies.',
+      },
+      {
+        q: 'How do I get laboratory results into the SCADA displays?',
+        a: 'The laboratory system writes results to a table in the DMZ database, or exports a file to a DMZ share; a job on the control side reads them through a one-way path, validates the tag, time, and range, and writes them to SCADA tags marked as laboratory values. Display them beside the online analyzer with their sample time; never let an imported value drive control.',
+      },
+      {
+        q: 'The monthly report totals do not match the operator log.',
+        a: 'Common causes: the report integrates sampled flow while the operator reads the totalizer; the day boundary is in universal time rather than local; bad-quality samples were treated as zero; a daylight saving change doubled or dropped an hour. Compute totals from the totalizer tag at local midnight, carry the quality, and reconcile the two methods once so the difference is understood.',
+      },
+      {
+        q: 'Can the SCADA write to a database in the office?',
+        a: 'It can, through the DMZ, one direction, to a database the office then reads. It should not connect directly to an office database server, and the office should not connect to anything on the control network. The DMZ database, or a broker in the DMZ, is the meeting point.',
+      },
+    ],
+    related: [
+      '/controls/scada-hmi/historian-data/reporting',
+      '/controls/scada-hmi/historian-data/historian-architecture',
+      '/controls/scada-hmi/historian-data/long-term-storage',
+      '/cybersecurity/network-segmentation/dmz-design',
+      '/controls/plc-systems/communications/opc-ua',
+      '/controls/scada-hmi/scada-troubleshooting/time-synchronization',
+    ],
+  },
 ];

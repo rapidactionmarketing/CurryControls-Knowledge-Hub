@@ -1561,4 +1561,493 @@ export const INSTRUMENTATION_ENTRIES: Entry[] = [
       '/controls/scada-hmi/alarm-management/alarm-priority',
     ],
   },
+  {
+    path: '/controls/instrumentation/analytical/ph',
+    kind: 'reference',
+    title: 'pH Measurement',
+    summary:
+      'Glass electrodes, reference junctions, and why pH is the measurement that drifts: how the sensor works, temperature compensation, two-point buffer calibration, mounting rules, the failure modes of the reference, and using the signal for chemical feed control.',
+    answer:
+      'pH is measured by the voltage between a glass electrode, which develops a potential proportional to hydrogen ion activity, and a reference electrode that provides a stable potential through a porous junction. The signal is about 59 millivolts per pH unit at 25 °C and changes with temperature, so every measurement is temperature compensated. The sensor is calibrated against two buffers, drifts as the glass ages and the reference junction fouls or its electrolyte depletes, and is the most maintenance-intensive analytical measurement in a typical plant.',
+    keyPoints: [
+      'The measurement is a voltage: 59.16 mV per pH unit at 25 °C, zero at pH 7.',
+      'The reference electrode is the usual failure. Fouled junctions and depleted electrolyte cause drift and slow response.',
+      'Two-point calibration with fresh buffers, bracketing the process pH.',
+      'Slope and offset from the calibration tell you the sensor condition. Track them.',
+      'Temperature compensation corrects the electrode, not the chemistry. A pH at 10 °C is a different number at 25 °C.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 11,
+    tags: ['Instrumentation', 'Water', 'Wastewater', 'Analog'],
+    blocks: [
+      { t: 'h2', text: 'How the sensor works' },
+      {
+        t: 'p',
+        text: 'A pH sensor is a small battery whose voltage depends on the hydrogen ion activity of the solution. The glass electrode is a bulb of special glass that develops a potential across its surface in proportion to pH, and the reference electrode, usually silver and silver chloride in a potassium chloride electrolyte, provides a fixed potential against which the glass is measured. The two connect through the solution: the glass by its surface, the reference through a porous junction that lets ions pass while keeping the electrolyte in.',
+      },
+      {
+        t: 'formula',
+        expr: 'E = E₀ − (2.303 RT / F) × (pH − 7) ≈ −59.16 mV × (pH − 7) at 25 °C',
+        where: [
+          'E = measured voltage between the glass and reference electrodes',
+          'E₀ = the sensor offset, ideally zero at pH 7',
+          '2.303 RT / F = the Nernst slope, 59.16 mV per pH unit at 25 °C and 54.2 mV at 0 °C',
+        ],
+      },
+      {
+        t: 'p',
+        text: 'The slope depends on absolute temperature, which is why every pH sensor has a temperature element and every transmitter compensates. The compensation corrects the electrode response to the temperature; it does not correct for the fact that the pH of the water itself changes with temperature. A sample at 10 °C measured correctly reads the pH at 10 °C.',
+      },
+      {
+        t: 'p',
+        text: 'The signal is tiny and its source impedance is very high, hundreds of megohms through the glass, which makes the measurement sensitive to moisture in connectors, cable length, and electrical noise. Modern sensors put a preamplifier in the sensor body or the cable head, and the transmitter is mounted close.',
+      },
+      { t: 'h2', text: 'Sensor types' },
+      {
+        t: 'table',
+        head: ['Type', 'Reference design', 'Strength', 'Limit'],
+        rows: [
+          ['Combination, gel-filled', 'Sealed gel electrolyte, single or double junction', 'No maintenance of the electrolyte; inexpensive', 'Gel depletes and cannot be refilled; life of months to a year or two in process water'],
+          ['Combination, refillable', 'Liquid electrolyte topped up through a fill port', 'Longer life; the junction can be flushed', 'Needs refilling; electrolyte leaks are a maintenance item'],
+          ['Double junction', 'A second chamber between the reference and the process', 'Protects the reference from sulfide, ammonia, and heavy metals that poison silver chloride', 'The standard for wastewater'],
+          ['Differential', 'A third electrode replaces the direct reference; both glass and reference are measured against it', 'Very tolerant of fouling and ground loops; long life', 'More expensive; specific to a manufacturer family'],
+          ['Flat glass', 'A flat rather than bulb measuring surface', 'Resists coating and abrasion; easier to clean', 'Slightly slower response'],
+        ],
+      },
+      { t: 'h2', text: 'Mounting and sample' },
+      {
+        t: 'ul',
+        items: [
+          'The glass must stay wet. A sensor that dries out is damaged, and one left in air over a weekend often does not recover.',
+          'Flow past the sensor, but not turbulence that entrains air bubbles onto the glass. Insertion into a pipe with a flow of a foot or two per second, or a flow cell on a sample line, is typical.',
+          'Mounting angle: bulb down, at least 15 degrees from horizontal, so bubbles in the reference do not sit on the junction.',
+          'Temperature element in the same water, and the sensor and the process at the same temperature by the time the measurement is read.',
+          'Away from injection points for acid, caustic, or chlorine, where the chemical is not yet mixed. A pH sensor at a caustic injection point reads the plume, not the water.',
+          'Retractable or hot-tap assemblies where the sensor must be serviced without draining the line. On a wastewater channel, a submersible assembly on a swing arm that can be lifted to the walkway.',
+        ],
+      },
+      { t: 'h2', text: 'Calibration' },
+      {
+        t: 'p',
+        text: 'A pH sensor is calibrated in two buffers that bracket the process pH, commonly 7 and 4 for acidic service or 7 and 10 for alkaline, at a known temperature, with fresh buffers. The transmitter reads the voltage in each, computes the offset from the pH 7 reading and the slope from the pair, and stores them. The offset and slope are the health of the sensor.',
+      },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Rinse and blot', text: 'Rinse the sensor in clean water and blot the glass; do not wipe it. Wiping a glass electrode charges it and takes minutes to settle.' },
+          { title: 'First buffer, pH 7', text: 'Immerse, stir gently, wait for the reading to stabilize, typically 30 seconds to two minutes. A sensor that takes longer has a slow reference. Accept the reading in the transmitter.' },
+          { title: 'Rinse, second buffer', text: 'Immerse in the second buffer, wait, accept. The transmitter computes the slope.' },
+          { title: 'Read the diagnostics', text: 'Offset within about 30 mV of zero and slope between about 92 and 102 percent of theoretical is a healthy sensor. Offset drifting away from zero or slope falling toward 85 percent means the sensor is aging; below that, replace it.' },
+          { title: 'Return to process and compare', text: 'Compare with a grab sample measured on a bench meter that was itself calibrated. Agreement within 0.1 to 0.2 pH is typical for process water.' },
+          { title: 'Record', text: 'Buffers and lot, temperature, offset, slope, grab result, date, and technician. The trend of slope over time is the replacement schedule.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Fresh buffers, capped bottles',
+        text: 'Buffer solutions change when exposed to air, pH 10 buffer especially, which absorbs carbon dioxide and falls. Use fresh buffer poured into a clean cup, discard it after use, keep the bottles capped, and check the expiration date. Calibrating to a bad buffer is calibrating to the wrong number.',
+      },
+      { t: 'h2', text: 'Why pH drifts' },
+      {
+        t: 'table',
+        head: ['Cause', 'Symptom', 'Fix'],
+        rows: [
+          ['Reference junction fouled or coated', 'Slow response, drift, offset growing', 'Clean the junction; flush a refillable reference; replace a gel sensor'],
+          ['Reference electrolyte depleted or contaminated', 'Offset growing, unstable reading', 'Refill; replace'],
+          ['Reference poisoned by sulfide or ammonia', 'Offset shifts, dark junction', 'Double-junction sensor'],
+          ['Glass coated with grease, biofilm, or scale', 'Slow response, low slope', 'Clean with detergent, or dilute acid for scale; a flat glass sensor; automatic cleaning'],
+          ['Glass aged', 'Slope falling steadily over months', 'Replace; glass has a finite life'],
+          ['Glass cracked', 'Reading jumps to near pH 7 and stops responding', 'Replace'],
+          ['Moisture in the connector', 'Erratic reading, especially after rain', 'Dry and seal the connector; check the cable'],
+          ['Ground loop or stray current', 'Reading shifts when a pump starts', 'Solution ground on the sensor; differential sensor; check the loop grounding'],
+          ['Temperature element failed', 'Reading wrong by a fraction of a pH at temperatures away from 25 °C', 'Replace; check the compensation setting'],
+        ],
+      },
+      { t: 'h2', text: 'Using pH for control' },
+      {
+        t: 'p',
+        text: 'pH control is notoriously difficult because the relationship between chemical added and pH is a titration curve: nearly flat far from the endpoint and almost vertical near it. A feed loop tuned for one region of the curve is either sluggish or unstable in another. For water treatment, where pH is adjusted by a small amount for corrosion control or coagulation, flow-paced feedforward with slow pH trim and a modest dose range works well. For neutralization of a wide swing, staged reactors, characterized control that adapts the gain to the curve, or simply a large reaction volume are the usual answers. In every case the pH signal is validated: a sensor reading exactly 7.00 with no noise is often a cracked glass, not a neutral process, and the feed must not chase it.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'How often should a pH sensor be calibrated?',
+        a: 'Weekly to monthly in process water, set by the drift observed. Compare with a grab sample more often than you calibrate, and calibrate when the comparison says to or on the schedule, whichever comes first. A sensor that needs calibration every few days is fouling or dying, and calibration is not the fix.',
+      },
+      {
+        q: 'Why does the reading drift after calibration when the sensor goes back in the process?',
+        a: 'The process is at a different temperature than the buffers, and the sensor needs minutes to equalize; or the junction is slow to re-establish contact after the buffers; or the process has a coating that the buffers washed off and that is now re-forming. Wait fifteen minutes before judging, then compare with a grab sample.',
+      },
+      {
+        q: 'What is a solution ground and do I need one?',
+        a: 'A third metal contact on the sensor that ties the process liquid to the transmitter reference, so that stray currents in the liquid flow through it rather than through the reference junction. It stabilizes the reading in tanks with pumps, mixers, or cathodic protection. Most process sensors have one; use it.',
+      },
+      {
+        q: 'Is a differential sensor worth the cost?',
+        a: 'In wastewater and dirty water, usually. It tolerates fouling that stops a conventional reference, its salt bridge is replaceable, and it is immune to the ground loop problems that plague conventional sensors in tanks with mixers. In clean water a good double-junction combination sensor does the job for less.',
+      },
+    ],
+    related: [
+      '/controls/instrumentation/analytical/chlorine',
+      '/controls/instrumentation/signals/ground-loops',
+      '/controls/plc-systems/analog-control/signal-validation',
+      '/controls/plc-systems/analog-control/pid',
+      '/controls/instrumentation/signals/4-20-ma-signals',
+      '/how-to/instrumentation-how-to/diagnose-ground-loops',
+    ],
+  },
+  {
+    path: '/controls/instrumentation/analytical/dissolved-oxygen',
+    kind: 'reference',
+    title: 'Dissolved Oxygen Measurement',
+    summary:
+      'Optical and membrane DO sensors for aeration control: how each measures, why optical has taken over, air calibration with pressure and salinity corrections, sensor placement in an aeration basin, fouling and cleaning, and the response time that limits the control loop.',
+    answer:
+      'Dissolved oxygen is measured in wastewater aeration basins by optical sensors, which read the fluorescence quenching of a coating by oxygen, or by older membrane-covered electrochemical sensors. Optical sensors need no membrane or electrolyte, drift little, and are calibrated in water-saturated air with corrections for barometric pressure and salinity. The measurement feeds aeration control, where the blower output or the valve position holds a DO setpoint, and it is only as good as the sensor placement and cleaning schedule in a basin that fouls everything put into it.',
+    keyPoints: [
+      'Optical sensors have replaced membrane sensors for aeration control: less drift, no electrolyte, longer intervals.',
+      'Calibrate in water-saturated air, corrected for barometric pressure. A calibration at the wrong pressure is off by a few percent.',
+      'Placement decides what the sensor sees. A basin is not uniform.',
+      'Fouling is the failure mode. Wipers or air blast cleaning and a cleaning schedule are part of the design.',
+      'Response time of a minute or more limits aeration control tuning. Tune the loop for the sensor, not the blower.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 11,
+    tags: ['Instrumentation', 'Wastewater', 'Analog', 'Control'],
+    blocks: [
+      { t: 'h2', text: 'Why DO is measured' },
+      {
+        t: 'p',
+        text: 'Aerobic biological treatment needs oxygen in the water for the bacteria that consume organic matter and oxidize ammonia. Too little and treatment suffers; too much and the blowers, which are typically the largest energy consumer at a wastewater plant, run harder than needed. Aeration control holds a dissolved oxygen setpoint, commonly around 2 mg/L in a conventional activated sludge basin and lower in processes that manage nitrogen, by modulating air supply. The DO measurement is the input to that loop and the largest lever on plant energy cost, which is why it deserves better than a sensor that was installed once and forgotten.',
+      },
+      { t: 'h2', text: 'Sensor types' },
+      {
+        t: 'table',
+        head: ['Type', 'How it works', 'Strengths', 'Limits'],
+        rows: [
+          ['Optical, luminescent', 'A coating on the sensor tip fluoresces when illuminated by a blue LED; oxygen quenches the fluorescence, and the sensor measures the decay time or phase shift', 'No membrane or electrolyte; no oxygen consumption so no flow dependence; stable for months; calibration rarely needed', 'The sensor cap is a consumable, replaced yearly or so; response time of 30 to 90 seconds; fouling of the cap'],
+          ['Galvanic membrane', 'Oxygen diffuses through a membrane and is reduced at a cathode, producing a current with no external voltage', 'Inexpensive; established', 'Consumes oxygen, so needs flow past the membrane; membrane and electrolyte replaced monthly to quarterly; drifts'],
+          ['Polarographic membrane', 'Like galvanic, with an applied polarizing voltage', 'Fast response', 'Needs warm-up; the same membrane and electrolyte maintenance; drifts'],
+        ],
+      },
+      {
+        t: 'p',
+        text: 'For continuous aeration control, optical sensors are now the default. Membrane sensors remain on portable meters and in older installations, and the maintenance they need is the reason many DO control loops were left in manual for years.',
+      },
+      { t: 'h2', text: 'Calibration' },
+      {
+        t: 'p',
+        text: 'A DO sensor is calibrated at one point, in water-saturated air, where the oxygen partial pressure is known from the barometric pressure and the temperature. The sensor reads 100 percent saturation at that condition, and the transmitter converts to concentration using the temperature, the pressure, and the salinity of the process water.',
+      },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Clean the sensor', text: 'Remove the cap guard, rinse, and clean the sensing surface as the manufacturer directs. Calibrating a fouled sensor stores the fouling as the calibration.' },
+          { title: 'Place it in saturated air', text: 'In the calibration cup with a wet sponge, or held in air just above the water surface, out of direct sun, and let it equilibrate to the air temperature for several minutes.' },
+          { title: 'Enter the barometric pressure', text: 'From a local barometer or the transmitter sensor, in the units the transmitter expects. Sea level is 760 mm Hg; a plant at 1,500 m elevation is near 635 mm Hg, and a calibration at the wrong value is wrong by the ratio.' },
+          { title: 'Accept the calibration', text: 'The transmitter sets 100 percent saturation. Check the reported slope or gain against the healthy range in the manual.' },
+          { title: 'Set salinity if needed', text: 'Fresh wastewater is near zero. Brackish or seawater processes need the value, which changes the concentration by several percent.' },
+          { title: 'Verify in process', text: 'Compare with a calibrated portable meter in the same location at the same depth. Agreement within a few tenths of a mg/L is expected.' },
+          { title: 'Record it', text: 'Date, pressure, temperature, slope, comparison, and cap age.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'Zero calibration',
+        text: 'A zero check in a sodium sulfite solution, which scavenges oxygen, confirms the sensor reads zero when there is no oxygen. Optical sensors rarely need it; membrane sensors should have it checked when the membrane is replaced. A sensor that does not read zero in sulfite has an air leak, a damaged membrane, or a failing cap.',
+      },
+      { t: 'h2', text: 'Placement in an aeration basin' },
+      {
+        t: 'p',
+        text: 'An aeration basin is not uniform. DO is highest near the diffusers and at the surface, lowest in dead zones and near the inlet where the oxygen demand is greatest. A plug-flow basin has a DO profile along its length; a complete-mix basin still has gradients. The sensor location decides what the control loop sees, and it is chosen for the control objective.',
+      },
+      {
+        t: 'ul',
+        items: [
+          'For control of a plug-flow basin, one sensor per control zone, at roughly two-thirds of the way through the zone, where the DO represents the zone rather than the inlet demand or the outlet recovery.',
+          'Depth of 1 to 2 m below the surface, away from the surface layer that is aerated by contact with air, and away from a diffuser grid where a bubble plume reads high.',
+          'On a rail or a swing arm that lets the sensor be lifted to the walkway for cleaning without a boat or a crane.',
+          'Away from the inlet mixing zone and the return activated sludge entry, unless the objective is to measure there.',
+          'Two sensors in a zone where the control matters most, so that a fouled sensor is detected by disagreement rather than by a process upset.',
+        ],
+      },
+      { t: 'h2', text: 'Fouling and cleaning' },
+      {
+        t: 'p',
+        text: 'Everything in an aeration basin grows a biofilm, and a coated DO sensor reads low, because the film consumes oxygen at the surface, and slowly. The control loop responds to the low reading by adding air, and the plant over-aerates until someone notices. Cleaning is therefore part of the design, not a maintenance afterthought.',
+      },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Automatic cleaning', def: 'An air blast from the plant air supply, on a timer of every 15 to 60 minutes, or a mechanical wiper on the sensor face. Both extend the manual cleaning interval from days to weeks.' },
+          { term: 'Manual cleaning', def: 'On a schedule, typically weekly to monthly depending on the basin, with a soft cloth and water, and a dilute acid for scale where the water is hard. Abrasives damage optical caps.' },
+          { term: 'Cleaning detection', def: 'Trend the DO reading and its response to the cleaning cycle. A sensor whose reading jumps up after each cleaning was fouled before it; shorten the interval.' },
+          { term: 'Cap and membrane replacement', def: 'Optical caps on the manufacturer interval, usually a year; membranes when the slope falls or the response slows.' },
+        ],
+      },
+      { t: 'h2', text: 'Using DO for control' },
+      {
+        t: 'p',
+        text: 'DO control is a slow loop with significant dead time. The sensor itself takes 30 to 90 seconds to respond, the basin takes minutes to change its DO after the air changes, and the blower or valve has its own dynamics. The controller is tuned for that: a slow proportional-integral loop with an execution interval of seconds to a minute, output limits that respect the blower minimum turndown and the diffuser minimum airflow, and a large deadband around setpoint so that the blower does not hunt. Cascade control, in which the DO loop sets an airflow setpoint that an inner flow loop holds, handles the blower and valve nonlinearities better than DO driving the blower directly. The DO signal is validated: a sensor reading that does not respond to an air change for several minutes, or a pair of sensors that disagree beyond a limit, drops the loop to a safe fixed airflow and alarms.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'What DO setpoint should we use?',
+        a: 'What the process needs, which the plant operator and the process engineer decide from the treatment objectives and the basin configuration. Around 2 mg/L is the conventional activated sludge figure; nitrification may want more at the front of the basin and less at the end; processes with anoxic zones want near zero there. The control system holds the setpoint; it does not choose it.',
+      },
+      {
+        q: 'Why does the DO read high near the surface and low at depth?',
+        a: 'Surface water exchanges oxygen with the air and is also where bubbles from the diffusers collect; deeper water has had the oxygen consumed by the biomass. The sensor is placed at a depth that represents the mixed liquor the bacteria live in, which is why 1 to 2 m is the usual depth.',
+      },
+      {
+        q: 'Can we skip cleaning with an optical sensor?',
+        a: 'No. Optical sensors do not drift the way membrane sensors do, but they foul the same way. Automatic cleaning and a manual schedule remain necessary; the difference is that the optical sensor is otherwise maintenance-free between them.',
+      },
+      {
+        q: 'How do we know the sensor is telling the truth?',
+        a: 'A periodic comparison with a calibrated portable meter at the same spot and depth, a second sensor in the critical zone, and a trend that shows the reading responding to air changes within a couple of minutes. A DO that sits flat while the blowers change is not measuring the basin.',
+      },
+    ],
+    related: [
+      '/controls/instrumentation/analytical/chlorine',
+      '/controls/instrumentation/analytical/ph',
+      '/controls/plc-systems/analog-control/pid',
+      '/controls/plc-systems/analog-control/signal-validation',
+      '/how-to/plc-how-to/create-a-pid-loop',
+    ],
+  },
+  {
+    path: '/controls/instrumentation/analytical/turbidity',
+    kind: 'reference',
+    title: 'Turbidity Measurement',
+    summary:
+      'Nephelometric turbidimeters for filter effluent and raw water: how 90-degree scattering is measured, the methods and the NTU, low-range versus high-range instruments, bubbles and the debubbler, formazin calibration and verification standards, and the compliance record the instrument exists to produce.',
+    answer:
+      'Turbidity is the cloudiness of water caused by suspended particles, measured by shining a light through a sample and detecting the light scattered at 90 degrees. The result is reported in nephelometric turbidity units against a formazin standard. Online turbidimeters on individual filter effluents and on the combined filter effluent are compliance instruments at surface water treatment plants, so their calibration with primary standards, verification with secondary standards, and record-keeping are prescribed. The measurement is ruined by air bubbles, which is why every process turbidimeter has a bubble trap.',
+    keyPoints: [
+      'Turbidity is scattered light, not particle count. Two waters with the same NTU can have different particles.',
+      'Filter effluent turbidimeters are compliance instruments. Their calibration and records are regulated.',
+      'Bubbles read as turbidity. The debubbler and a slow, steady sample flow are essential.',
+      'Calibrate with formazin or an approved primary standard; verify with a secondary standard on a schedule.',
+      'Low-range instruments for filter effluent, high-range for raw water and backwash. One instrument does not cover both.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 11,
+    tags: ['Instrumentation', 'Water', 'Analog', 'Standards'],
+    blocks: [
+      { t: 'h2', text: 'What is measured' },
+      {
+        t: 'p',
+        text: 'Particles suspended in water scatter light. A nephelometer shines a beam through the sample and measures the intensity of light scattered at 90 degrees to the beam, which is the geometry that is most sensitive to small particles and least affected by color. The reading is compared with a suspension of formazin polymer of known concentration, and reported in nephelometric turbidity units. The regulatory methods define the light source and the detector geometry: EPA Method 180.1 uses a tungsten lamp, and the ISO 7027 method uses an infrared source, which reads differently in colored water. The method the state accepts decides the instrument.',
+      },
+      {
+        t: 'p',
+        text: 'Turbidity is not a measure of particle count, mass, or size. It is a proxy for them, adopted because it can be measured continuously and correlates with pathogen breakthrough through a filter. Combined filter effluent at or below 0.3 NTU in 95 percent of monthly measurements, and never above 1 NTU, is the surface water treatment rule requirement in the United States for conventional and direct filtration plants, and individual filter monitoring at 15-minute intervals is required as well. That is why the instruments exist and what their records serve.',
+      },
+      { t: 'h2', text: 'Instrument ranges' },
+      {
+        t: 'table',
+        head: ['Application', 'Range', 'Instrument', 'Note'],
+        rows: [
+          ['Individual filter effluent', '0 to 1 or 0 to 10 NTU', 'Low-range process nephelometer, often with 0.001 NTU resolution', 'A compliance point; one per filter'],
+          ['Combined filter effluent', '0 to 1 NTU', 'Low-range', 'The other compliance point'],
+          ['Settled water', '0 to 10 or 0 to 100 NTU', 'Mid-range', 'Process control for coagulation'],
+          ['Raw water', '0 to 1,000 NTU or higher', 'High-range or ratio instrument; surface-scatter designs for very high turbidity', 'Coagulant dosing and event detection'],
+          ['Backwash waste', '0 to 1,000 NTU', 'High-range', 'Backwash endpoint'],
+          ['Distribution', '0 to 10 NTU', 'Low or mid-range', 'Optional monitoring'],
+        ],
+      },
+      { t: 'h2', text: 'The sample system' },
+      {
+        t: 'p',
+        text: 'Most turbidimeter problems are sample problems. The instrument measures whatever reaches its cell.',
+      },
+      {
+        t: 'ul',
+        items: [
+          'Sample flow: slow and steady, typically 250 to 750 mL per minute depending on the instrument, set with a flow regulator and never pulsing. A sample pump introduces bubbles; gravity or line pressure through a regulator is preferred.',
+          'The bubble trap: every process turbidimeter has a chamber that lets entrained air rise out before the sample reaches the optical cell. It works only if the flow is slow enough and the trap is clean. Filter effluent under pressure, warm water, and supersaturated water all release bubbles.',
+          'Sample line: short, opaque, no low points that collect sediment, and taken from a point that represents the stream: a pipe tap in the side, not the bottom where sediment moves or the top where air collects.',
+          'Lag time: the sample takes time to travel from the tap to the cell. For individual filter monitoring at 15-minute intervals it rarely matters; for a turbidity spike alarm it does. Keep the line short.',
+          'Cell cleaning: the optical surfaces coat with biofilm and scale. Weekly to monthly cleaning, more often on raw water, with the cleaning noted in the record.',
+          'Drain: to a drain that cannot back up into the cell, with an air gap.',
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'A bubble is a 0.3 NTU excursion',
+        text: 'A stream of fine bubbles through the cell of a low-range turbidimeter reads as tenths of an NTU and looks exactly like a filter breakthrough. Before a compliance excursion is reported, or a filter is pulled from service, confirm the reading with a grab sample on a bench instrument and look at the sample for air. Then fix the sample system.',
+      },
+      { t: 'h2', text: 'Calibration and verification' },
+      {
+        t: 'p',
+        text: 'Because the instruments are compliance devices, the regulations and the instrument methods specify how they are calibrated and how often they are checked. Calibration means adjusting the instrument to read correctly against a primary standard; verification means confirming, without adjusting, that it still does.',
+      },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Primary standard', def: 'Formazin, prepared or purchased at a certified concentration, or an EPA-approved alternative such as a styrene divinylbenzene polymer suspension. Used for calibration, typically quarterly for process instruments and whenever verification fails.' },
+          { term: 'Secondary standard', def: 'A sealed standard, often a gel or a solid, whose value was assigned by comparison against a primary standard on the same instrument. Used for verification, typically weekly, because it is convenient and stable.' },
+          { term: 'Verification', def: 'Place the secondary standard, read, and compare with its assigned value within the tolerance the method or the state sets, usually a few percent or a fixed NTU at low range. Pass: record it. Fail: clean the instrument, verify again, and calibrate with the primary standard if it still fails.' },
+          { term: 'Grab sample comparison', def: 'A bench turbidimeter reading on a grab sample drawn at the process instrument, on a schedule, as a check that the sample system is delivering what the process contains.' },
+          { term: 'Records', def: 'Every calibration, verification, cleaning, and standard lot, with dates and initials, kept for the period the state requires. Inspectors read these before anything else.' },
+        ],
+      },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Check the standard', text: 'In date, undisturbed, at room temperature, no bubbles or settling. A formazin dilution is prepared fresh; a sealed secondary is inverted gently if the instructions say so and never shaken.' },
+          { title: 'Clean the cell and cuvette', text: 'Optical surfaces clean and dry on the outside, with no fingerprints. Oil the outside of a cuvette if the instrument method calls for it.' },
+          { title: 'Calibrate at the points the instrument requires', text: 'A zero or a low point and one or more upscale points, in the order the transmitter menu prescribes. Let each reading stabilize.' },
+          { title: 'Verify with the secondary', text: 'Immediately after calibration, read the secondary standard and record its value as the assigned value for future verifications on this instrument.' },
+          { title: 'Return to sample and compare', text: 'Confirm the reading is stable and the bubble trap is working. Compare with a bench reading of a grab.' },
+        ],
+      },
+      { t: 'h2', text: 'Using the signal' },
+      {
+        t: 'p',
+        text: 'Individual filter effluent turbidity is trended at the interval the rule requires and alarmed at the rule limits with pre-alarms below them. A filter that trends upward through its run is approaching breakthrough, and the trend, together with head loss and run time, is a backwash trigger. Raw water turbidity drives coagulant dosing in plants with streaming current or feedforward control and is the earliest warning of a storm event reaching the intake. Backwash waste turbidity marks the end of the wash. None of these signals is a control input the plant can trust without the sample system and the verification record behind it.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'What is the difference between NTU, FNU, and FTU?',
+        a: 'All three are formazin-based units. NTU is the term for the EPA 180.1 method with a white light source measured at 90 degrees. FNU is the ISO 7027 method with an infrared source, also at 90 degrees. FTU is an older generic term. The numbers are similar in clean water and diverge in colored water; use the unit and method the regulator accepts.',
+      },
+      {
+        q: 'Why does the online reading differ from the bench reading?',
+        a: 'Different instruments, different methods, a bubble in one or a dirty cell in the other, or the grab sample sat long enough for particles to settle. A consistent offset is investigated; a small random difference is normal. Keep the bench instrument calibrated and verified too, or the comparison means nothing.',
+      },
+      {
+        q: 'How low can a process turbidimeter read reliably?',
+        a: 'Modern low-range instruments resolve to 0.001 NTU and read reliably to a few hundredths, which is below the 0.1 NTU that many plants target. At that level, the sample system, stray light, and the cleanliness of the cell dominate; a reading of 0.02 NTU is only as good as the last cleaning.',
+      },
+      {
+        q: 'Can turbidity be used to control filtration directly?',
+        a: 'It is used as a backwash trigger and an alarm, and in some plants as a feedforward to coagulation. It is not used to modulate filter flow in real time, because a filter does not respond to a flow change quickly enough to control its own effluent turbidity, and because the compliance instrument should not be in a control loop that could push it around.',
+      },
+    ],
+    related: [
+      '/controls/instrumentation/analytical/chlorine',
+      '/controls/instrumentation/analytical/ph',
+      '/controls/plc-systems/analog-control/signal-validation',
+      '/controls/scada-hmi/alarm-management/alarm-priority',
+      '/controls/scada-hmi/hmi-design/trends',
+    ],
+  },
+  {
+    path: '/controls/instrumentation/signals/surge-protection',
+    kind: 'reference',
+    title: 'Surge Protection for Signal Circuits',
+    summary:
+      'Protecting 4-20 mA loops, discrete inputs, network cables, and radio feeds from lightning and switching surges: where surges enter, the device types and how they clamp, the grounding that makes them work, the resistance and capacitance they add, and where to put them at a remote site.',
+    answer:
+      'Signal surge protection places a clamping device on each conductor of a signal circuit where the circuit enters a panel, so that a surge from lightning or switching is diverted to ground before it reaches the transmitter, the input card, or the radio. Gas discharge tubes handle the energy, transient voltage suppressor diodes clamp fast and low, and hybrid devices combine them in stages. A protector works only through its ground connection, which must be short and bonded to the same ground as the equipment it protects, and it adds series resistance and capacitance the loop design must allow for.',
+    keyPoints: [
+      'Surges enter on every conductor that leaves the building: power, signal, network, antenna. Protect all of them or none of them is protected.',
+      'A protector is a path to ground. A long ground lead makes it useless.',
+      'Two-stage hybrid devices for signal loops: a gas tube for energy, a diode for speed.',
+      'Every protector adds resistance and capacitance. Check the loop and the network for them.',
+      'Protectors fail. Test or replace on a schedule, and use ones that indicate.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['Instrumentation', 'Signals', 'Grounding', 'Telemetry'],
+    blocks: [
+      { t: 'h2', text: 'Where surges come from' },
+      {
+        t: 'p',
+        text: 'A lightning strike does not have to hit the site. A strike a mile away raises the ground potential unevenly across the area and induces voltage in every long conductor, and a lift station with a transmitter in the wet well, a level cable in a conduit, a power service, a radio antenna on a mast, and a telephone line is a collection of long conductors tied to different points in the ground. The difference in potential between those points appears across whatever connects them: the input card, the radio, the transmitter. Switching surges from utility operations, motor starts, and capacitor banks are smaller and far more frequent, and they wear insulation and electronics down the same way.',
+      },
+      {
+        t: 'p',
+        text: 'The rule that follows is that a surge enters on any conductor that leaves the building or the panel, and that protecting the power service while leaving the signal cables and the antenna unprotected leaves the surge a path through the electronics from the unprotected side to the protected one.',
+      },
+      { t: 'h2', text: 'Device types' },
+      {
+        t: 'table',
+        head: ['Device', 'How it works', 'Strength', 'Limit'],
+        rows: [
+          ['Gas discharge tube (GDT)', 'A sealed gap that arcs over at a few hundred volts and then conducts heavily', 'Handles very high energy; very low capacitance; long life', 'Slow to fire, so the voltage reaches hundreds of volts before it clamps; needs a second stage for electronics'],
+          ['Metal oxide varistor (MOV)', 'A resistor whose resistance collapses above a threshold', 'High energy; inexpensive', 'Degrades with each surge; high capacitance; used on power circuits more than signal'],
+          ['Transient voltage suppressor diode (TVS)', 'A silicon diode that clamps within nanoseconds at a precise voltage', 'Fast and precise; clamps low enough to protect a 24 V input', 'Limited energy; fails short when overwhelmed, which at least takes the circuit down safely'],
+          ['Hybrid, multi-stage', 'A GDT on the line side, a series resistor or inductor, and a TVS on the equipment side', 'The GDT takes the energy while the resistor lets the TVS clamp first; the standard for signal loops', 'Adds series resistance, typically a few ohms to tens of ohms per conductor, and some capacitance'],
+          ['Isolating transformer or optical isolator', 'Breaks the galvanic path entirely', 'Immune to ground potential difference', 'Not a surge protector as such; used with one, especially on network and serial links'],
+        ],
+      },
+      { t: 'h2', text: 'Where to put them' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'At the panel entry', def: 'On each conductor of each signal cable where it enters the panel, on a DIN rail or a terminal block designed for it, before the cable reaches the controller. The protector ground goes to the panel ground bar by the shortest possible lead.' },
+          { term: 'At the field device', def: 'Transmitters in exposed locations, on tanks, on masts, or in wet wells, get a protector at the device as well, so that a surge induced on the cable is clamped at both ends. Many transmitters offer an integral surge option.' },
+          { term: 'On the antenna feed', def: 'A coaxial surge protector at the point the feed enters the building, bonded to the site ground with a short strap. The mast is bonded to the same ground. Radios are the most frequent lightning casualty at remote sites and this is the reason.' },
+          { term: 'On network cables between buildings', def: 'Copper Ethernet between buildings is protected at both ends, or, better, replaced with fiber, which does not conduct a surge at all.' },
+          { term: 'On serial lines', def: 'RS-485 and RS-232 links that leave a panel, at both ends, with devices rated for the signal voltage and the data rate.' },
+          { term: 'On power', def: 'A service entrance protector and a panel protector, because signal protection is defeated if the power side floats up.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'The ground lead is the protector',
+        text: 'A surge protector diverts current to ground. The voltage that appears across the protected equipment is the clamping voltage plus the voltage developed along the ground lead by the surge current, and a surge rising at kiloamps per microsecond develops hundreds of volts along a foot of wire. A protector with a long, looped ground lead protects nothing. Short, straight, heavy, and bonded to the same ground bar as the equipment it protects.',
+      },
+      { t: 'h2', text: 'Grounding that makes it work' },
+      {
+        t: 'p',
+        text: 'Surge protection and grounding are one subject. Every protector, the panel ground bar, the equipment ground, the antenna mast, the service ground, and the transmitter case need to rise together when the ground rises, which means a single low-impedance ground system for the site: a ground ring or grid with rods, bonded to the service ground, to the mast, and to the panel, with the protectors landed on the bar that is bonded to it. Separate isolated grounds for instrumentation, a practice that is sometimes specified for noise reasons, are the opposite of what surge protection needs, and where both matter, the instrument ground bar is bonded to the site ground at one point and the shields are handled as the ground loop guidance describes.',
+      },
+      { t: 'h2', text: 'What protectors do to the loop' },
+      {
+        t: 'ul',
+        items: [
+          'Series resistance. A hybrid protector at each end of a 4-20 mA loop adds tens of ohms to the loop. Add it to the loop resistance calculation for the transmitter compliance voltage.',
+          'Capacitance. Protectors on a HART loop or a serial line add capacitance that can attenuate the signal; use devices rated for the protocol.',
+          'Leakage. A protector near its clamping voltage leaks current. On a 24 V loop, choose a clamp voltage with margin above the working voltage, commonly 30 to 36 V, so the protector does not conduct in normal operation.',
+          'Failure modes. A TVS fails short and takes the loop to zero, which is detected. A GDT can fail open and stop protecting silently. Devices with a status indicator or a remote contact are worth the cost on critical loops.',
+          'Bandwidth. Network protectors are rated for a data rate; a device meant for 10 Mb Ethernet degrades a gigabit link.',
+        ],
+      },
+      { t: 'h2', text: 'Maintenance' },
+      {
+        t: 'p',
+        text: 'Protectors are consumed by the surges they absorb. Plug-in devices with a status flag are inspected on the site visit schedule and after any lightning event, and replaced when flagged. Devices without indication are replaced on a schedule, every few years in a lightning-prone area, or tested with a protector tester where the utility has one. A site that has had its radio or its level transmitter replaced twice for lightning damage has a grounding or protection gap, not bad luck, and the investigation starts with the ground lead lengths and the bonding.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Do I need surge protection on a 4-20 mA loop that stays inside the building?',
+        a: 'Usually not, if the loop never leaves the structure and the building has a proper ground. A loop that goes to a transmitter on a tank outside, down a wet well, or through a buried conduit to another structure does, at both ends.',
+      },
+      {
+        q: 'Is fiber the answer to network surge problems?',
+        a: 'Between buildings, yes. Fiber conducts no current, so a ground potential difference between two structures does not appear across the switches. Copper between buildings is protected at both ends and still fails more often; fiber is usually the better investment at any site that has lost a switch to lightning.',
+      },
+      {
+        q: 'Where does the protector for the wet well level transmitter go?',
+        a: 'At the panel entry for the level cable, and at the transmitter where the transmitter offers it or where a junction box at the well top allows a protector. The wet well transmitter is at the bottom of a hole in the ground with a cable running to the panel, which is the classic lightning path.',
+      },
+      {
+        q: 'Can surge protectors cause a ground loop?',
+        a: 'A protector connects a conductor to ground only when clamping, so in normal operation it does not. A shield grounded at both ends through a protector ground, however, is still a shield grounded at both ends; keep the shield termination rules and use protectors that pass the shield through or ground it only at the panel end.',
+      },
+    ],
+    related: [
+      '/controls/instrumentation/signals/ground-loops',
+      '/controls/instrumentation/signals/4-20-ma-signals',
+      '/controls/instrumentation/signals/hart',
+      '/how-to/instrumentation-how-to/diagnose-ground-loops',
+      '/troubleshooting/network-troubleshooting/ethernet-device-drops-offline',
+      '/controls/instrumentation/level/hydrostatic-level',
+    ],
+  },
 ];

@@ -1396,4 +1396,483 @@ export const SCADA_ENTRIES: Entry[] = [
       '/controls/scada-hmi/scada-fundamentals/redundancy',
     ],
   },
+  {
+    path: '/controls/scada-hmi/hmi-design/faceplates',
+    kind: 'reference',
+    title: 'HMI Faceplates',
+    summary:
+      'The pop-up that controls one device: what a pump, valve, or loop faceplate must show, the mode and command layout, interlock and permissive display, security by role, and building faceplates from a standard object so every device behaves the same.',
+    answer:
+      'A faceplate is the pop-up window that opens when an operator selects a device on a process display. It shows that device state, mode, setpoints, and diagnostics, and it carries the commands the operator may give. Good faceplates are built once per device type from a standard object, laid out identically, show why a device is not doing what it was told, and expose commands according to the user role. The process display shows the situation; the faceplate is where the operator acts.',
+    keyPoints: [
+      'One faceplate design per device type, instantiated for every device. Consistency is the feature.',
+      'Show the mode, the command, the feedback, and the disagreement between them.',
+      'Show the interlocks and permissives by name, with the one that is holding the device highlighted.',
+      'Commands respect the user role and confirm anything with consequences.',
+      'Everything on the faceplate comes from the controller. The faceplate does not contain logic.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['HMI', 'SCADA', 'Design', 'ISA'],
+    blocks: [
+      { t: 'h2', text: 'What a faceplate is for' },
+      {
+        t: 'p',
+        text: 'A process display is built to show the state of the process at a glance, and ISA-101 practice keeps it uncluttered: a pump is a symbol with a status, not a panel of buttons. When the operator needs to act on that pump, or to see why it is not running, they select it and a faceplate opens. The faceplate is the detailed view and the control surface for one device. It holds everything the display leaves out.',
+      },
+      {
+        t: 'p',
+        text: 'Because it is opened for one device at a time and every device of a type gets the same one, the faceplate is where consistency pays off most. An operator who has learned the pump faceplate has learned every pump in the plant. That is achievable only if the faceplate is built once, as a standard object tied to a standard controller block, and never customized per device.',
+      },
+      { t: 'h2', text: 'What a pump faceplate shows' },
+      {
+        t: 'table',
+        head: ['Element', 'Content', 'Note'],
+        rows: [
+          ['Header', 'Tag, description, and a navigation link to the process display it lives on', 'Same position on every faceplate'],
+          ['Mode', 'Hand, Off, Auto from the local HOA; Manual or Auto in the controller; Local or Remote where the device has it', 'Show what the physical switch says and what the controller is doing; they are not the same thing'],
+          ['Command and feedback', 'Commanded state, running feedback, and a visible disagreement indicator when they differ beyond the proof time', 'The disagreement is the diagnostic operators use most'],
+          ['Process values', 'Speed reference and actual speed, motor current, run hours, starts today', 'Numbers with units, and a trend link on each'],
+          ['Interlocks and permissives', 'Each by name, with status, and the first one that is holding the device highlighted', 'Without this the operator calls someone to ask why the pump will not start'],
+          ['Alarms', 'Active alarms on this device with priority, and an acknowledge control', 'Linked to the alarm summary filtered to the device'],
+          ['Commands', 'Start, Stop, Auto, Manual, setpoint entry, reset', 'Visible or enabled by role; confirmation on Start, Stop, and mode change'],
+          ['Diagnostics', 'Fault code from the drive or starter, seal-leak, thermal, last fault time', 'A second tab where space is tight'],
+        ],
+      },
+      { t: 'h2', text: 'Layout rules' },
+      {
+        t: 'ul',
+        items: [
+          'Same size, same position of every element, on every faceplate for a device type, and the same zones across device types: header top, status upper left, commands lower right. The operator eye goes to the same place for the same thing.',
+          'Status in text and shape, not color alone. Running, Stopped, Faulted as words; the color is the reinforcement, and it follows the ISA-101 palette used on the displays.',
+          'Commands are buttons that look like buttons, distinct from status indicators, and inactive commands are visibly disabled with the reason available on hover or in a short note.',
+          'Setpoint entry shows the current value, the engineering units, and the allowed range, and rejects out-of-range entry with a message rather than clamping silently.',
+          'A trend button on each process value, opening a pre-configured trend of that value with the related ones: level and speed together, pressure and flow together.',
+          'A single close control in the same corner every time, and no more than two tabs.',
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'Why the interlock list matters more than it looks',
+        text: 'The most common radio call from a plant operator to a controls engineer is that the pump will not start and nobody knows why. A faceplate that lists the permissives and interlocks by name and highlights the one that is false answers the call before it is made. It costs a few tags per device in the controller block and it pays for itself in the first month.',
+      },
+      { t: 'h2', text: 'Modes and what they mean' },
+      {
+        t: 'p',
+        text: 'Mode confusion is the most common cause of a faceplate command doing nothing. The physical HOA switch at the panel decides whether the controller has authority at all. The controller mode decides whether the automatic sequence or the operator is issuing the command. A local/remote selector at a drive or a packaged system adds a third layer. The faceplate shows all three separately and plainly, so that an operator who presses Start on a pump whose HOA is in OFF sees that the switch is in OFF, rather than a button that appears to do nothing.',
+      },
+      {
+        t: 'table',
+        head: ['Layer', 'Where it lives', 'Faceplate shows'],
+        rows: [
+          ['HOA', 'Physical switch at the panel', 'HAND, OFF, or AUTO as read by the controller input; grayed commands when not AUTO'],
+          ['Controller mode', 'Program, per device', 'AUTO (sequence in control) or MANUAL (operator in control); the toggle command'],
+          ['Local or remote', 'Drive keypad, packaged system panel', 'Local or remote; grayed commands when local'],
+          ['Out of service', 'Program flag set by the operator', 'A visible banner; removes the device from rotation and suppresses its alarms by design'],
+        ],
+      },
+      { t: 'h2', text: 'Security and confirmation' },
+      {
+        t: 'p',
+        text: 'Faceplate commands are permitted by user role. A viewer sees status and no commands. An operator sees and may issue operating commands. A supervisor may change setpoints outside the operator range and reset latched faults. An engineer may change tuning and configuration. The roles come from the SCADA security model, and the faceplate simply hides or disables what the current user may not do. Commands with consequences, a start, a stop, a mode change, a setpoint change beyond a threshold, ask for confirmation, and the confirmation dialog names the device and the action so that a misdirected click is caught. Every command is logged with the user, the time, and the device.',
+      },
+      { t: 'h2', text: 'Building from a standard' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Define the controller block first', text: 'The pump control block in the PLC owns the logic and publishes a status structure. The faceplate is a view of that structure. If the block does not expose a value, the faceplate cannot show it, and the answer is to add it to the block, never to compute it in the HMI.' },
+          { title: 'Design one faceplate per block type', text: 'Pump, valve, analog loop, analyzer, sequence. Lay it out with the rules above and review it with operators before it is instantiated.' },
+          { title: 'Instantiate by tag', text: 'Each device is an instance of the faceplate bound to its block by a tag prefix or a structure reference. No per-device edits.' },
+          { title: 'Test one, then all', text: 'Test the faceplate fully on one device, including every command in every mode and every role. Then spot-check the instances for binding errors.' },
+          { title: 'Version it with the block', text: 'A change to the block that adds a status member is a change to the faceplate. Keep the two in step and record the version on both.' },
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Should the faceplate contain any logic?',
+        a: 'No. The controller decides whether a command is allowed and what happens; the faceplate sends the request and shows the result. Logic in the HMI diverges from the controller over time, is invisible from the panel, and does not run when the HMI is down.',
+      },
+      {
+        q: 'How much should be on the faceplate versus the display?',
+        a: 'The display shows what the operator needs to see to know the state of the process without opening anything. The faceplate holds everything about one device. If operators are opening faceplates just to check a value, that value belongs on the display; if the display is crowded with per-device detail, it belongs on the faceplate.',
+      },
+      {
+        q: 'Can vendors supply faceplates?',
+        a: 'Most SCADA platforms and many integrators supply library objects with matching controller blocks and faceplates, and they are a good starting point. Adopt one library per site rather than mixing, and adjust the layout to the site standard once, before instantiating.',
+      },
+      {
+        q: 'What about a device with no controller block, like a packaged system?',
+        a: 'Build a faceplate against the status the package exposes over its network interface, and keep the mode layers honest: if the package is in local, the faceplate says so and disables commands. A faceplate that pretends to control a package that is not listening trains operators to distrust all of them.',
+      },
+    ],
+    related: [
+      '/controls/scada-hmi/hmi-design/isa-101',
+      '/controls/scada-hmi/hmi-design/high-performance-hmi',
+      '/controls/plc-systems/programming/function-block-diagram',
+      '/controls/control-panels/pump-panels/hoa',
+      '/controls/plc-systems/programming/interlocks',
+      '/controls/scada-hmi/alarm-management/alarm-priority',
+    ],
+  },
+  {
+    path: '/controls/scada-hmi/hmi-design/trends',
+    kind: 'reference',
+    title: 'Trends on the HMI',
+    summary:
+      'Trend displays that answer questions: embedded sparklines on process displays, pre-configured trend groups, the axes and time spans that make a trend readable, and the difference between a trend for operating and a trend for investigating.',
+    answer:
+      'A trend on an HMI shows how a value has changed over time, and it is the tool operators use to see where the process is heading rather than where it is. Good trend design puts small embedded trends on the process displays for the values that matter, provides pre-built trend groups that put related values together on sensible axes, and offers an ad hoc trend tool for investigation. Time spans, scales, and colors are chosen for the question each trend answers, and every trend is fed by the historian, not by the display.',
+    keyPoints: [
+      'An embedded trend on the display shows direction. A number shows only position.',
+      'Group related values: the level with the pump speed, the pressure with the flow, the residual with the dose.',
+      'Fixed scales on operating trends, autoscale on investigation trends. Say which on the trend.',
+      'Time span follows the process: minutes for pressure, hours for a wet well, days for a tank.',
+      'Trends read from the historian. A display that trends from its own buffer loses the past when it closes.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['HMI', 'SCADA', 'Design'],
+    blocks: [
+      { t: 'h2', text: 'Two kinds of trend' },
+      {
+        t: 'p',
+        text: 'An operating trend lives on a process display or a faceplate and answers one question continuously: is this value where it should be, and which way is it moving. It is small, its scale is fixed to the normal operating range, and its time span is short enough that the recent movement fills it. An investigation trend is opened to find out what happened: several values, a longer span, adjustable scales, cursors, and the ability to scroll back through history. Both are needed, and confusing them produces either an operating display cluttered with full trend windows, or a trend tool that shows so much that nothing can be read.',
+      },
+      { t: 'h2', text: 'Embedded trends' },
+      {
+        t: 'p',
+        text: 'ISA-101 and the high-performance HMI practice put small trends directly on the process display for the handful of values that decide how the process is doing: the wet well level, the clearwell level, the discharge pressure, the chlorine residual. A number tells the operator where the value is; the sparkline beside it tells them where it has been for the last hour and whether it is climbing. That is the difference between seeing a problem forming and seeing an alarm.',
+      },
+      {
+        t: 'ul',
+        items: [
+          'Fixed vertical scale set to the normal operating range, with the alarm limits shown as lines, so that the shape of the trace means the same thing every time.',
+          'A fixed time span, typically 30 minutes to a few hours depending on the process, that fills the width with recent history.',
+          'One value per embedded trend, or two closely related ones in distinct line weights. Not four.',
+          'Gray or muted trace colors consistent with the display palette; the alarm limit lines in the alarm colors only.',
+          'The current value as a number beside the trend, with units.',
+          'A click that opens the full investigation trend for that value and its group.',
+        ],
+      },
+      { t: 'h2', text: 'Trend groups' },
+      {
+        t: 'p',
+        text: 'Values are understood in relation to each other. A level trend with the pump run status and speed overlaid shows why the level did what it did. A pressure trend alone shows a dip; with flow, it shows whether the dip was demand or a pump. Pre-configured trend groups, built by someone who knows the process and opened with one click from the display or the faceplate, are the most used trend feature in a plant, and they are worth the time to design.',
+      },
+      {
+        t: 'table',
+        head: ['Group', 'Values', 'Typical span'],
+        rows: [
+          ['Lift station', 'Wet well level; pump 1 and pump 2 run status as bands; pump speed; motor current', '4 hours'],
+          ['Distribution pressure', 'Zone pressure; setpoint; pump speed; station flow; tank level', '8 hours'],
+          ['Disinfection', 'Chlorine residual at the point of entry; dose setpoint; feeder output; plant flow; pH', '24 hours'],
+          ['Filter', 'Effluent turbidity; head loss; flow; run time since backwash', '72 hours'],
+          ['Tank', 'Level; inflow; outflow; time of day', '7 days'],
+          ['Communications', 'Poll success rate per site; latency; retries', '24 hours'],
+        ],
+      },
+      { t: 'h2', text: 'Axes, scales, and spans' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Vertical scale', def: 'Fixed for operating trends so the shape is comparable; autoscale for investigation with the scale visible. Values with different units get their own axes, and no more than two axes on one chart before it becomes unreadable.' },
+          { term: 'Digital states', def: 'Run status, valve position, mode: shown as bands or a stepped trace at the bottom, not as a line that pretends to be analog.' },
+          { term: 'Time span', def: 'Chosen from how fast the value changes and how far back the operator needs to see. Pressure and flow in minutes to hours; wet well level in hours; tank level and residual in a day; filter runs in days.' },
+          { term: 'Sampling', def: 'The trend reads the historian at whatever the historian stored. A trend that appears smooth at 5-second data and stepped at 1-minute data is showing the historian configuration, not the process.' },
+          { term: 'Time axis', def: 'Absolute time with the date where the span crosses midnight; a live mode that scrolls and a frozen mode that does not.' },
+          { term: 'Cursors', def: 'Two cursors on the investigation trend, reading the value of every trace at each and the difference between them. This is how a drawdown rate or a dose response time is read.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Overlay yesterday',
+        text: 'A trend that overlays the same value from 24 hours ago, or the same weekday last week, turns a daily pattern into a comparison. A wet well that is filling faster than yesterday at this hour, or a residual that is lower than last Tuesday, is visible at a glance. Many platforms support it directly; where they do not, a historian query can build it.',
+      },
+      { t: 'h2', text: 'Trends and the historian' },
+      {
+        t: 'p',
+        text: 'Every trend should read from the historian, so that the same data is available on every client, so that history is available back as far as the historian keeps it, and so that a trend opened on a client that was just started shows the past. A display that trends from its own in-memory buffer shows a blank chart on open and forgets everything on close. The historian configuration, its collection rates and its compression, decides what a trend can show; the trending design and the historian design are the same exercise.',
+      },
+      { t: 'h2', text: 'Common mistakes' },
+      {
+        t: 'ul',
+        items: [
+          'Autoscaled operating trends, so that a tiny fluctuation fills the chart and looks like an event.',
+          'Rainbow traces. Five bright colors on one chart, none of them meaning anything.',
+          'Trend spans set for commissioning and never changed: a 5-minute window on a value that moves over hours.',
+          'No trend groups, so every investigation starts with building a trend from scratch and the operator does not bother.',
+          'Digital states plotted as analog lines from 0 to 1 on the same axis as a level in feet.',
+          'A historian collecting at one minute for a pressure loop that oscillates at 20 seconds, so the trend shows aliasing instead of the oscillation.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'How many embedded trends should a display have?',
+        a: 'The high-performance HMI practice suggests a handful on an overview display, for the values that define the state of the process. More than six and the display is a trend page; fewer and the operator has no sense of direction. Area displays can carry more, one per key loop.',
+      },
+      {
+        q: 'Should trend colors match the alarm colors?',
+        a: 'No. Traces are in neutral colors; the alarm colors are reserved for alarm limit lines and for alarm indication. A red trace on a normal value teaches operators that red does not mean alarm.',
+      },
+      {
+        q: 'What sampling rate does the historian need for trends?',
+        a: 'Fast enough to show the fastest behavior the operator needs to see. Pressure and flow loops with a drive commonly need one to five second data; levels and residuals are fine at 10 to 60 seconds. Exception or deadband collection stores the changes rather than every sample, and the trend interpolates between them.',
+      },
+      {
+        q: 'Can operators build their own trends?',
+        a: 'They should be able to, in an ad hoc trend tool, and the useful ones should be promoted to trend groups by whoever maintains the HMI. The ad hoc tool is where investigation happens; the groups are the ones everyone uses.',
+      },
+    ],
+    related: [
+      '/controls/scada-hmi/hmi-design/high-performance-hmi',
+      '/controls/scada-hmi/hmi-design/isa-101',
+      '/controls/scada-hmi/scada-fundamentals/historians',
+      '/controls/scada-hmi/hmi-design/faceplates',
+      '/troubleshooting/scada-troubleshooting/values-frozen-on-screen',
+    ],
+  },
+  {
+    path: '/controls/scada-hmi/hmi-design/alarm-indication',
+    kind: 'reference',
+    title: 'Alarm Indication on the HMI',
+    summary:
+      'How an alarm looks and sounds on the operator screen: the ISA-101 and ISA-18.2 rules for color, shape, and blink, the alarm banner and summary, acknowledgment behavior, navigation to the alarm, and indication that survives colorblindness and a noisy control room.',
+    answer:
+      'Alarm indication is the set of visual and audible cues that tell the operator an alarm exists, its priority, and its acknowledgment state. ISA-101 practice reserves a small set of colors for alarms and uses them nowhere else, pairs each with a shape or a symbol so priority is not conveyed by color alone, blinks only unacknowledged alarms, and shows alarms both at the point on the display where the problem is and in a banner and summary that are visible from every screen. The indication is driven by the alarm state from the controller and ends only when the alarm is acknowledged and the condition clears.',
+    keyPoints: [
+      'Alarm colors are reserved. Nothing else on the HMI uses them.',
+      'Priority is shown by color and by shape or symbol, so a colorblind operator sees the same thing.',
+      'Blink means unacknowledged. Steady means acknowledged and still active. Gone means cleared.',
+      'The alarm is indicated where the problem is on the display, in the banner, and in the summary.',
+      'One click from the indication to the device and to the alarm summary filtered to it.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['HMI', 'Alarms', 'ISA', 'Design'],
+    blocks: [
+      { t: 'h2', text: 'What the indication must do' },
+      {
+        t: 'p',
+        text: 'The operator has to notice that an alarm exists, know how urgent it is, find where it is, and know whether they have already seen it. Those four jobs are done by different cues, and an indication that does one of them at the expense of the others fails. A display in which everything abnormal is bright red gets the first job done and none of the others; a display in which an alarm is a small gray line in a list gets the fourth done and not the first.',
+      },
+      {
+        t: 'p',
+        text: 'ISA-101 sets out the presentation rules and ISA-18.2 sets out the alarm states and the transitions the operator drives. Together they produce a consistent indication scheme that a utility can adopt as-is.',
+      },
+      { t: 'h2', text: 'Color and shape' },
+      {
+        t: 'table',
+        head: ['Priority', 'Color', 'Shape or symbol', 'Sound'],
+        rows: [
+          ['Critical (where used)', 'Red', 'Filled square or a distinct symbol, priority number 1', 'Distinct continuous tone until acknowledged'],
+          ['High', 'Red', 'Filled square, priority number 1 or 2', 'Distinct tone'],
+          ['Medium', 'Yellow or amber', 'Filled triangle, priority number 2 or 3', 'A different tone, or a chime'],
+          ['Low', 'Blue or magenta', 'Filled circle, priority number 3 or 4', 'None, or a soft chime'],
+          ['Diagnostic, not an alarm', 'Gray or the muted display palette', 'Small symbol', 'None'],
+        ],
+      },
+      {
+        t: 'p',
+        text: 'The exact colors are chosen by the site and recorded in the HMI style guide; what matters is that the same color always means the same priority, that the colors appear nowhere else on the displays, and that a shape and a number accompany each so that the priority is readable without the color. Red for a running pump, yellow for a piping line, and green for anything at all are how alarm colors lose their meaning.',
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'Gray displays make alarms visible',
+        text: 'The reason high-performance HMI displays are gray and muted is that an alarm indication in color then stands out from across the room. On a display with bright colors everywhere, an alarm is one more bright thing. The alarm indication scheme depends on the display palette being quiet.',
+      },
+      { t: 'h2', text: 'States and blink' },
+      {
+        t: 'p',
+        text: 'ISA-18.2 defines the alarm states the indication has to show. The operator needs to distinguish a new alarm from one they have already acknowledged, and an alarm that has cleared but was never acknowledged from one that is gone.',
+      },
+      {
+        t: 'table',
+        head: ['State', 'Condition', 'Acknowledged', 'Indication'],
+        rows: [
+          ['Normal', 'Clear', 'Not applicable', 'No indication'],
+          ['Unacknowledged alarm', 'Active', 'No', 'Priority color and symbol, blinking; audible'],
+          ['Acknowledged alarm', 'Active', 'Yes', 'Priority color and symbol, steady; audible silenced'],
+          ['Return to normal, unacknowledged', 'Clear', 'No', 'Symbol in outline or with a distinct marker, highlighted in the summary, until acknowledged'],
+          ['Shelved', 'Any', 'Any', 'Removed from the active list; shown in the shelved list with a timer'],
+          ['Suppressed by design', 'Any', 'Any', 'Not annunciated; shown in the suppressed list with the reason'],
+          ['Out of service', 'Any', 'Any', 'Not annunciated; shown on the device with a clear out-of-service marker'],
+        ],
+      },
+      {
+        t: 'p',
+        text: 'Blinking is reserved for the unacknowledged state. A blinking indication that continues after acknowledgment, or a steady one for a new alarm, breaks the meaning. Blink rate is moderate, around one cycle per second, and nothing else on the display blinks.',
+      },
+      { t: 'h2', text: 'Where the alarm appears' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'On the process display', def: 'At the device or the value that is in alarm: the symbol beside the number, the device outline, or a marker at the point on the display. The operator sees where the problem is without reading text.' },
+          { term: 'In the alarm banner', def: 'A strip visible on every display, showing the most recent or the highest priority unacknowledged alarms, with priority color, symbol, time, tag, and message. Clicking an entry navigates to the display that contains the device.' },
+          { term: 'In the alarm summary', def: 'The full list, sorted by priority then time, filterable by area and priority, with acknowledge controls. The banner leads to the summary; the summary leads to the device.' },
+          { term: 'On the navigation', def: 'An indicator on the menu or the navigation buttons for each area, showing the highest priority active alarm in that area, so an operator on the water plant display knows the collection system has a high alarm.' },
+          { term: 'Audibly', def: 'A tone per priority, silenced by acknowledgment or by a silence button that does not acknowledge, re-sounding for each new alarm.' },
+        ],
+      },
+      { t: 'h2', text: 'Acknowledgment and navigation' },
+      {
+        t: 'p',
+        text: 'Acknowledgment says an operator has seen the alarm. It is done from the summary, from the banner, or from the device faceplate, and it is logged with the user and the time. Acknowledging clears the blink and silences the tone; it does not remove the alarm, which stays indicated until the condition clears. Acknowledge-all is a function to be cautious with: in a flood it is how the one alarm that mattered is acknowledged unread, and many sites restrict it or require a confirmation. From any indication, one click reaches the device faceplate and one click reaches the summary filtered to the device or area, so that acting on an alarm never requires knowing where to look.',
+      },
+      { t: 'h2', text: 'Testing the indication' },
+      {
+        t: 'ul',
+        items: [
+          'Drive an alarm of each priority and confirm the color, the symbol, the blink, the tone, the banner entry, the summary entry, and the display marker.',
+          'Acknowledge each and confirm the blink stops, the tone stops, and the indication remains until the condition clears.',
+          'Clear a condition without acknowledging and confirm the return-to-normal state is shown until acknowledged.',
+          'View the displays in grayscale, or with a colorblindness simulator, and confirm priority is still readable.',
+          'Stand at the back of the control room with the display at normal brightness and confirm a high alarm is visible.',
+          'Confirm nothing but alarms uses the alarm colors, and nothing but unacknowledged alarms blinks.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Why not use green for normal and red for alarm?',
+        a: 'Because then red and green are everywhere, and an alarm is one red thing among many. Normal is shown in the muted display palette so that the alarm colors stand out. Green, in particular, is avoided as a status color on high-performance displays because it competes with the alarm palette and because red-green is the most common form of colorblindness.',
+      },
+      {
+        q: 'Should the alarm banner be on every screen?',
+        a: 'Yes. An operator on any display must see that a new alarm exists and its priority. The banner is small, a few lines, and it is the same on every display. The summary is the full list on its own display.',
+      },
+      {
+        q: 'What about alarms on remote client screens and phones?',
+        a: 'The same states and the same priority scheme, with whatever the device can render. A phone notification carries the priority in words and the message; the acknowledgment from the phone is logged like any other, if the site permits it.',
+      },
+      {
+        q: 'How do I show a device that is out of service?',
+        a: 'With a clear marker on the device symbol and on its faceplate, a distinct entry in the out-of-service list, and its alarms suppressed by that state. The marker must be obvious enough that an operator does not expect the device to respond, and the list must be reviewed so devices do not stay out of service by neglect.',
+      },
+    ],
+    related: [
+      '/controls/scada-hmi/hmi-design/isa-101',
+      '/controls/scada-hmi/alarm-management/isa-18-2',
+      '/controls/scada-hmi/alarm-management/alarm-priority',
+      '/controls/scada-hmi/hmi-design/high-performance-hmi',
+      '/controls/scada-hmi/alarm-management/alarm-floods',
+      '/controls/scada-hmi/hmi-design/faceplates',
+    ],
+  },
+  {
+    path: '/controls/scada-hmi/hmi-design/navigation',
+    kind: 'reference',
+    title: 'HMI Navigation',
+    summary:
+      'How operators move through the displays: the display hierarchy from overview to detail, a fixed navigation bar with area alarm indication, one-click paths from an alarm to the device, the rules that keep any display within two clicks, and what to leave out.',
+    answer:
+      'HMI navigation is the structure and the controls that let an operator reach any display in the system quickly and predictably. ISA-101 practice organizes displays in a hierarchy of overview, area, unit, and detail levels, provides a navigation bar that is identical on every display and shows the alarm state of each area, and adds context links from alarms, devices, and values to the displays that explain them. The goal is that any display is reachable in two clicks and that an operator always knows where they are.',
+    keyPoints: [
+      'Four levels: overview, area, unit, detail. Every display has a place in the hierarchy.',
+      'The navigation bar is identical on every display and carries the area alarm indicators.',
+      'Two clicks to anywhere. Three is a design failure.',
+      'Every alarm, device, and value links to the display that explains it.',
+      'Fewer displays, well organized, beat many displays with everything on them.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['HMI', 'SCADA', 'Design', 'ISA'],
+    blocks: [
+      { t: 'h2', text: 'The hierarchy' },
+      {
+        t: 'p',
+        text: 'ISA-101 describes displays in levels, and the levels are what make navigation possible. Without them, a system of eighty displays is a maze; with them, it is a tree the operator can hold in their head.',
+      },
+      {
+        t: 'table',
+        head: ['Level', 'Purpose', 'Content', 'Example'],
+        rows: [
+          ['1, Overview', 'The state of the whole system at a glance; the display that is up when nothing is happening', 'Key values with embedded trends, area alarm indicators, high-level status; very little control', 'The utility: plant, distribution, collection, each as a block with its health'],
+          ['2, Area', 'The state of one area and the control that area needs', 'The process in that area as a simplified diagram, the important values, the devices with status', 'The water plant; the lift stations; the distribution system'],
+          ['3, Unit', 'One process unit or one site, with everything needed to operate it', 'The unit diagram, its devices, its loops, its sequence status', 'Filter 3; lift station 12; the high service pump station'],
+          ['4, Detail', 'One device, loop, or sequence in full', 'Faceplates, loop detail, sequence step lists, diagnostics', 'Pump P-3 faceplate; the backwash sequence display; the chlorine loop detail'],
+        ],
+      },
+      {
+        t: 'p',
+        text: 'An operator lives on level 2 and 3 displays, glances at level 1, and opens level 4 when acting or investigating. Every display is assigned to exactly one level and one branch of the tree, and the navigation bar reflects that tree.',
+      },
+      { t: 'h2', text: 'The navigation bar' },
+      {
+        t: 'p',
+        text: 'A strip in the same place on every display, containing a button for each area and, on area displays, a row for the units in that area. Each button carries the highest priority active alarm in its area as a small indicator, in the alarm color and symbol, so that an operator on any display sees that another area has an alarm. The bar also holds the fixed utilities: the alarm summary, the trend tool, the alarm banner, the user login, and a home button that returns to the overview.',
+      },
+      {
+        t: 'ul',
+        items: [
+          'Same position, same size, same order on every display. A bar that moves or changes teaches operators to look for it instead of at the process.',
+          'The current location highlighted, and the path shown: Overview, Water Plant, Filters, Filter 3.',
+          'One click to any area from any display, two clicks to any unit. Detail displays open as pop-ups over the unit display, so the unit context is not lost.',
+          'The alarm indicator on each area button is the highest priority unacknowledged alarm in the area; it clears when the alarms are acknowledged and follows the same blink rule.',
+          'No more than about eight area buttons; a system with more areas groups them.',
+        ],
+      },
+      { t: 'h2', text: 'Context navigation' },
+      {
+        t: 'p',
+        text: 'The bar gets the operator to a place; context links get them to the thing. Every alarm entry in the banner and the summary links to the display that contains the device, and to the device faceplate. Every device symbol opens its faceplate. Every value with a trend link opens its trend group. A faceplate has a link back to the display it lives on. A sequence status shows the current step and links to the step display. These links are what make two clicks to anywhere true in practice: the operator rarely uses the bar to find a problem, because the problem finds them and links them to itself.',
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Test navigation from the alarm',
+        text: 'For each alarm in the master alarm database, start at the overview, note the alarm in the banner, and count the clicks to the device faceplate. If any path is more than two, either the link is missing or the display hierarchy has a hole. This test takes an afternoon and it finds most navigation problems.',
+      },
+      { t: 'h2', text: 'What to leave out' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Duplicate paths', def: 'A device that appears on three displays with three different faceplate bindings is three places for a mistake. A device lives on one unit display; other displays show its status and link to it.' },
+          { term: 'Deep menus', def: 'A drop-down menu with sub-menus adds clicks and hides the alarm indication. The bar is flat.' },
+          { term: 'Hidden navigation', def: 'Clicking on an unlabeled region of a diagram to go somewhere. Navigation controls look like navigation controls.' },
+          { term: 'Popup chains', def: 'A faceplate that opens a detail that opens a diagnostic that opens a trend. Two levels of popup at most, with a clear close on each.' },
+          { term: 'Per-client differences', def: 'Every client, in the control room, at the plant, and remote, uses the same navigation. An operator who moves between them should not relearn.' },
+          { term: 'Screens nobody uses', def: 'A display that has not been opened in a year, as the SCADA usage log shows, is either merged into another or removed. Every display costs maintenance.' },
+        ],
+      },
+      { t: 'h2', text: 'Multiple monitors and remote clients' },
+      {
+        t: 'p',
+        text: 'A control room with several monitors commonly fixes the overview on one, the alarm summary on another, and uses the rest for area and unit displays. The navigation bar behaves the same on each, and a display opened from an alarm opens on the monitor the operator is working on, not on a fixed one. Remote and mobile clients get the same hierarchy with the layout adapted to the screen; what they do not get is a different structure. An operator who knows the plant HMI knows the phone client.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'How many displays should a utility SCADA system have?',
+        a: 'As few as the hierarchy needs. A mid-size utility often lands at one overview, three to five area displays, a unit display per plant process and one per remote site type with a site selector, and the detail displays that the faceplates and sequences generate. Fifty well-structured displays serve better than two hundred accumulated ones.',
+      },
+      {
+        q: 'Should the overview have any control on it?',
+        a: 'Very little. The overview is for seeing; control happens on unit displays and faceplates. A start button on the overview is a start button an operator can press while looking at the wrong thing.',
+      },
+      {
+        q: 'Where does the alarm summary live in the hierarchy?',
+        a: 'Outside it, as a utility display reachable from the bar on every screen. It is a view across all areas and does not belong to one.',
+      },
+      {
+        q: 'How do I handle a system with many identical remote sites?',
+        a: 'One unit display template with a site selector, so the operator picks a station and the display binds to it. The alarm link from the banner opens the template bound to the station in alarm. This is far better than eighty copies of a display that diverge over time.',
+      },
+    ],
+    related: [
+      '/controls/scada-hmi/hmi-design/isa-101',
+      '/controls/scada-hmi/hmi-design/high-performance-hmi',
+      '/controls/scada-hmi/hmi-design/alarm-indication',
+      '/controls/scada-hmi/hmi-design/faceplates',
+      '/controls/scada-hmi/hmi-design/trends',
+    ],
+  },
 ];

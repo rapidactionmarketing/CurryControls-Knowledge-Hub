@@ -74,6 +74,116 @@ const projects = [
 
 const projectBySlug = Object.fromEntries(projects.map((project) => [project.id, project]));
 
+const pageMetadata: Record<string, { title: string; description: string }> = {
+  '/': {
+    title: 'CurryControls.com | Controls & Automation Knowledge Hub',
+    description: 'Practical reference material for control systems, PLCs, SCADA, instrumentation, industrial networking, and water and wastewater controls.',
+  },
+  '/controls': {
+    title: 'Controls Knowledge Base | CurryControls.com',
+    description: 'Explore practical controls topics spanning PLCs, SCADA, instrumentation, panels, networking, and OT cybersecurity.',
+  },
+  '/water-wastewater': {
+    title: 'Water & Wastewater Controls | CurryControls.com',
+    description: 'A growing technical reference for treatment plants, lift stations, pumping, telemetry, instrumentation, and utility controls.',
+  },
+  '/troubleshooting': {
+    title: 'Control System Troubleshooting | CurryControls.com',
+    description: 'A problem-oriented starting point for diagnosing PLC, instrumentation, networking, SCADA, and pump-control issues.',
+  },
+  '/engineering-library': {
+    title: 'Engineering Library | CurryControls.com',
+    description: 'An organized home for engineering references, diagrams, checklists, control narratives, and commissioning resources.',
+  },
+  '/tools-projects': {
+    title: 'Tools & Projects Under Development | CurryControls.com',
+    description: 'Independent software and technology projects being explored around engineering, estimating, documentation, and technical workflows.',
+  },
+  '/projects/suiteplans': {
+    title: 'SuitePlans | CurryControls.com',
+    description: 'A project note for SuitePlans, an early concept for organizing control-system planning and engineering workflows.',
+  },
+  '/projects/suitebids': {
+    title: 'SuiteBids | CurryControls.com',
+    description: 'A project note for SuiteBids, an early concept for technical bid review, estimating, and scope workflows.',
+  },
+  '/projects/keydocs': {
+    title: 'KeyDocs | CurryControls.com',
+    description: 'A project note for KeyDocs, an early concept for organizing project documents and technical information.',
+  },
+  '/projects/securelyfax': {
+    title: 'SecurelyFax | CurryControls.com',
+    description: 'A project note for SecurelyFax, an early concept for modern document transmission workflows.',
+  },
+  '/articles': {
+    title: 'Technical Articles | CurryControls.com',
+    description: 'A clear publishing queue for future controls, water, troubleshooting, engineering, and instrumentation reference content.',
+  },
+  '/about': {
+    title: 'About CurryControls.com',
+    description: 'Learn what CurryControls.com is, who maintains it, and how it is positioned as an independent technical information resource.',
+  },
+};
+
+function SeoMetadata() {
+  const [location] = useLocation();
+  const pathname = location.split('?')[0] || '/';
+  const metadata = pageMetadata[pathname] ?? {
+    title: 'CurryControls.com | Technical Knowledge Hub',
+    description: 'An independent technical resource for controls, automation, instrumentation, engineering, and water and wastewater systems.',
+  };
+
+  useEffect(() => {
+    document.title = metadata.title;
+    const canonicalUrl = `${window.location.origin}${pathname}`;
+    const upsertMeta = (selector: string, attribute: 'name' | 'property', key: string, content: string) => {
+      let element = document.head.querySelector<HTMLMetaElement>(selector);
+      if (!element) {
+        element = document.createElement('meta');
+        element.setAttribute(attribute, key);
+        document.head.appendChild(element);
+      }
+      element.content = content;
+    };
+
+    upsertMeta('meta[name="description"]', 'name', 'description', metadata.description);
+    upsertMeta('meta[property="og:title"]', 'property', 'og:title', metadata.title);
+    upsertMeta('meta[property="og:description"]', 'property', 'og:description', metadata.description);
+    upsertMeta('meta[property="og:url"]', 'property', 'og:url', canonicalUrl);
+    upsertMeta('meta[name="twitter:title"]', 'name', 'twitter:title', metadata.title);
+    upsertMeta('meta[name="twitter:description"]', 'name', 'twitter:description', metadata.description);
+
+    let canonical = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.rel = 'canonical';
+      document.head.appendChild(canonical);
+    }
+    canonical.href = canonicalUrl;
+
+    let schema = document.head.querySelector<HTMLScriptElement>('#currycontrols-site-schema');
+    if (!schema) {
+      schema = document.createElement('script');
+      schema.id = 'currycontrols-site-schema';
+      schema.type = 'application/ld+json';
+      document.head.appendChild(schema);
+    }
+    schema.textContent = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name: 'CurryControls.com',
+      url: window.location.origin,
+      description: metadata.description,
+      maintainer: {
+        '@type': 'Person',
+        name: 'Eric Sullivan',
+      },
+    });
+  }, [metadata.description, metadata.title, pathname]);
+
+  return null;
+}
+
 function NoticeGate() {
   const [accepted, setAccepted] = useState(false);
 
@@ -205,7 +315,7 @@ function Footer() {
           <p className="text-xs leading-5 text-[hsl(var(--primary-foreground)/.62)]">{INFORMATIONAL_DISCLAIMER}</p>
         </div>
       </div>
-      <div className="cc-container border-t border-[hsl(var(--primary-foreground)/.16)] py-5 text-xs text-[hsl(var(--primary-foreground)/.6)]">© 2025 CurryControls.com · Independent technical publishing project</div>
+      <div className="cc-container border-t border-[hsl(var(--primary-foreground)/.16)] py-5 text-xs text-[hsl(var(--primary-foreground)/.6)]">© 2026 CurryControls.com · Independent technical publishing project</div>
     </footer>
   );
 }
@@ -213,6 +323,7 @@ function Footer() {
 function Shell({ children }: { children: ReactNode }) {
   return (
     <div className="cc-page">
+      <SeoMetadata />
       <Header />
       <main>{children}</main>
       <Footer />

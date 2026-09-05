@@ -662,4 +662,434 @@ export const INSTRUMENTATION_ENTRIES: Entry[] = [
       '/calculators/wet-well-cycle',
     ],
   },
+  {
+    path: '/controls/instrumentation/level/hydrostatic-level',
+    kind: 'reference',
+    title: 'Hydrostatic Level Measurement',
+    summary:
+      'Measuring level from the pressure of the liquid above a sensor: submersible transducers, bubblers, and base-mounted transmitters, the density assumption behind all of them, venting, installation, and what makes them drift.',
+    answer:
+      'A hydrostatic level instrument measures the pressure at a point below the surface and converts it to the height of liquid above that point, using the liquid density. A submersible transducer hangs in the liquid; a bubbler pushes air through a tube and measures the back pressure; a base-mounted transmitter reads through a tap in the tank. All three depend on the density being what the calibration assumed, on the reference pressure being atmospheric, and on the sensor staying where it was installed.',
+    keyPoints: [
+      'Level equals pressure divided by density times gravity; a change in density is read as a change in level.',
+      'A gauge sensor needs a vent to atmosphere, usually a tube in the cable, and a blocked or wet vent produces a slow drift.',
+      'The reading is the height above the sensor, so the sensor elevation is part of the calibration and must be recorded.',
+      'Bubblers keep the electronics out of the liquid at the cost of an air supply and a tube that can plug.',
+      'Fouling, cable damage, and a shifted sensor are the failures; comparison with a tape or a float is the check.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['Instrumentation', 'Level', 'Water', 'Wastewater'],
+    blocks: [
+      { t: 'h2', text: 'The principle' },
+      {
+        t: 'p',
+        text: 'The pressure at a depth in a liquid is the weight of the column above it. For water, every foot of depth adds about 0.433 psi, or every 2.31 feet adds one psi. A sensor at the bottom of a tank measuring 4.33 psi is under ten feet of water. The instrument does that arithmetic with a density it was told at calibration, and it is right as long as the liquid is what it was told.',
+      },
+      {
+        t: 'formula',
+        expr: 'Level = Pressure / (Density x g)',
+        where: [
+          'Level is the height of liquid above the sensor',
+          'Pressure is the gauge pressure at the sensor, referenced to atmosphere',
+          'Density is the liquid density, about 62.4 lb per cubic foot for water, and g is gravity',
+          'For water in US units, level in feet is pressure in psi times 2.31',
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'Density is an assumption',
+        text: 'A sludge holding tank at a specific gravity of 1.03 reads three percent low on an instrument calibrated for water. A chemical tank at 1.3 reads a quarter low. Brine, hypochlorite, ferric chloride, and settled sludge all differ from water, and temperature moves density a little too. Calibrate for the actual liquid and record the specific gravity used.',
+      },
+      { t: 'h2', text: 'Three ways to do it' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Submersible transducer', def: 'A sealed pressure sensor on a cable, lowered into the liquid and held at a fixed elevation. The cable carries the signal and a vent tube. It is the default in wet wells, tanks, and wells because it is cheap, accurate, and needs no tap in the vessel. Its weaknesses are that it is in the liquid, with everything that means for fouling, and that the cable is vulnerable.' },
+          { term: 'Bubbler', def: 'A tube runs to a point near the bottom, and a small compressor or a plant air supply pushes air down it at a low, regulated flow. The pressure needed to push bubbles out of the end equals the head above it, and a pressure transmitter at the top of the tube, in the dry, reads it. Nothing electrical is in the liquid, which suits corrosive, hot, or classified locations. The costs are an air supply that must not fail and a tube that can plug or freeze.' },
+          { term: 'Base-mounted transmitter', def: 'A pressure transmitter on a tap at the bottom of the tank or on the inlet piping, reading the static head. Accessible for calibration without draining and no cable in the liquid. It needs a tap, it reads velocity effects if the tap is on a live line, and it needs a diaphragm seal on liquids that would plug or attack it.' },
+        ],
+      },
+      { t: 'h2', text: 'Venting and the reference' },
+      {
+        t: 'p',
+        text: 'A gauge pressure sensor compares the process pressure with the atmosphere, and a submersible unit reaches the atmosphere through a small tube in its cable that ends in the junction box. If the tube is pinched, blocked with dirt, or has taken on water from condensation, the reference is no longer atmospheric, and the reading drifts with the weather and the temperature. The junction box gets a vented cap with a desiccant or a breather, the cable is not tie-wrapped so tightly that the tube closes, and a slow unexplained drift is checked at the vent first.',
+      },
+      {
+        t: 'p',
+        text: 'An absolute sensor avoids the vent by measuring against a sealed vacuum, and then needs a separate barometric measurement subtracted from it, either in the transmitter or in the controller. That trades a vent tube for a second instrument.',
+      },
+      { t: 'h2', text: 'Installation' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Fix the sensor elevation.', text: 'The instrument reads height above itself. Hang it on a stainless cable or a rigid pipe to a known elevation, record that elevation against the tank floor on the drawing, and enter it in the scaling so the reading is referenced to the floor, not to the sensor.' },
+          { title: 'Keep it still.', text: 'A transducer that swings in the inflow or is dragged by the pump reads a moving elevation. A stilling tube or a weighted bracket holds it.' },
+          { title: 'Make it retrievable.', text: 'It will need cleaning. Hang it from the hatch on a cable and a clip so that it can be lifted without anyone entering the well.' },
+          { title: 'Protect the cable.', text: 'Away from the pump intakes, away from the ladder, in a conduit or a tube through the wall, with strain relief at the top and a drip loop at the junction box.' },
+          { title: 'Locate the tap for a base-mounted unit on a dead leg.', text: 'Static head only. A tap on the inlet or discharge piping reads flow effects as level.' },
+        ],
+      },
+      { t: 'h2', text: 'Failures and checks' },
+      {
+        t: 'table',
+        caption: 'What goes wrong',
+        head: ['Symptom', 'Likely cause', 'Check'],
+        rows: [
+          ['Reads high, slowly worsening', 'Grease or solids on the diaphragm', 'Lift and clean; compare with a tape'],
+          ['Slow drift with the weather', 'Vent tube blocked or wet', 'Inspect the vent and the junction box'],
+          ['Sudden offset', 'Sensor moved or cable slipped', 'Check the hanging point and the elevation'],
+          ['Reads low or zero', 'Cable damaged or sensor pulled out of the liquid', 'Inspect the cable; measure the loop'],
+          ['Correct at one level, wrong at another', 'Density or span wrong', 'Recalibrate against a tape at two levels'],
+          ['Reads high while a pump runs', 'Tap on a live line or sensor in the intake flow', 'Relocate to a dead leg or a stilling tube'],
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'safety',
+        title: 'Wet wells and tanks are confined spaces',
+        text: 'Servicing a submersible transducer from inside the well is confined space entry with atmospheric hazards. Install so that the instrument comes out through the hatch, and follow the entry procedure when it does not.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'How does a submersible level transducer work?',
+        a: 'It measures the pressure of the liquid above it, which is proportional to depth for a known density, and outputs 4 to 20 mA over a vented cable. Level above the sensor is the pressure divided by the liquid density.',
+      },
+      {
+        q: 'Why does my level transducer drift with the weather?',
+        a: 'The vent tube in the cable is blocked or wet, so the reference side is no longer at atmospheric pressure and the reading follows the barometer and the temperature. Inspect the vent and the junction box breather.',
+      },
+      {
+        q: 'When should I use a bubbler instead of a transducer?',
+        a: 'When nothing electrical should be in the liquid: corrosive chemicals, high temperature, a classified area, or a liquid that fouls diaphragms badly. Accept the air supply and the purge tube as the maintenance items in exchange.',
+      },
+      {
+        q: 'Does the instrument need recalibrating for a different liquid?',
+        a: 'Yes, if the density differs from what it was calibrated for. A specific gravity of 1.1 reads ten percent low on a water calibration. Enter the actual specific gravity, or calibrate against a measured level in the actual liquid.',
+      },
+    ],
+    related: [
+      '/controls/instrumentation/level/wet-well-level',
+      '/controls/instrumentation/level/ultrasonic-level',
+      '/controls/instrumentation/level/floats',
+      '/water-wastewater/water-systems/storage/tank-level-control',
+      '/controls/instrumentation/pressure/pressure-transmitters',
+    ],
+  },
+  {
+    path: '/controls/instrumentation/level/ultrasonic-level',
+    kind: 'reference',
+    title: 'Ultrasonic Level Measurement',
+    summary:
+      'Non-contact level by time of flight: how the sensor works, the blanking zone and beam angle, temperature compensation, the surfaces and vapors that defeat it, mounting rules, and what to do when it loses its echo.',
+    answer:
+      'An ultrasonic level sensor sends a pulse of sound from above the liquid, times the echo from the surface, and converts the time to a distance using the speed of sound, which it corrects for temperature. Level is the vessel height minus that distance. Nothing touches the liquid, which is its advantage; the sound has to cross whatever is above the liquid, which is its limit. Foam absorbs it, vapor and temperature layers bend it, obstructions reflect it, and the sensor cannot see anything closer than its blanking distance.',
+    keyPoints: [
+      'The sensor measures distance to the surface; the level is the reference height minus the distance, so the reference height is part of the setup.',
+      'The speed of sound changes with air temperature, and the sensor compensates from its own temperature sensor, which is not the temperature of the air in the vessel.',
+      'Foam, heavy vapor, and a turbulent surface weaken or scatter the echo; radar tolerates all three.',
+      'The blanking zone near the sensor is a dead band, and the beam widens with distance, so mounting position decides what the sensor sees.',
+      'Loss of echo is a fault the controller must treat as a bad signal, not as a level.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['Instrumentation', 'Level', 'Water', 'Wastewater'],
+    blocks: [
+      { t: 'h2', text: 'How it works' },
+      {
+        t: 'p',
+        text: 'The transducer at the top of the vessel is both speaker and microphone. It emits a short burst of sound, in the tens of kilohertz, listens for the echo from the liquid surface, and measures the round-trip time. Distance is half the time multiplied by the speed of sound, about 1,125 feet per second in air at room temperature. Level is the distance from the sensor face to the vessel floor, entered at setup, minus the measured distance.',
+      },
+      {
+        t: 'p',
+        text: 'The speed of sound in air rises with temperature, by roughly 0.2 percent per degree Celsius, and a sensor that ignored that would read a level that changed with the weather. Every ultrasonic sensor carries a temperature sensor and corrects for it. The correction is for the temperature at the sensor, and in a vessel where the air near the surface is warmer or cooler than at the top, or where sunlight heats the sensor housing, the correction is off by the difference. That is a small error on a short range and a real one on a tall tank in the sun.',
+      },
+      { t: 'h2', text: 'Blanking and beam' },
+      {
+        t: 'p',
+        text: 'After emitting a pulse the transducer rings for a moment and cannot hear, so an echo from a surface too close arrives while it is deaf. That distance, the blanking or dead zone, is typically a foot or two and is stated on the datasheet. The sensor must be mounted at least that far above the highest level it needs to measure. The pulse also spreads in a cone, several degrees wide, and anything inside the cone, a ladder, an inlet pipe, a wall at an angle, returns an echo the sensor may take for the surface. Mounting position is chosen so that the cone sees liquid and nothing else all the way down.',
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Mount it perpendicular, away from the wall, and clear of the inflow',
+        text: 'The face must be parallel to the liquid surface, or the echo bounces away. It should sit far enough from the wall that the cone does not touch it, and away from where the inflow falls, which is both turbulent and a source of false echoes from the falling stream. On a conical bottom, the cone should not see the sloped section.',
+      },
+      { t: 'h2', text: 'What defeats it' },
+      {
+        t: 'table',
+        caption: 'Conditions that weaken or lose the echo',
+        head: ['Condition', 'Effect', 'Remedy'],
+        rows: [
+          ['Foam on the surface', 'Absorbs the pulse; weak or no echo', 'Radar, or a stilling well where the foam is excluded'],
+          ['Heavy vapor or mist', 'Attenuates and scatters the sound', 'Radar, or a sensor with more power and a shorter range'],
+          ['Temperature stratification', 'Speed of sound varies along the path; reading offset', 'Shade the sensor; radar on tall tanks'],
+          ['Turbulence or agitation', 'Scattered echo, noisy reading', 'Stilling well; filtering; radar'],
+          ['Condensation on the face', 'Attenuates the pulse', 'A self-cleaning or heated face; mounting angle for drainage'],
+          ['Obstructions in the cone', 'False echoes at a fixed distance', 'Relocate, or map the false echo out in the sensor configuration'],
+          ['Sloped or conical surfaces', 'Echo deflected away', 'Aim at flat liquid only'],
+        ],
+      },
+      { t: 'h2', text: 'Loss of echo' },
+      {
+        t: 'p',
+        text: 'When the sensor gets no usable echo it declares loss of echo, and what it outputs then is configurable: hold the last value, go to a fault current, or go to a preset. Holding the last value is the dangerous choice, because the control system sees a plausible level that stopped moving. The sensor should be set to signal a fault, and the controller should validate the signal and fall back to floats, as the signal validation and wet well level pages describe. A loss of echo that happens every time it rains, in a wet well, is foam from high inflow, and it is telling you the application wants radar.',
+      },
+      { t: 'h2', text: 'Setup and checks' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Enter the reference distance.', text: 'The distance from the sensor face to the vessel floor, or to whatever zero level means at that site, measured with a tape. This is the number that is most often entered wrong.' },
+          { title: 'Set the range and the blanking.', text: 'The maximum level the sensor must read must be at least the blanking distance below the face. If it is not, move the sensor.' },
+          { title: 'Map false echoes.', text: 'With the vessel empty or low, run the sensor’s echo mapping so that it learns fixed reflections from ladders and pipes and ignores them.' },
+          { title: 'Verify at two levels.', text: 'Compare the reading against a tape or a known level near the bottom and near the top. A constant offset is the reference distance; a proportional error is the speed of sound or the temperature.' },
+          { title: 'Configure the fault behavior.', text: 'Loss of echo to a fault current, and the controller validating it.' },
+        ],
+      },
+      { t: 'h2', text: 'Where it fits' },
+      {
+        t: 'p',
+        text: 'Ultrasonic sensors are inexpensive, easy to mount, and accurate to a fraction of a percent on a clean surface in still air. Clean water tanks, chemical day tanks with a calm surface, open channels with a flume for flow measurement, and dry bulk hoppers are good applications. Wet wells with foam and grease, digesters with heavy vapor, and tall outdoor tanks in the sun are the applications where radar has replaced it, and the radar level page covers why.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'What is the blanking distance on an ultrasonic level sensor?',
+        a: 'The zone directly in front of the sensor, usually a foot or two, in which it cannot measure because it is still ringing from its own pulse. The maximum level must stay below the face by at least that distance.',
+      },
+      {
+        q: 'Why does my ultrasonic sensor read wrong on hot days?',
+        a: 'The speed of sound rises with temperature and the sensor compensates from its own temperature, which in the sun is not the temperature of the air in the vessel. Shade the sensor, or use radar, which does not depend on the speed of sound in air.',
+      },
+      {
+        q: 'Ultrasonic or radar for a wet well?',
+        a: 'Radar. Foam, turbulence, and vapor in a wet well are the three things ultrasonic handles worst. Ultrasonic remains a good choice for clean, calm liquids and for open-channel flow with a flume.',
+      },
+      {
+        q: 'What should the sensor output on loss of echo?',
+        a: 'A fault current that the controller recognizes as a bad signal, so that control falls back to floats or a defined safe action. Never a held last value, which looks like a level that stopped changing.',
+      },
+    ],
+    related: [
+      '/controls/instrumentation/level/radar-level',
+      '/controls/instrumentation/level/wet-well-level',
+      '/controls/instrumentation/level/hydrostatic-level',
+      '/controls/instrumentation/flow/open-channel-flow',
+      '/controls/plc-systems/analog-control/signal-validation',
+    ],
+  },
+  {
+    path: '/controls/instrumentation/level/floats',
+    kind: 'reference',
+    title: 'Float Switches',
+    summary:
+      'The oldest level instrument and still the one that saves a station: how tilt and stem floats work, the wiring conventions, mounting and spacing in a wet well, classified-area ratings, and how to use them alongside a continuous instrument.',
+    answer:
+      'A float switch is a contact that changes state when a float rises or falls past a fixed level. It needs no calibration, no scaling, and no electronics, and it fails separately from every continuous instrument in the well, which is why the high level alarm float is wired around the controller to the alarm and the pumps. Its enemies are rags and cables that hang it up, and its rules are simple: mount it where it cannot tangle, wire it fail-safe, rate it for the area, and test it by lifting it.',
+    keyPoints: [
+      'A float switch is a mechanical contact at a fixed level; it does not drift, but it can hang up.',
+      'Wire critical floats normally closed so a broken wire reads as the alarm condition.',
+      'The high level float goes directly to the alarm and to the pump start relays, independent of the controller.',
+      'Mount floats on a stainless bracket, spaced and weighted, away from cables and the inflow.',
+      'Wastewater wet wells are usually classified locations, and the float and its circuit must be rated for it.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 7,
+    tags: ['Instrumentation', 'Level', 'Lift Stations', 'Wastewater'],
+    blocks: [
+      { t: 'h2', text: 'Two kinds' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Tilt float', def: 'A sealed float on a cable with a switch inside that closes when the float tilts past horizontal. Hung on its cable from a bracket, weighted so that it pivots at a set level, it is the standard wet well float. The switching level is set by where the cable is clamped; the differential, the distance between switching up and switching down, is set by the free cable length below the clamp.' },
+          { term: 'Stem or vertical float', def: 'A float that slides on a vertical rod and operates a switch at the top, or a magnet passing a reed switch in the stem. Compact and precise, used in day tanks, sumps, and vessels where there is no room to swing a tilt float, and vulnerable to solids that jam the float on the stem.' },
+        ],
+      },
+      { t: 'h2', text: 'Contacts and wiring' },
+      {
+        t: 'p',
+        text: 'A float has a contact that is either closed or open with the float down, and the choice of which decides what a broken wire means. A high level alarm float wired normally closed, opening when the level rises, produces the alarm when the float lifts and also when the cable breaks, the terminal loosens, or the fuse blows. Wired normally open, a broken wire silences the alarm forever. Critical floats are wired so that failure of the circuit produces the safe indication, and the program is written to read them that way. The convention is written on the drawing so that the next person does not reverse it.',
+      },
+      {
+        t: 'callout',
+        kind: 'safety',
+        title: 'The high level float does not go through the controller',
+        text: 'Wire it to the alarm dialer or telemetry and to the pump starter control circuit directly, through its own relay, so that a faulted processor, a failed input card, or a program error still produces an alarm and running pumps. It may also feed a controller input for indication, and that input is never the only path.',
+      },
+      { t: 'h2', text: 'Mounting' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Use a bracket.', text: 'A stainless steel bracket at the hatch, with the float cables clamped to it at the elevations the levels require, so that a float can be adjusted or replaced without entering the well.' },
+          { title: 'Space them.', text: 'Floats swing. Two floats close enough to touch will tangle, and one held up by another reads a level that is not there. Stagger them and give each its arc.' },
+          { title: 'Keep them clear.', text: 'Away from the pump cables, the discharge pipes, the ladder, and the inflow. A float that lands on a pipe as the level falls stays there.' },
+          { title: 'Weight the cable.', text: 'A cable weight a set distance above the float sets the pivot point and keeps the float from being pushed around by the flow.' },
+          { title: 'Route the cable.', text: 'Through the hatch to a junction box, with strain relief, and with a seal-off where the area classification requires one.' },
+        ],
+      },
+      { t: 'h2', text: 'Classified areas' },
+      {
+        t: 'p',
+        text: 'A wastewater wet well is a space where sewer gas collects, and under NFPA 820, the standard for fire protection in wastewater facilities, the wet well and the spaces around it are usually classified locations under NEC Article 500. That decides the float: an intrinsically safe float on an intrinsically safe barrier in the panel, or a float and a circuit rated for the division, and the conduit sealed at the boundary. A general-purpose float from a hardware store in a Class I, Division 1 wet well is a code violation and a hazard. Read the classification for the site before selecting anything that goes in the well.',
+      },
+      { t: 'h2', text: 'Using floats with a continuous instrument' },
+      {
+        t: 'table',
+        caption: 'The floats in a wet well with a transducer',
+        head: ['Float', 'Level', 'Function'],
+        rows: [
+          ['High level alarm', 'Above lag start', 'Alarm and force both pumps to run, independent of the controller'],
+          ['Lag start backup', 'At or just above lag start', 'Starts the second pump when the controller or the transducer has failed'],
+          ['Lead start backup', 'At or just above lead start', 'Starts the first pump on floats alone when the continuous level is bad'],
+          ['Stop backup', 'At the stop level', 'Stops pumps on floats alone'],
+          ['Low level cutoff', 'Below stop', 'Stops the pumps before they run dry when the transducer has failed high'],
+        ],
+      },
+      {
+        t: 'p',
+        text: 'The controller uses the floats two ways: as the backup control when it has declared the continuous level bad, and as a check on the continuous level while it is good. A transducer reading below the lead start level while the lead start float is up is a disagreement, and it is alarmed. The wet well level page covers the arrangement in full.',
+      },
+      { t: 'h2', text: 'Testing' },
+      {
+        t: 'p',
+        text: 'A float is tested by lifting it. Raise each float by its cable from the hatch, in order, and confirm the indication at the panel and the action it causes: the lead pump starts, the lag pump starts, the alarm dials out. Lower them and confirm the stop. Do it on a schedule and after any work in the well, and record the result. A float that has not been lifted in a year is a float whose state is unknown.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Why use floats if there is a level transducer?',
+        a: 'Because the transducer, the input card, and the controller can all fail, and floats fail differently. The high level float wired directly to the alarm and the pumps is what keeps the station from overflowing when everything else has stopped.',
+      },
+      {
+        q: 'Should a float be wired normally open or normally closed?',
+        a: 'For anything critical, so that a broken wire produces the safe indication. A high level alarm float is normally closed and opens on high level, so an open circuit alarms. Write the convention on the drawing and read the input accordingly in the program.',
+      },
+      {
+        q: 'How far apart should wet well floats be?',
+        a: 'Far enough that their swinging arcs do not overlap, staggered on the bracket so they do not hang in a line, and weighted so the flow does not push them together. A tangled pair reads levels that do not exist.',
+      },
+      {
+        q: 'Do wet well floats need to be intrinsically safe?',
+        a: 'Usually. NFPA 820 classifies most wastewater wet wells as hazardous locations, and the float and its circuit must be rated for the classification, typically through an intrinsically safe barrier in the panel. Check the classification for the specific site.',
+      },
+    ],
+    related: [
+      '/controls/instrumentation/level/wet-well-level',
+      '/water-wastewater/wastewater-systems/lift-stations/wet-well-control',
+      '/controls/instrumentation/level/hydrostatic-level',
+      '/controls/plc-systems/plc-fundamentals/io-systems',
+      '/controls/control-panels/panel-design/ul-698a',
+    ],
+  },
+  {
+    path: '/controls/instrumentation/pressure/pressure-transmitters',
+    kind: 'reference',
+    title: 'Pressure Transmitters',
+    summary:
+      'Gauge, absolute, and differential pressure transmitters: how they sense, how range, turndown, and accuracy specifications work, the process connection and its accessories, and the installation errors that show up as calibration problems.',
+    answer:
+      'A pressure transmitter senses pressure on a diaphragm, converts the deflection to an electrical signal, and outputs 4 to 20 mA scaled to its calibrated range. Gauge transmitters measure against atmosphere, absolute against vacuum, and differential between two connections. Selecting one means matching the reference, the range with margin for overpressure, the accuracy the loop needs, and the wetted materials to the fluid. Installing one means a connection that carries pressure without carrying pulsation, solids, or a column of liquid the calibration did not expect.',
+    keyPoints: [
+      'Gauge, absolute, or differential: the reference decides the instrument, and using the wrong one is an offset that no calibration removes.',
+      'Range with turndown lets one transmitter be calibrated across a wide span, but accuracy specifications are usually a percent of span, and a narrow span on a wide-range unit is less accurate than it looks.',
+      'Overpressure and burst ratings are separate from range; a water hammer that exceeds them ends the transmitter.',
+      'A snubber tames pulsation, an isolation valve permits calibration, and a diaphragm seal keeps the process out of the sensor.',
+      'A column of liquid between the tap and the transmitter is a pressure the transmitter reads; zero it out or account for it.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['Instrumentation', 'Water', 'Pumps', 'Signals'],
+    blocks: [
+      { t: 'h2', text: 'Three references' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Gauge', def: 'Measures relative to the atmosphere, through a vent in the housing. Reads zero with the process open to air. The right instrument for discharge pressure, system pressure, and most pump work.' },
+          { term: 'Absolute', def: 'Measures relative to a sealed vacuum. Reads atmospheric pressure, about 14.7 psi at sea level, with the process open to air. Used for vacuum service, for barometric compensation, and where atmospheric changes would matter.' },
+          { term: 'Differential', def: 'Measures the difference between a high side and a low side connection. Used for flow across an orifice or a venturi, for level in a closed tank, for filter loading, and for any measurement where the difference matters and the absolute value does not. It has a static pressure rating, the pressure both sides can carry together, which is separate from its differential range.' },
+        ],
+      },
+      { t: 'h2', text: 'Sensing' },
+      {
+        t: 'p',
+        text: 'The process pressure deflects an isolating diaphragm, the deflection is transferred through a fill fluid to a sensing element, and the element, piezoresistive or capacitance on most current designs, produces a signal the electronics linearize, compensate for temperature, and convert to 4 to 20 mA, usually with HART on the loop. The fill fluid matters in two places: it must not react with the process if the diaphragm fails, and its expansion with temperature is part of the temperature error on a diaphragm seal with a long capillary.',
+      },
+      { t: 'h2', text: 'Range, span, and turndown' },
+      {
+        t: 'p',
+        text: 'A transmitter has an upper range limit, the most it can measure, and a calibrated span, the part of that range mapped onto 4 to 20 mA. Turndown is the ratio of the two: a 300 psi transmitter calibrated for 0 to 30 psi has a turndown of ten. Modern transmitters offer turndowns of a hundred or more, which lets one stocked unit serve many applications. The catch is in the accuracy specification.',
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'Read whether accuracy is a percent of span or of the upper range limit',
+        text: 'An accuracy of 0.1 percent of span on a 0 to 30 psi calibration is 0.03 psi. An accuracy of 0.1 percent of the upper range limit on the same unit is 0.3 psi, ten times worse, and it stays that size however narrow the span is turned down. Some datasheets state accuracy as a percent of span up to a turndown limit and degrade beyond it. Match the transmitter range to the application so that the turndown stays modest, and read the datasheet formula, not the headline number.',
+      },
+      { t: 'h2', text: 'Overpressure' },
+      {
+        t: 'p',
+        text: 'Separate from the range are the overpressure limit, the pressure the transmitter can see without permanent damage, and the burst pressure, beyond which the housing fails. Water hammer from a valve slamming, a pump starting against a closed check, or a surge on a long force main produces short spikes well above operating pressure. A transmitter at the discharge of a pump station sees them regularly. Select the range so that the overpressure limit covers the spike, or fit a snubber to spread it, or both.',
+      },
+      { t: 'h2', text: 'The process connection' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Isolation valve', def: 'Between the tap and the transmitter, so that the transmitter can be removed or calibrated with the process live. A manifold with isolation, equalizing, and vent valves does the same for a differential unit.' },
+          { term: 'Snubber', def: 'A restriction in the connection that damps pulsation from a positive displacement pump or a surge. It slows the response, which is the point, and it can plug.' },
+          { term: 'Diaphragm seal', def: 'A second diaphragm at the process with a capillary to the transmitter, for fluids that would plug, corrode, or freeze in the connection: sludge, slurries, chemicals, hot fluids. Adds temperature error from the capillary fill and must be specified as a matched assembly.' },
+          { term: 'Bleed or drain', def: 'To purge air from a liquid connection or condensate from a gas one before zeroing. A connection with trapped air reads wrong and reads differently as the air compresses.' },
+          { term: 'Pressure gauge', def: 'A local gauge on the same connection gives a technician a reference without a calibrator, and shows the process pressure when the loop is dead.' },
+        ],
+      },
+      { t: 'h2', text: 'Installation errors that look like calibration errors' },
+      {
+        t: 'ul',
+        items: [
+          'Elevation. A transmitter mounted below its tap on a liquid line reads the column of liquid in the connection as extra pressure, about 0.433 psi per foot of water. Mount at the tap elevation or zero the offset out after filling, and record that it was done.',
+          'Trapped air in a liquid connection, or trapped liquid in a gas connection. Bleed before zeroing.',
+          'A tap in turbulent flow, at an elbow, or in the pump discharge before the check valve. Reads a pressure that includes velocity effects and pulsation.',
+          'A blocked snubber or a plugged connection. The transmitter reads a pressure that no longer follows the process, often plausibly.',
+          'Temperature. The transmitter and its fill are rated for a range; a unit on a hot line or in direct sun outside it drifts.',
+          'Vibration. A transmitter mounted on a vibrating pump reads noise and eventually fails. Mount on a bracket off the pump with a flexible connection.',
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'safety',
+        title: 'Isolate and vent before opening a connection',
+        text: 'A pressure connection holds the process pressure until it is isolated and vented, and a plugged connection can hold it after the isolation valve is closed. Vent through the bleed, confirm zero on the gauge, and treat a connection that will not vent as still pressurized.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'What is the difference between gauge and absolute pressure?',
+        a: 'Gauge pressure is measured relative to the atmosphere and reads zero open to air. Absolute is measured relative to vacuum and reads about 14.7 psi open to air at sea level. Most pump and system measurements are gauge; vacuum and barometric work is absolute.',
+      },
+      {
+        q: 'What does turndown mean on a pressure transmitter?',
+        a: 'The ratio of the transmitter’s maximum range to the span it is calibrated for. A 300 psi unit calibrated for 30 psi has a turndown of ten. High turndown is convenient for stocking, and accuracy can degrade as it increases, depending on how the datasheet states accuracy.',
+      },
+      {
+        q: 'Why does my pressure transmitter read a few psi with the line drained?',
+        a: 'Usually the liquid column in the connection between the tap and the transmitter, if the transmitter is mounted below the tap, or trapped liquid. Bleed the connection and zero the transmitter with the connection at the condition it will run in.',
+      },
+      {
+        q: 'Do I need a snubber?',
+        a: 'On a connection that sees pulsation from a reciprocating pump or surges from valves and pump starts, yes. It protects the sensor from spikes and steadies the reading, at the cost of some response speed and a restriction that can plug.',
+      },
+    ],
+    related: [
+      '/controls/instrumentation/pressure/differential-pressure',
+      '/controls/instrumentation/pressure/impulse-lines',
+      '/controls/instrumentation/pressure/pressure-calibration',
+      '/water-wastewater/water-systems/water-pumping/pressure-control',
+      '/controls/instrumentation/signals/4-20-ma-signals',
+    ],
+  },
 ];

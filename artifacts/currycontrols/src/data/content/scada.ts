@@ -506,4 +506,421 @@ export const SCADA_ENTRIES: Entry[] = [
       '/engineering-library/standards/isa',
     ],
   },
+  {
+    path: '/controls/scada-hmi/scada-fundamentals/scada-architecture',
+    kind: 'reference',
+    title: 'SCADA Architecture',
+    summary:
+      'The parts of a SCADA system and how data moves between them: I/O servers, the tag database, clients, the historian, the alarm server, and the topologies from a single panel PC to a redundant, distributed plant.',
+    answer:
+      'A SCADA system is a set of services with data flowing between them. I/O servers poll the controllers through drivers and fill a real-time tag database; the alarm server watches the tags against limits; the historian records them; and clients present displays that read the tags and write commands back. Those services can all run on one machine at a small site or be split across redundant servers and thin clients at a plant, and the architecture is chosen from how much the site can afford to lose when something fails.',
+    keyPoints: [
+      'Every SCADA platform has the same five jobs: talk to controllers, hold live tags, alarm, historize, and display; the differences are in how they are packaged.',
+      'Data flows controller to driver to tag database to client; a fault at any hop looks like frozen values downstream.',
+      'A single machine is fine until it is the only copy of the configuration and the history.',
+      'Clients should hold no configuration of their own; a display that works only on one machine is a liability.',
+      'Where the servers sit on the network, and what can reach them from outside, is a security architecture decision as much as a SCADA one.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['SCADA', 'Design', 'Networking', 'Fundamentals'],
+    blocks: [
+      { t: 'h2', text: 'The services' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'I/O server, or driver host', def: 'Runs the protocol drivers that talk to controllers, RTUs, drives, and meters over Ethernet, serial, and radio. It polls on scan groups, or receives unsolicited data on protocols that support it, and writes the results into the tag database. It is where communication diagnostics live.' },
+          { term: 'Tag database, or runtime', def: 'The real-time image of the plant: every tag with its value, quality, and timestamp. Everything else reads from it and writes to it. It also runs scripts, calculations, and derived tags.' },
+          { term: 'Alarm server', def: 'Evaluates tags against limits and states, manages alarm state and acknowledgment, applies priorities, shelving, and suppression, and feeds the alarm displays and the notification system.' },
+          { term: 'Historian', def: 'Stores tag values over time, compressed, and answers queries for trends and reports. On small systems it is a module of the runtime; on large ones a separate product on its own server.' },
+          { term: 'Clients', def: 'The displays. Thick clients run the display engine locally and connect to the servers; thin and web clients render displays served from a server in a browser or a lightweight viewer. Operators, engineers, and managers get different clients with different permissions.' },
+          { term: 'Supporting services', def: 'Reporting, notification by phone or text, remote access gateways, and integrations to maintenance, billing, or laboratory systems.' },
+        ],
+      },
+      { t: 'h2', text: 'The data path' },
+      {
+        t: 'p',
+        text: 'A level in a wet well becomes a number on an operator screen by a chain of steps, and knowing the chain is most of troubleshooting. The transmitter drives 4 to 20 mA into the controller input. The controller scales it and holds it in a tag. The I/O server polls the controller on its scan interval and writes the value, with a quality and a timestamp, into the tag database. The alarm server compares it against the high level limit. The historian stores it when it changes by more than its deadband. The client subscribes to the tag and paints it. A frozen value on the screen is a failure at one of those hops, and each hop has its own diagnostics.',
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'Polling is the default and it is not free',
+        text: 'An I/O server polling a hundred controllers every second over a shared radio channel is asking for a hundred replies a second on a channel that carries a few. Scan intervals are set per group of tags from how fast each needs to update, and protocols with unsolicited reporting, DNP3 above all, exist so that the remote sites can speak when something changes instead of being asked constantly.',
+      },
+      { t: 'h2', text: 'Topologies' },
+      {
+        t: 'table',
+        caption: 'From one machine to a plant',
+        head: ['Topology', 'What runs where', 'Suits', 'What it loses when it fails'],
+        rows: [
+          ['Standalone', 'Every service and the client on one PC, often a panel PC in the control room', 'A single station or a small plant', 'Everything: control view, alarms, and history, until the PC is rebuilt'],
+          ['Server and clients', 'Services on one server; clients on operator workstations and remote PCs', 'A plant with several operator positions', 'The server is still a single point of failure, but clients can be replaced in minutes'],
+          ['Redundant servers', 'Two servers, one active and one standby, synchronizing tags, alarms, and history; clients fail over automatically', 'A plant that cannot be blind for an hour', 'Very little, if failover is tested; the redundancy page covers what it does not cover'],
+          ['Distributed', 'I/O servers at remote sites or plants, a central runtime and historian, clients everywhere', 'A utility with several plants and many remote sites', 'A site keeps polling locally when the link to the center is down, and catches up after'],
+        ],
+      },
+      { t: 'h2', text: 'Clients' },
+      {
+        t: 'p',
+        text: 'A client should be interchangeable. Any client, on any machine, with the right credentials, shows the same displays from the same server, and replacing a failed operator workstation is a matter of installing the client and pointing it at the server. The failure mode to design out is the workstation that has displays, scripts, or driver configuration of its own that exist nowhere else. Thin and web clients make this natural; thick clients need the discipline of keeping every display on the server and deploying from there.',
+      },
+      { t: 'h2', text: 'Where it sits on the network' },
+      {
+        t: 'p',
+        text: 'The SCADA servers talk to the controllers on the control network and to clients, the historian, and the enterprise on networks above it. In the Purdue model they sit at level 2 and 3, with a firewall between them and the controllers below and a demilitarized zone between them and the business network above. Remote access, for an on-call operator or a vendor, comes in through that DMZ, never straight to the servers. Anything that can reach the SCADA server can, in most platforms, write to any controller it is connected to, so the network around it is part of the design and the cybersecurity section covers it.',
+      },
+      { t: 'h2', text: 'Virtualization and time' },
+      {
+        t: 'p',
+        text: 'Modern SCADA servers are usually virtual machines on a host in a rack, which makes redundancy, backup, and rebuilding far easier than on a dedicated PC in a panel. It also means the host, its storage, and its network are now part of the control system and have to be maintained as such. Time synchronization across everything, servers, clients, controllers, and RTUs, from one reliable source, is the small architectural detail that decides whether the alarm log and the historian agree about when something happened.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'What is the difference between SCADA and HMI?',
+        a: 'The HMI is the display the operator uses. SCADA is the whole system behind it: communication with the controllers, the live tag database, alarming, and history, of which the HMI is the visible part. A panel touchscreen is an HMI; a plant control room runs SCADA.',
+      },
+      {
+        q: 'Do I need a separate historian?',
+        a: 'A small system does fine with the historian built into the SCADA platform. A plant that keeps years of high-resolution data, serves it to reports and analytics, and cannot afford to lose it wants a dedicated historian on its own server with its own backup.',
+      },
+      {
+        q: 'Should clients be thick or thin?',
+        a: 'Thin and web clients keep every display on the server and make workstations interchangeable, which is what you want. Thick clients are needed where a platform requires them or where local performance matters, and then the displays still belong on the server.',
+      },
+      {
+        q: 'Can the SCADA server be a virtual machine?',
+        a: 'Yes, and it usually should be. Snapshots, backups, and failover are all easier. The host and its storage become part of the control system and need the same care and the same network placement.',
+      },
+    ],
+    related: [
+      '/controls/scada-hmi/scada-fundamentals/what-is-scada',
+      '/controls/scada-hmi/scada-fundamentals/historians',
+      '/controls/scada-hmi/scada-fundamentals/redundancy',
+      '/cybersecurity/ot-security/purdue-model',
+      '/troubleshooting/scada-troubleshooting/values-frozen-on-screen',
+    ],
+  },
+  {
+    path: '/controls/scada-hmi/scada-fundamentals/historians',
+    kind: 'reference',
+    title: 'Historians',
+    summary:
+      'What a process historian does that a database does not, how data gets into it, how compression and retrieval work, how to size and keep it, and the settings that quietly throw data away.',
+    answer:
+      'A historian is a time-series store built for process data: millions of values per day, written continuously, read back as trends and aggregates over any period. It collects from the SCADA tag database or straight from controllers, compresses each tag with a deadband so that noise is not stored, and answers queries by interpolating or aggregating between the samples it kept. The two decisions that matter are what to collect and how hard to compress, and both are easy to get wrong in the direction of losing detail nobody can get back.',
+    keyPoints: [
+      'A historian stores changes, not samples: a value is written when it moves more than its deadband, and a flat line costs almost nothing.',
+      'What is not collected is gone forever; collect more than seems necessary and compress it sensibly.',
+      'Compression deadbands set too wide turn a real oscillation into a straight line in the record.',
+      'Retrieval interpolates between stored points; a trend is a reconstruction, and the raw points are the truth.',
+      'Back it up, keep it on its own storage, and decide how long data lives before the disk decides for you.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['SCADA', 'Design', 'Fundamentals'],
+    blocks: [
+      { t: 'h2', text: 'Why not a database' },
+      {
+        t: 'p',
+        text: 'A relational database stores rows and is designed for transactions. A plant produces a value for every tag every second, ten thousand tags, forever, and the questions asked of the data are about time: what did this look like last Tuesday, what was the average over the shift, when did it first exceed the limit. A historian is a store optimized for that: append-only writes, compression designed for signals, indexes by time, and retrieval that understands interpolation and aggregation. Most also present the data through SQL for the tools that expect it, which is the subject of the SQL integration page.',
+      },
+      { t: 'h2', text: 'Getting data in' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'From the SCADA tag database', def: 'The usual path. The historian subscribes to tags in the runtime and records them as they change. Simple, and it means the historian sees what SCADA sees, including its scan intervals and its outages.' },
+          { term: 'Directly from controllers', def: 'A collector reads the controllers itself, by OPC UA or a native driver. It survives a SCADA outage, it can run faster than the SCADA scan, and it is a second load on the controller communications.' },
+          { term: 'Store and forward', def: 'A collector at a remote site buffers data when the link to the central historian is down and sends it when the link returns, so that the record has no gap. On any site connected over radio or cellular this is the feature that decides whether the history is trustworthy.' },
+          { term: 'Manual and laboratory data', def: 'Values entered by hand, from a lab result or a meter reading, with the time they apply to. A historian that accepts these lets the plant keep one record instead of a spreadsheet beside it.' },
+        ],
+      },
+      { t: 'h2', text: 'Compression' },
+      {
+        t: 'p',
+        text: 'A historian that stored every value of every tag every second would fill any disk. Instead each tag has a deadband: a new value is stored only when it differs from the last stored value by more than the deadband, with a maximum interval so that a stable value is still written occasionally. More sophisticated schemes store a point only when the signal leaves a corridor projected from the last stored points, which reconstructs a slope from two points instead of twenty. Either way the principle is the same: store what changed, reconstruct the rest.',
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Compression is the setting that destroys evidence',
+        text: 'A pressure that oscillates plus or minus 2 psi around setpoint is a hunting control loop. With a compression deadband of 3 psi it is recorded as a flat line, and the loop tuning problem is invisible in the history that was meant to reveal it. Set the deadband below the smallest real movement that matters, per tag, and revisit it when a trend looks too smooth to be true.',
+      },
+      { t: 'h2', text: 'Getting data out' },
+      {
+        t: 'p',
+        text: 'A trend over a week of a tag stored on change has points at irregular intervals. The historian answers a request for evenly spaced values by interpolating between stored points, and answers a request for an average, a minimum, or a total by aggregating them with time weighting. That is fine and it is fast, and it is worth knowing that a trend drawn at one-minute resolution from data compressed at ten minutes is a reconstruction that never saw the minutes between. When the question is what exactly happened at 03:14, ask for the raw stored values, not the interpolated ones.',
+      },
+      { t: 'h2', text: 'What to collect' },
+      {
+        t: 'ul',
+        items: [
+          'Every analog measurement, every setpoint, every controller output, and every equipment run status, at a deadband suited to each.',
+          'Every alarm and every operator action, with timestamps, in the event record beside the values.',
+          'Communication status per controller, so that gaps in the data can be told apart from flat process.',
+          'Calculated values that a report will need, such as daily totals, computed once and stored rather than recomputed from raw data each time.',
+          'More than seems necessary. Storage is cheap; a value that was not collected during the event nobody predicted is expensive.',
+        ],
+      },
+      { t: 'h2', text: 'Keeping it' },
+      {
+        t: 'p',
+        text: 'The historian lives on its own storage with its own backup, because it is the record of the plant and, for a utility, part of the regulatory record. Retention is decided in advance: full resolution for a period, aggregated beyond it, or full resolution forever if the storage allows, which it increasingly does. Clock synchronization across every source is what makes the timestamps mean anything; a controller five minutes fast produces a history in which effects precede their causes. And someone owns it: tags added to SCADA are added to the historian, deadbands are reviewed, and the backup is tested by restoring it.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'How much data does a historian store?',
+        a: 'Far less than the raw rate suggests, because it stores changes. A stable tag might store a few points an hour; a noisy one a few a second. Ten thousand tags at typical plant rates come to a few gigabytes a year on most platforms, which is why full-resolution retention for many years is now normal.',
+      },
+      {
+        q: 'Why does my trend look smoother than the live value?',
+        a: 'Compression. The historian stored only values that moved more than the deadband, and the trend interpolates between them. If detail that matters is missing, the deadband on that tag is too wide.',
+      },
+      {
+        q: 'Should the historian collect from SCADA or from the PLCs directly?',
+        a: 'From SCADA is simpler and adequate for most sites. Direct collection survives a SCADA outage and can run faster, at the cost of a second polling load on the controllers. Large plants often do both for different tags.',
+      },
+      {
+        q: 'What is store and forward?',
+        a: 'A collector at a remote site buffering data while the link to the central historian is down, then sending it when the link returns, so the history has no gap. Essential on radio and cellular sites.',
+      },
+    ],
+    related: [
+      '/controls/scada-hmi/scada-fundamentals/scada-architecture',
+      '/controls/scada-hmi/historian-data/compression',
+      '/controls/scada-hmi/historian-data/trending',
+      '/calculators/historian-storage',
+      '/troubleshooting/scada-troubleshooting/trend-gaps',
+    ],
+  },
+  {
+    path: '/controls/scada-hmi/scada-fundamentals/redundancy',
+    kind: 'reference',
+    title: 'SCADA Redundancy',
+    summary:
+      'What redundant SCADA servers protect against and what they do not, how failover works for tags, alarms, history, and clients, the network and controller layers beneath it, and why an untested failover is not redundancy.',
+    answer:
+      'Redundancy is a second copy of a service that takes over when the first fails: a standby SCADA server synchronized with the active one, a second I/O server polling the same controllers, dual network paths, and sometimes a second controller. It protects against hardware failure and lets maintenance happen without a blind plant. It does not protect against a bad configuration, a bad network design, or an operator error, all of which replicate to the standby faithfully. A failover that has never been tested under load has not been shown to work.',
+    keyPoints: [
+      'Server redundancy synchronizes tags, alarm states, and history so a client sees no difference when the standby takes over.',
+      'Clients must fail over automatically, and the operator should see a status change, not a blank screen.',
+      'History collected during the switch is the part most often lost; store and forward and historian merging cover it.',
+      'The network under the servers needs its own redundancy or the servers fail together.',
+      'Test failover on a schedule, under normal load, and read the alarm and history record afterward for gaps.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['SCADA', 'Design', 'Networking'],
+    blocks: [
+      { t: 'h2', text: 'What can be made redundant' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'SCADA servers', def: 'A pair, primary and standby, running the same configuration. The primary serves clients and polls controllers; the standby mirrors tags, alarm states, and acknowledgments, and takes over when the primary stops answering. Some platforms run both active with clients balanced between them.' },
+          { term: 'I/O servers', def: 'Two driver hosts polling the same controllers, one active and one watching, or both polling with the runtime taking whichever answers. This protects the communication path independently of the runtime.' },
+          { term: 'Historians', def: 'A pair collecting in parallel, or one collecting with a mirrored copy, with a merge process that fills gaps in one from the other after an outage.' },
+          { term: 'Networks', def: 'Dual network cards on each server, dual switches, and a ring or redundant-path protocol on the control network, so that a cable or a switch failure does not isolate a server that is otherwise healthy.' },
+          { term: 'Controllers', def: 'Redundant processors, covered on the PLC architecture page. The SCADA servers see one controller address and the controllers handle the switch between themselves.' },
+        ],
+      },
+      { t: 'h2', text: 'How failover happens' },
+      {
+        t: 'p',
+        text: 'The standby watches the primary with a heartbeat. When the heartbeat stops for longer than a configured time, the standby declares itself active, starts polling the controllers, starts serving clients, and starts writing history. Clients that were connected to the primary detect the loss and reconnect to the standby, which takes a few seconds and should show the operator a status change rather than a frozen or blank display. When the primary returns, it either resumes as primary, which means a second switch, or becomes the standby, which most sites prefer.',
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Both servers active at once is worse than neither',
+        text: 'If the heartbeat path fails while both servers are healthy, each may decide the other is dead and both become active, polling the controllers twice, serving different clients different states, and writing conflicting history. The heartbeat needs its own path, ideally a direct cable between the servers as well as the network, and the platform’s rules for resolving the split have to be understood and configured.',
+      },
+      { t: 'h2', text: 'What gets lost' },
+      {
+        t: 'table',
+        caption: 'The gaps a failover can leave',
+        head: ['What', 'Risk during the switch', 'Protection'],
+        rows: [
+          ['Live tag values', 'A few seconds of no updates', 'Clients show stale quality briefly; acceptable'],
+          ['Alarm states and acknowledgments', 'An alarm that occurred during the switch, or an acknowledgment that did not replicate', 'Alarm synchronization between servers, and controllers that latch alarms until acknowledged'],
+          ['History', 'Values that occurred while neither server was collecting', 'Store and forward at the collectors, historian merging afterward'],
+          ['Operator writes', 'A setpoint written to the primary as it died', 'The client confirms the write from the controller, not from the server'],
+          ['Scripts and calculations', 'A script mid-execution on the failed server', 'Scripts written to be restartable and idempotent'],
+        ],
+      },
+      { t: 'h2', text: 'What redundancy does not protect' },
+      {
+        t: 'ul',
+        items: [
+          'A wrong configuration. The standby has the same displays, the same tag mistakes, and the same alarm limits. Redundancy replicates errors perfectly.',
+          'A network that both servers share. A broadcast storm, a duplicate address, or a failed core switch takes both.',
+          'A power supply both servers share. Separate circuits and separate UPSs, or the redundancy is theoretical.',
+          'A physical event. Two servers in the same rack in the same room flood, burn, and lose air conditioning together.',
+          'An intrusion. An attacker on the network reaches both servers, and a ransomware event encrypts both.',
+        ],
+      },
+      { t: 'h2', text: 'Testing' },
+      {
+        t: 'p',
+        text: 'A redundant pair that has never failed over is a pair with an unknown failover. Pull the network cable from the primary during a normal shift, with a person watching each client, and time how long until every client is back. Then read the alarm log and the historian for the period and look for the gap. Then fail back. Do it on a schedule, after every configuration change to the pair, and after every platform update. Most redundancy failures are discovered during the outage that the redundancy was bought for, because nobody had tried it since commissioning.',
+      },
+      { t: 'h2', text: 'Is it worth it' },
+      {
+        t: 'p',
+        text: 'A redundant pair roughly doubles the server licensing, the hardware, and the configuration effort, and it adds the synchronization and the testing as permanent tasks. For a plant where a blind hour means an overflow, a permit violation, or a safety event, it is cheap. For a small system with a good backup and a spare PC that can be restored in an hour, the backup and the spare may be the better investment. The question is what an outage costs, not whether redundancy is available.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'How long does a SCADA failover take?',
+        a: 'Typically a few seconds to a few tens of seconds, set by the heartbeat timeout and the client reconnection time. During it, clients show stale values and then reconnect. The time is configurable and it is a trade against false failovers on a busy network.',
+      },
+      {
+        q: 'Does redundancy protect against ransomware?',
+        a: 'No. Both servers are on the same network and are encrypted together. Offline backups, network segmentation, and access control protect against that; redundancy protects against hardware failure.',
+      },
+      {
+        q: 'Do I need redundant I/O servers as well as redundant SCADA servers?',
+        a: 'If the drivers run on the SCADA servers, the pair already covers them. If the I/O servers are separate machines, they need their own pair or the communication path is a single point of failure behind a redundant runtime.',
+      },
+      {
+        q: 'How often should failover be tested?',
+        a: 'On a schedule, quarterly or better, and after every change to the pair or the platform. A test under normal load with a person watching each client, followed by a check of the alarm log and historian for gaps.',
+      },
+    ],
+    related: [
+      '/controls/scada-hmi/scada-fundamentals/scada-architecture',
+      '/controls/scada-hmi/scada-fundamentals/historians',
+      '/controls/plc-systems/plc-fundamentals/plc-architecture',
+      '/troubleshooting/scada-troubleshooting/client-cannot-connect',
+      '/cybersecurity/ot-security/purdue-model',
+    ],
+  },
+  {
+    path: '/controls/scada-hmi/alarm-management/alarm-philosophy',
+    kind: 'reference',
+    title: 'The Alarm Philosophy',
+    summary:
+      'The document that decides what is allowed to be an alarm: the definition, the criteria, the priorities and their meaning, the performance targets, the handling rules, and who owns it. Under ISA-18.2 it comes first.',
+    answer:
+      'An alarm philosophy is the short document a plant writes before rationalizing, configuring, or auditing any alarm. It states what an alarm is, an abnormal condition that requires an operator to act, and what is not, states the criteria a condition must meet, defines the priorities and how they are assigned from consequence and time to respond, sets the performance targets the system will be measured against, and lays out the rules for shelving, suppression, and change. Everything else in alarm management is checked against it.',
+    keyPoints: [
+      'An alarm requires operator action. A condition with no action is a status, an event, or a log entry, not an alarm.',
+      'Priority is assigned from consequence and time to respond, using a matrix in the philosophy, not from how loud someone argued for it.',
+      'The philosophy sets numeric targets: alarms per operator per hour, priority distribution, and standing alarm counts.',
+      'It fixes the rules for shelving, designed suppression, and out-of-service alarms so those tools are used and not abused.',
+      'It is owned by operations, it is short, and it outlives the SCADA platform it was written for.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['SCADA', 'Alarms', 'ISA', 'Documentation', 'Design'],
+    blocks: [
+      { t: 'h2', text: 'Why a document, not a setting' },
+      {
+        t: 'p',
+        text: 'Alarm systems go bad one alarm at a time. A commissioning engineer alarms every diagnostic bit. A supervisor asks for an alarm on a pump start. A vendor package arrives with two hundred alarms preconfigured. Five years on the operator sees a thousand alarms a shift and acknowledges them in blocks without reading them, and the one that mattered is in the block. No setting prevents that. A written definition of what an alarm is, applied to every proposed alarm by someone with the authority to say no, is the only thing that does. ISA-18.2 puts the philosophy at the start of the lifecycle for that reason.',
+      },
+      { t: 'h2', text: 'What it contains' },
+      {
+        t: 'ol',
+        items: [
+          'Purpose and scope: what systems and what sites the philosophy governs, and who must follow it.',
+          'The definition of an alarm and the criteria a condition must meet to become one.',
+          'The priority levels, what each means to the operator, and the matrix that assigns one from consequence and time to respond.',
+          'The alarm classes, for alarms with regulatory, safety, or environmental significance that carry extra requirements for testing and record keeping.',
+          'Performance targets and how they are measured.',
+          'How alarms are presented: the HMI conventions, sounds, colors, and the alarm summary, in agreement with the HMI philosophy.',
+          'The rules for shelving, designed suppression, and out-of-service alarms.',
+          'Roles: who may propose, approve, change, and remove an alarm, and how changes are recorded.',
+          'How the system is monitored and audited, and how often the philosophy itself is reviewed.',
+        ],
+      },
+      { t: 'h2', text: 'The criteria' },
+      {
+        t: 'p',
+        text: 'The test every proposed alarm has to pass is stated in a few lines and applied without exception.',
+      },
+      {
+        t: 'dl',
+        items: [
+          { term: 'It requires an operator response', def: 'There is a specific action the operator takes when it occurs. If the answer to what the operator does is nothing, or watch it, it is not an alarm.' },
+          { term: 'The response prevents or mitigates a consequence', def: 'Acting matters. A condition that resolves itself, or whose consequence is unaffected by anything the operator can do, is an event.' },
+          { term: 'It is unique', def: 'It is not already indicated by another alarm. A high level alarm and a high level float alarm and a pump overload that all announce one overflow are one alarm and two nuisances.' },
+          { term: 'It is timely', def: 'It arrives with enough time for the response to work, and not so early that it is ignored as premature.' },
+          { term: 'It has a defined limit and a defined deadband or delay', def: 'So that it does not chatter and so that its meaning is stable.' },
+        ],
+      },
+      { t: 'h2', text: 'Priority' },
+      {
+        t: 'p',
+        text: 'Priority tells the operator which of several alarms to deal with first. It is assigned from two things: the consequence of not responding, in categories the plant defines for safety, environment, equipment, and production, and the time available to respond before the consequence. A matrix in the philosophy maps each combination to a priority, and every alarm is assigned by that matrix during rationalization. Three priorities, sometimes four, are the norm. More than that and the operator cannot tell them apart.',
+      },
+      {
+        t: 'table',
+        caption: 'A typical priority matrix, illustrative',
+        head: ['Time to respond', 'Minor consequence', 'Serious consequence', 'Severe consequence'],
+        rows: [
+          ['More than 30 minutes', 'Low', 'Low', 'Medium'],
+          ['10 to 30 minutes', 'Low', 'Medium', 'High'],
+          ['Less than 10 minutes', 'Medium', 'High', 'High'],
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Most alarms should be low priority',
+        text: 'The commonly used distribution target is around 80 percent low, 15 percent medium, and 5 percent high. A system in which half the alarms are high priority has no priorities. If rationalization produces that distribution, the matrix or its inputs are being applied too generously.',
+      },
+      { t: 'h2', text: 'Performance targets' },
+      {
+        t: 'p',
+        text: 'The philosophy states what an acceptable alarm load is, so that the system can be measured against it. The benchmarks in ISA-18.2 and EEMUA 191 are the usual reference: on the order of one alarm per ten minutes per operator in steady operation as a manageable load, with more than that becoming demanding and several times that unacceptable; a small number of standing alarms; no alarm floods, defined as more than ten alarms in ten minutes; and a bounded number of chattering alarms. The point is not the exact numbers. It is that the numbers exist, are measured monthly, and drive the rationalization of whatever is producing the load.',
+      },
+      { t: 'h2', text: 'The handling rules' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Shelving', def: 'An operator temporarily removing an alarm from view for a bounded time, with the shelving visible and logged. The philosophy sets the maximum duration, who may shelve which priorities, and that shelved alarms return automatically.' },
+          { term: 'Designed suppression', def: 'Alarms suppressed by logic because they are meaningless in a plant state, a low flow alarm on a pump that is off. Designed during rationalization, documented, and not available to the operator to change.' },
+          { term: 'Out of service', def: 'An alarm removed for maintenance of the instrument, by authorization, with a record and a return date.' },
+          { term: 'Change', def: 'Any change to a limit, priority, or the existence of an alarm goes through the management of change process the philosophy defines, with the rationalization record updated.' },
+        ],
+      },
+      { t: 'h2', text: 'Writing it' },
+      {
+        t: 'p',
+        text: 'The philosophy is short, ten to twenty pages for most plants, written in the plant’s own words, owned by operations rather than by the integrator, and approved by whoever is accountable for the plant. It refers to the HMI philosophy and the control narratives rather than repeating them. It is reviewed on a schedule and whenever the plant changes. And it is applied: the first rationalization workshop after it is written is where it either becomes the way the plant works or becomes a document on a shelf.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'What is the difference between an alarm and an event?',
+        a: 'An alarm requires an operator to do something. An event is something worth recording, a pump start, a mode change, a setpoint change, that requires no action. Events go in the log; alarms go in the alarm summary. Confusing the two is how alarm summaries fill up.',
+      },
+      {
+        q: 'How many alarm priorities should we have?',
+        a: 'Three is the usual answer, occasionally four with a diagnostic or urgent level. More than that and the operator cannot rank them at a glance, which defeats the purpose.',
+      },
+      {
+        q: 'Who writes the alarm philosophy?',
+        a: 'Operations, with engineering and the integrator contributing, and the plant’s management approving it. It is the plant’s statement of how it will run, and an integrator-written philosophy that operations did not shape is rarely followed.',
+      },
+      {
+        q: 'How does the philosophy relate to ISA-18.2?',
+        a: 'ISA-18.2 defines the alarm management lifecycle and puts the philosophy at its start. The philosophy is the plant’s document; the standard is the framework that says what it should contain and what comes after it.',
+      },
+    ],
+    related: [
+      '/controls/scada-hmi/alarm-management/isa-18-2',
+      '/controls/scada-hmi/alarm-management/rationalization',
+      '/controls/scada-hmi/alarm-management/alarm-priority',
+      '/controls/scada-hmi/hmi-design/isa-101',
+      '/controls/plc-systems/programming/alarms',
+    ],
+  },
 ];

@@ -31,13 +31,15 @@ export const CONTACT = {
 
 export const OWNERSHIP_NOTICE = {
   heading: 'ABOUT CURRYCONTROLS.COM',
+  /** The modal's title, as it read on the original site. */
+  title: 'Before you continue',
   paragraphs: [
     'CurryControls.com is currently owned and maintained by Eric Sullivan.',
     'Eric Sullivan is not affiliated with Curry Controls Company. Eric previously worked with Curry Controls Company and left the company in 2021. He is currently employed by General Control Systems, Inc.',
     'General Control Systems, Inc. is a separate company and is not affiliated with Curry Controls Company.',
   ],
   buttonLabel: 'ACCEPT & CONTINUE',
-  footnote: 'This notice is informational. It is not an agreement or a waiver.',
+  footnote: 'This notice is informational. It is not an agreement or waiver.',
   storageKey: 'curryNoticeAccepted',
 } as const;
 

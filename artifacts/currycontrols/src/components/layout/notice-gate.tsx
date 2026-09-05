@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Check, Info } from 'lucide-react';
+import { Check, ShieldCheck } from 'lucide-react';
 import { OWNERSHIP_NOTICE } from '@/data/site';
 
 /**
@@ -82,12 +82,12 @@ export function NoticeGate() {
       >
         <div className="mb-5 flex items-start gap-4">
           <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[hsl(var(--surface))] text-[hsl(var(--accent-blue))]">
-            <Info size={19} aria-hidden="true" />
+            <ShieldCheck size={19} aria-hidden="true" />
           </span>
           <div>
             <p className="cc-eyebrow">Important information</p>
             <h2 id="ownership-notice-title" className="cc-h2 mt-1">
-              {OWNERSHIP_NOTICE.heading}
+              {OWNERSHIP_NOTICE.title}
             </h2>
           </div>
         </div>

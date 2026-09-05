@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "CurryControls.com"
+description = "An independent technical knowledge hub for controls engineering, automation, instrumentation, SCADA, PLCs, industrial networking, water and wastewater systems, troubleshooting, engineering references, and related software projects."
+version = "1.0.0"
+id = "artifacts/currycontrols"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23073
+
+[services.development]
+run = "pnpm --filter @workspace/currycontrols run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/currycontrols", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/currycontrols/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23073"
+BASE_PATH = "/"

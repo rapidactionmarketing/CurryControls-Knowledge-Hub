@@ -3,6 +3,7 @@ import { Link } from 'wouter';
 import { ChevronDown, ExternalLink, Phone, X } from 'lucide-react';
 import { NAV_LINKS, NAV_SECTIONS, type NavNode } from '@/data/navigation';
 import { label } from '@/data/nav-index';
+import { LIVE_SITES } from '@/data/sites';
 import { hasContent } from '@/data/content';
 import { CONTACT } from '@/data/site';
 import { Icon } from '@/components/icon';
@@ -134,6 +135,21 @@ export function MobileNav({ open, onClose }: { open: boolean; onClose: () => voi
               ))}
             </Fragment>
           ))}
+
+          {LIVE_SITES.length > 0 && (
+            <div className="mt-5 border-t border-[hsl(var(--rule))] pt-4" data-testid="mobile-sites">
+              <p className="cc-eyebrow mb-2">Other sites by Eric Sullivan</p>
+              <ul className="space-y-1">
+                {LIVE_SITES.map((site) => (
+                  <li key={site.domain}>
+                    <a href={`https://${site.domain}/`} rel="noopener" className="cc-acc-leaf">
+                      {site.name}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           <Link
             href="/contact"

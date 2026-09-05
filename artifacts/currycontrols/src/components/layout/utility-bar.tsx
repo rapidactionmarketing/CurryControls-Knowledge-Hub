@@ -1,6 +1,7 @@
 import { Link } from 'wouter';
 import { Phone } from 'lucide-react';
 import { CONTACT } from '@/data/site';
+import { SitesMenu } from './sites-menu';
 
 /**
  * Permanent contact bar above the primary header.
@@ -20,6 +21,10 @@ export function UtilityBar() {
           <span className="hidden text-white/25 md:inline">|</span>
           <span className="hidden truncate text-[0.78rem] text-white/70 md:inline">
             Controls &amp; Automation Knowledge Hub
+          </span>
+          <span className="hidden text-white/25 md:inline">|</span>
+          <span className="hidden md:inline">
+            <SitesMenu />
           </span>
         </div>
 

@@ -13,7 +13,8 @@
     "build:ssr": "vite build --config vite.config.ts --ssr src/entry-server.tsx --outDir dist/server",
     "build:seo": "node scripts/build-seo.mjs",
     "prerender": "node scripts/prerender.mjs",
-    "deploy": "node scripts/deploy-cpanel.mjs"
+    "deploy": "node scripts/deploy-cpanel.mjs",
+    "inventory": "node scripts/topic-inventory.mjs"
   },
   "devDependencies": {
     "@hookform/resolvers": "^3.10.0",

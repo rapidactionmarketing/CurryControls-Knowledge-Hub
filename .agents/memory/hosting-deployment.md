@@ -11,7 +11,11 @@ Uploading only the root files and `assets` ships 8 files and one folder, leaving
 
 **Why the domain-specific directory:** the account hosts multiple domains, so uploading to the account-level `public_html` can target the wrong site. Confirm the addon domain's document root before uploading.
 
-**How to apply:** confirm the document root, then upload the full tree. The build is about 46 MB uncompressed and roughly 7 MB as a zip, so the practical route is to upload one archive and extract it in place rather than transferring files individually. Allow entry-file overwrites when publishing a new build.
+**Preferred: run the deploy script.** `pnpm --filter @workspace/currycontrols run deploy` builds, packages the whole tree, uploads it, extracts it server-side, and checks a deep URL afterward. It needs four Replit Secrets: `CPANEL_HOST`, `CPANEL_USER`, `CPANEL_TOKEN`, and `CPANEL_DOCROOT` (the addon domain's absolute document root). Set `SITE_URL` to enable the post-deploy check. The archive is staged in the account home directory, never in the document root, so it is never reachable over the web.
+
+cPanel exposes no UAPI function for extraction, so the script uploads through UAPI `Fileman::upload_files` and extracts through the older cPanel API 2 `Fileman::fileop`. That pairing is deliberate, not an oversight.
+
+**Manual fallback:** confirm the document root, then upload the full tree. The build is about 46 MB uncompressed and roughly 7 MB as a zip, so the practical route is to upload one archive and extract it in place rather than transferring files individually. Allow entry-file overwrites when publishing a new build.
 
 **Do not delete `.htaccess`.** It passes real files and directories through untouched and falls back to `index.html` only for routes with no prerendered file, which is what the small number of non-prerendered placeholder routes need.
 

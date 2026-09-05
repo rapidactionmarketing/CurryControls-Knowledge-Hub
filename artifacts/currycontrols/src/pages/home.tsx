@@ -8,6 +8,7 @@ import { Disclaimer } from '@/components/blocks/disclaimer';
 import { Icon } from '@/components/icon';
 import { SearchDialog } from '@/components/search/search-dialog';
 import { CONTACT, SITE } from '@/data/site';
+import { LEGAL } from '@/data/site-legal';
 import { KNOWLEDGE_SECTIONS } from '@/data/navigation';
 import { getEntry, getChildren, countDescendants } from '@/data/nav-index';
 import { ENTRIES, ENTRIES_BY_RECENCY, entriesOfKind } from '@/data/content';
@@ -269,22 +270,17 @@ export function HomePage() {
         <div className="cc-container grid gap-8 lg:grid-cols-[1.2fr_1fr]">
           <div>
             <p className="cc-eyebrow">About</p>
-            <h2 className="cc-h2 mt-1.5">About CurryControls.com</h2>
-            <div className="mt-3 space-y-3 text-[0.94rem] leading-7 text-[hsl(var(--ink-2))]">
-              <p>CurryControls.com is independently owned and maintained by Eric Sullivan.</p>
-              <p>
-                Eric Sullivan previously worked with Curry Controls Company and left the company in
-                2021. He is currently employed by General Control Systems, Inc. Eric Sullivan is not
-                affiliated with Curry Controls Company, and General Control Systems, Inc. is a
-                separate company that is not affiliated with Curry Controls Company.
-              </p>
-              <p>
-                This site is being developed as an independent technical information resource focused
-                on control systems, automation, instrumentation, engineering, and the water and
-                wastewater industry.
-              </p>
+            <h2 className="cc-h2 mt-1.5">{LEGAL.home.heading}</h2>
+            <div className="mt-3 space-y-3 text-[0.94rem] leading-7 text-[hsl(var(--ink-2))]" data-testid="home-about">
+              {LEGAL.home.paragraphs.map((paragraph) => (
+                <p key={paragraph}>{paragraph}</p>
+              ))}
+              <p>{LEGAL.purpose}</p>
             </div>
             <div className="mt-5 flex flex-wrap gap-3">
+              <Link href={LEGAL.ownershipPage.path} className="cc-btn cc-btn-primary" data-testid="link-home-ownership">
+                {LEGAL.ownershipPage.homeLinkLabel}
+              </Link>
               <Link href="/about/site" className="cc-btn cc-btn-outline">
                 About this site
               </Link>

@@ -3,6 +3,7 @@ import { ErrorBoundary } from '@/components/error-boundary';
 import { ssrHead, type SeoProps } from '@/components/seo/seo';
 import { ROUTES } from '@/lib/routes';
 import { CONTACT, SITE } from '@/data/site';
+import { LEGAL } from '@/data/site-legal';
 import { ENTRIES } from '@/data/content';
 import { NAV_SECTIONS } from '@/data/navigation';
 import { PROJECTS } from '@/data/projects';
@@ -43,6 +44,7 @@ export const seoData = {
   ROUTES,
   SITE,
   CONTACT,
+  LEGAL,
   NAV_SECTIONS,
   PROJECTS,
   CALCULATORS: CALCULATORS.map((c) => ({

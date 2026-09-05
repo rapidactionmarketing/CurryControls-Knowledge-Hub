@@ -7,6 +7,7 @@ import { ContactCta } from '@/components/blocks/contact-cta';
 import { Disclaimer } from '@/components/blocks/disclaimer';
 import { Icon } from '@/components/icon';
 import { DISCLAIMERS } from '@/data/site';
+import { LEGAL } from '@/data/site-legal';
 import { PROJECTS, PROJECT_BY_SLUG, STATUS_NOTE, type Project } from '@/data/projects';
 import {
   breadcrumbSchema,
@@ -60,6 +61,9 @@ export function ProjectsPage() {
           </p>
           <p className="mt-4 inline-block rounded border border-[hsl(var(--accent-blue))]/35 bg-white px-3 py-1.5 text-[0.8rem] font-semibold text-[hsl(var(--accent-blue))]">
             {DISCLAIMERS.projects}
+          </p>
+          <p className="mt-3 max-w-3xl text-[0.86rem] leading-6 text-[hsl(var(--ink-2))]" data-testid="projects-statement">
+            {LEGAL.project.collection}
           </p>
         </div>
       </header>
@@ -183,8 +187,11 @@ export function ProjectDetailPage({ slug }: { slug: string }) {
             </div>
           </div>
 
-          <p className="mt-6 inline-block rounded border border-[hsl(var(--accent-blue))]/35 bg-white px-3 py-1.5 text-[0.8rem] font-semibold text-[hsl(var(--accent-blue))]">
+          <p className="mt-6 inline-block rounded border border-[hsl(var(--accent-blue))]/35 bg-white px-3 py-1.5 text-[0.8rem] font-semibold text-[hsl(var(--accent-blue))]" data-testid="project-label">
             {DISCLAIMERS.projects}
+          </p>
+          <p className="mt-3 max-w-3xl text-[0.86rem] leading-6 text-[hsl(var(--ink-2))]" data-testid="project-statement">
+            {DISCLAIMERS.projectsExplanation}
           </p>
         </div>
       </header>

@@ -1,7 +1,7 @@
 {
   "name": "CurryControls.com",
   "short_name": "CurryControls",
-  "description": "An independent controls and automation knowledge hub covering PLCs, SCADA, instrumentation, control panels, industrial networking, OT cybersecurity, and water and wastewater control systems.",
+  "description": "CurryControls.com is an independently operated technical knowledge resource managed by Eric Sullivan covering PLCs, SCADA, instrumentation, control panels, networking, telemetry, OT cybersecurity, troubleshooting, and water/wastewater control systems.",
   "start_url": "/",
   "scope": "/",
   "display": "minimal-ui",

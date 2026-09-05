@@ -43,6 +43,7 @@ function buildRoutes(): RouteRecord[] {
   add({ path: '/contact', priority: 0.8, changefreq: 'monthly' });
   add({ path: '/about/site', priority: 0.6, changefreq: 'monthly' });
   add({ path: '/about/eric-sullivan', priority: 0.6, changefreq: 'monthly' });
+  add({ path: '/about/ownership', priority: 0.6, changefreq: 'monthly' });
   add({ path: '/tools-projects', priority: 0.7, changefreq: 'monthly' });
 
   for (const project of PROJECTS) {

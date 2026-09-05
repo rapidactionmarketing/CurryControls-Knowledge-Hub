@@ -3,6 +3,7 @@ import { ArrowRight, Calculator as CalcIcon } from 'lucide-react';
 import { Seo } from '@/components/seo/seo';
 import { Breadcrumbs } from '@/components/blocks/breadcrumbs';
 import { CalculatorDisclaimer } from '@/components/blocks/calculator-disclaimer';
+import { CodeStandardNotice, ReferenceTableNotice } from '@/components/blocks/technical-notices';
 import { CalculatorForm } from '@/components/calculators/calculator-form';
 import { ContactCta } from '@/components/blocks/contact-cta';
 import { FaqSection } from '@/components/blocks/faq-section';
@@ -240,7 +241,7 @@ export function CalculatorPage({ slug }: { slug: string }) {
 
             <section className="mt-8" aria-labelledby="assumptions-heading">
               <h2 id="assumptions-heading" className="cc-h2">
-                Assumptions built into this calculator
+                Assumptions and limitations built into this calculator
               </h2>
               <ul className="mt-3 space-y-2">
                 {calculator.assumptions.map((assumption) => (
@@ -254,6 +255,10 @@ export function CalculatorPage({ slug }: { slug: string }) {
                 ))}
               </ul>
             </section>
+
+            {calculator.standards && calculator.standards.length > 0 && (
+              <CodeStandardNotice className="mt-8" />
+            )}
 
             {calculator.faqs && <FaqSection faqs={calculator.faqs} />}
 
@@ -393,7 +398,7 @@ export function TablesIndexPage() {
             directly. Each one states the document it comes from.
           </p>
           <div className="mt-6 max-w-3xl">
-            <CalculatorDisclaimer variant="table" />
+            <ReferenceTableNotice />
           </div>
         </div>
       </header>
@@ -464,8 +469,9 @@ export function TablePage({ slug }: { slug: string }) {
       </header>
 
       <div className="cc-container py-8">
-        <div className="mb-7 max-w-4xl">
-          <CalculatorDisclaimer variant="table" />
+        <div className="mb-7 max-w-4xl space-y-4">
+          <ReferenceTableNotice />
+          <CodeStandardNotice />
         </div>
 
         <div className="cc-card mb-6 max-w-4xl border-l-[3px] border-l-[hsl(var(--accent-blue))] p-4">

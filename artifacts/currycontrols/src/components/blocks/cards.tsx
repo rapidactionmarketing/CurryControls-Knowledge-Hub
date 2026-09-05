@@ -1,4 +1,5 @@
 import { Link } from 'wouter';
+import { DISCLAIMERS } from '@/data/site';
 import { ArrowUpRight, Clock3, ExternalLink } from 'lucide-react';
 import { KIND_LABEL, type Entry } from '@/data/content';
 import { countDescendants, describe, label, type NavEntry } from '@/data/nav-index';
@@ -89,6 +90,9 @@ export function ProjectCard({ project }: { project: Project }) {
 
       <h3 className="cc-h3 mt-3.5">{project.name}</h3>
       <p className="cc-mono mt-0.5 text-[0.72rem] text-[hsl(var(--ink-2))]/80">{project.category}</p>
+      <p className="mt-1 text-[0.7rem] font-semibold text-[hsl(var(--accent-blue))]" data-testid="project-card-label">
+        {DISCLAIMERS.projects}
+      </p>
       <p className="mt-2.5 flex-1 text-[0.875rem] leading-6 text-[hsl(var(--ink-2))]">
         {project.summary}
       </p>

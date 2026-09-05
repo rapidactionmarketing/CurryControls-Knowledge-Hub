@@ -1,4 +1,5 @@
 import { AlertTriangle, Info, Lightbulb, ShieldAlert } from 'lucide-react';
+import { ProgrammingExampleDisclaimer } from '@/components/blocks/technical-notices';
 import type { Block } from '@/data/content';
 
 /** Stable heading id so the table of contents and deep links agree. */
@@ -18,6 +19,7 @@ const CALLOUT_META = {
 
 /** Renders the structured content blocks that make up an entry. */
 export function ContentBlocks({ blocks }: { blocks: Block[] }) {
+  const firstCodeIndex = blocks.findIndex((block) => block.t === 'code');
   let stepCounter = 0;
 
   return (
@@ -170,16 +172,20 @@ export function ContentBlocks({ blocks }: { blocks: Block[] }) {
 
           case 'code':
             return (
-              <figure key={index}>
-                {block.caption && (
-                  <figcaption className="mb-1.5 text-[0.78rem] font-medium text-[hsl(var(--ink-2))]">
-                    {block.caption}
-                  </figcaption>
-                )}
-                <pre className="cc-code">
-                  <code>{block.code}</code>
-                </pre>
-              </figure>
+              <div key={index}>
+                <figure>
+                  {block.caption && (
+                    <figcaption className="mb-1.5 text-[0.78rem] font-medium text-[hsl(var(--ink-2))]">
+                      {block.caption}
+                    </figcaption>
+                  )}
+                  <pre className="cc-code">
+                    <code>{block.code}</code>
+                  </pre>
+                </figure>
+                {/* The programming notice sits with the first example on the page. */}
+                {index === firstCodeIndex && <ProgrammingExampleDisclaimer className="mt-3" />}
+              </div>
             );
 
           case 'formula':

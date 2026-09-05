@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react';
+import { CalculatorResultDisclaimer } from '@/components/blocks/technical-notices';
+import { CALCULATOR_RESULT_LABEL } from '@/data/site-legal';
 import { AlertTriangle, RotateCcw } from 'lucide-react';
 import type { CalcOutput, CalcValues, Calculator } from '@/data/calculators';
 import { defaultValues } from '@/data/calculators';
@@ -132,13 +134,14 @@ export function CalculatorForm({ calculator }: { calculator: Calculator }) {
         ) : null}
 
         {result.outputs.length > 0 && (
-          <section aria-label="Results" data-testid="calculator-results">
-            <h2 className="cc-eyebrow mb-3">Results</h2>
+          <section aria-label={CALCULATOR_RESULT_LABEL} data-testid="calculator-results">
+            <h2 className="cc-eyebrow mb-3">{CALCULATOR_RESULT_LABEL}</h2>
             <dl className="grid gap-2.5 sm:grid-cols-2">
               {result.outputs.map((output, index) => (
                 <ResultTile key={`${output.label}-${index}`} output={output} />
               ))}
             </dl>
+            <CalculatorResultDisclaimer className="mt-4" />
           </section>
         )}
 

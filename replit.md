@@ -129,10 +129,29 @@ Everything is under `artifacts/currycontrols`.
 
 ## User preferences
 
-- The phone number is Eric Sullivan's personal contact for CurryControls.com. It must never be
-  presented as a Curry Controls Company number or a General Control Systems number.
-- Never imply corporate succession from Curry Controls Company. The permitted wording lives in
-  `OWNERSHIP_NOTICE` and `DISCLAIMERS` in `src/data/site.ts`; use those constants.
+- The phone number is Eric Sullivan's personal contact for CurryControls.com and his personal
+  projects. It must never be presented as a Curry Controls Company, Revere Control Systems, Inc.,
+  S.J. Electro Systems, LLC, or General Control Systems, Inc. number.
+- The factual record: Curry Controls Company was acquired by Revere Control Systems, Inc. in 2021.
+  Eric Sullivan was formerly employed by Curry Controls Company; that employment ended in 2021. A
+  prior registration of CurryControls.com expired, completed the deletion process, and became
+  publicly available; Eric Sullivan independently registered the domain in 2025 (April 13, 2025) in
+  his individual capacity, a new registration, not a transfer. The current site is new content
+  managed and published by Eric Sullivan. He is currently employed by General Control Systems, Inc.,
+  which is separate from the site. The site is not owned, operated, sponsored, endorsed,
+  maintained, authorized, or published by any of the four companies.
+- Never imply corporate succession ("now GCS", "became GCS", "legacy continues", "successor
+  company"), never describe the domain as acquired or transferred from a prior registrant, and never
+  claim that everything on the site belongs to Eric. Every statement lives in
+  `src/data/site-legal.ts` (`siteIdentity` facts and the derived `LEGAL` statements); the notice,
+  the About and ownership pages, the policies, the footer, the contact page, the project pages, the
+  metadata, the structured data, and llms.txt all render from it. Never write a separate version.
+- Every calculator result carries the REFERENCE CALCULATION ONLY notice beside it; every programming
+  example carries the PROGRAMMING EXAMPLE ONLY notice; troubleshooting pages carry the
+  TROUBLESHOOTING REFERENCE notice; pages that cite a code or standard carry the CODE & STANDARD
+  REFERENCE notice; reference tables carry REFERENCE INFORMATION — VERIFY BEFORE USE. All from
+  `src/components/blocks/technical-notices.tsx`. Run `pnpm --filter @workspace/currycontrols test`
+  after changing any of this.
 - Every personal-project page must carry "A Personal Project of Eric Sullivan".
 - Do not manufacture technical content to fill a page. An unwritten page says so.
 

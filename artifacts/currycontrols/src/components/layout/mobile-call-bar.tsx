@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'wouter';
 import { MessageSquare, Phone, X } from 'lucide-react';
 import { CONTACT } from '@/data/site';
+import { LEGAL } from '@/data/site-legal';
 
 const DISMISS_KEY = 'curryCallBarDismissed';
 
@@ -42,7 +43,8 @@ export function MobileCallBar() {
           data-phone-placement="mobile-sticky-bar"
           className="flex flex-1 items-center justify-center gap-2 py-3 text-white"
           data-testid="link-phone-sticky"
-          aria-label={`Call Eric Sullivan at ${CONTACT.phoneDisplay}`}
+          title={LEGAL.phoneLabel}
+          aria-label={`${LEGAL.phoneLabel}, call ${CONTACT.phoneDisplay}`}
         >
           <Phone size={16} aria-hidden="true" />
           <span className="text-[0.82rem] font-semibold uppercase tracking-wide">Call Eric</span>

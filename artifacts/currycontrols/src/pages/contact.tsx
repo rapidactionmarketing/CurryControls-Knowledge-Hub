@@ -5,6 +5,7 @@ import { Seo } from '@/components/seo/seo';
 import { Breadcrumbs } from '@/components/blocks/breadcrumbs';
 import { Disclaimer } from '@/components/blocks/disclaimer';
 import { CONTACT, CONTACT_TOPICS } from '@/data/site';
+import { LEGAL } from '@/data/site-legal';
 import { trackContactSubmit } from '@/lib/analytics';
 import { apiUrl } from '@/lib/api-base';
 import {
@@ -70,9 +71,11 @@ function mailtoHref(form: FormState): string {
 /**
  * Contact page for Eric Sullivan.
  *
- * This is not a Curry Controls Company contact page and it is not a General
- * Control Systems contact page. The phone number and this form reach Eric
- * Sullivan directly regarding CurryControls.com and his personal projects.
+ * This is not a contact page for Curry Controls Company, Revere Control
+ * Systems, Inc., S.J. Electro Systems, LLC, or General Control Systems, Inc.
+ * The phone number and this form reach Eric Sullivan directly regarding
+ * CurryControls.com and his personal projects. The wording is
+ * CONTACT_STATEMENT in the legal record.
  *
  * The form posts to the site's message service, which stores the message and
  * emails Eric. If the service cannot be reached, the same details are composed
@@ -166,10 +169,12 @@ export function ContactPage() {
       <header className="border-b border-[hsl(var(--rule))] bg-[hsl(var(--surface))]">
         <div className="cc-container py-9">
           <Breadcrumbs trail={trail} />
-          <h1 className="cc-h1 mt-4">Contact Eric Sullivan</h1>
-          <p className="cc-lead mt-3 max-w-2xl">
-            Have a question related to CurryControls.com, one of Eric's personal projects, or a
-            controls and automation topic?
+          <h1 className="cc-h1 mt-4">{LEGAL.contact.heading}</h1>
+          <p className="cc-lead mt-3 max-w-2xl" data-testid="contact-statement">
+            {LEGAL.contact.paragraphs[0]}
+          </p>
+          <p className="mt-3 max-w-2xl text-[0.9rem] leading-6.5 text-[hsl(var(--ink-2))]" data-testid="contact-phone-statement">
+            {LEGAL.contact.paragraphs[1]}
           </p>
         </div>
       </header>
@@ -344,11 +349,13 @@ export function ContactPage() {
                 data-phone-placement="contact-page"
                 className="mt-3 flex items-center gap-3 rounded bg-[hsl(var(--navy))] px-4 py-3 text-white"
                 data-testid="link-phone-contact-page"
+                title={LEGAL.phoneLabel}
+                aria-label={`${LEGAL.phoneLabel}, call ${CONTACT.phoneDisplay}`}
               >
                 <Phone size={18} aria-hidden="true" />
                 <span>
                   <span className="block text-[0.68rem] uppercase tracking-wider text-white/65">
-                    Phone
+                    {LEGAL.contact.phoneLabel}
                   </span>
                   <span className="cc-phone">{CONTACT.phoneDisplay}</span>
                 </span>
@@ -360,11 +367,11 @@ export function ContactPage() {
 
             <div className="cc-card mt-4 bg-[hsl(var(--surface))] p-5">
               <p className="cc-eyebrow">Please note</p>
-              <p className="mt-2 text-[0.82rem] leading-6 text-[hsl(var(--ink-2))]">
-                This page is for contacting Eric Sullivan regarding CurryControls.com and his personal
-                projects. It is not a contact page for Curry Controls Company, and it is not a contact
-                page for General Control Systems, Inc.
-              </p>
+              {LEGAL.contact.paragraphs.map((paragraph) => (
+                <p key={paragraph} className="mt-2 text-[0.82rem] leading-6 text-[hsl(var(--ink-2))]">
+                  {paragraph}
+                </p>
+              ))}
             </div>
 
             <Disclaimer kind="engineering" className="mt-4" />

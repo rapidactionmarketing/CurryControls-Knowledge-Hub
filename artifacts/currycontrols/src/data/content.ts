@@ -17,6 +17,7 @@ import { COMMS_ENTRIES } from './content/comms';
 import { SECURITY_ENTRIES } from './content/security';
 import { HOWTO_ENTRIES } from './content/howto';
 import { TROUBLESHOOTING_ENTRIES } from './content/troubleshooting';
+import { LIBRARY_ENTRIES } from './content/library';
 
 export type { Entry, EntryKind, Block, Faq, CauseCheck } from './content-types';
 export { KIND_LABEL } from './content-types';
@@ -32,6 +33,7 @@ export const ENTRIES: Entry[] = [
   ...SECURITY_ENTRIES,
   ...HOWTO_ENTRIES,
   ...TROUBLESHOOTING_ENTRIES,
+  ...LIBRARY_ENTRIES,
 ];
 
 const byPath = new Map<string, Entry>(ENTRIES.map((e) => [e.path, e]));
@@ -70,6 +72,18 @@ export const ALL_TAGS: { tag: string; count: number }[] = (() => {
     .map(([tag, count]) => ({ tag, count }))
     .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag));
 })();
+
+/**
+ * Tags that get a topic page. A topic page with one article is a thin page
+ * that competes with the article itself, so a tag earns a page only once two
+ * or more articles carry it. Single-use tags still appear on the article as
+ * plain text.
+ */
+export const TOPIC_TAGS: { tag: string; count: number }[] = ALL_TAGS.filter((t) => t.count >= 2);
+
+export function hasTopicPage(tag: string): boolean {
+  return TOPIC_TAGS.some((t) => t.tag === tag);
+}
 
 /** Word count of an entry's prose, used for reading-time sanity checks. */
 export function wordCount(entry: Entry): number {

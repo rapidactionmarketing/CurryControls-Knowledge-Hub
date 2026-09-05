@@ -5,14 +5,16 @@
   "type": "module",
   "scripts": {
     "dev": "vite --config vite.config.ts --host 0.0.0.0",
-    "build": "vite build --config vite.config.ts && pnpm run build:ssr && pnpm run build:seo && pnpm run prerender",
+    "build": "pnpm run validate:nec && vite build --config vite.config.ts && pnpm run build:ssr && pnpm run build:seo && pnpm run prerender",
     "serve": "vite preview --config vite.config.ts --host 0.0.0.0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "validate:nec": "node --experimental-strip-types scripts/validate-nec-tables.mjs",
     "build:client": "vite build --config vite.config.ts",
     "build:ssr": "vite build --config vite.config.ts --ssr src/entry-server.tsx --outDir dist/server",
     "build:seo": "node scripts/build-seo.mjs",
     "prerender": "node scripts/prerender.mjs",
-    "deploy": "node scripts/deploy-cpanel.mjs"
+    "deploy": "node scripts/deploy-cpanel.mjs",
+    "inventory": "node scripts/topic-inventory.mjs"
   },
   "devDependencies": {
     "@hookform/resolvers": "^3.10.0",

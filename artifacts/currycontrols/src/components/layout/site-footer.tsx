@@ -134,6 +134,9 @@ export function SiteFooter() {
         </div>
 
         <div className="mt-10 space-y-3 border-t border-white/12 pt-6 text-[0.75rem] leading-5 text-white/55">
+          <p data-testid="footer-risk">
+            {DISCLAIMERS.risk} <Link href="/disclaimer" className="cc-link">Read the full disclaimer.</Link>
+          </p>
           <p>{DISCLAIMERS.independence}</p>
           <p>{DISCLAIMERS.endorsement}</p>
           <p>{DISCLAIMERS.engineering}</p>

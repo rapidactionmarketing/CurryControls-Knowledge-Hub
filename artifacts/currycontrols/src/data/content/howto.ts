@@ -25,7 +25,7 @@ export const HOWTO_ENTRIES: Entry[] = [
     published: '2026-02-14',
     updated: '2026-08-12',
     readingTime: 7,
-    tags: ['PLC', 'Analog', 'How-To', 'Scaling'],
+    tags: ['PLC', 'Analog', 'How-To'],
     blocks: [
       {
         t: 'callout',
@@ -672,6 +672,1413 @@ END_IF;`,
       '/controls/control-panels/panel-design/heat-calculations',
       '/controls/control-panels/plc-panels/plc-power',
       '/troubleshooting/control-panel-troubleshooting/no-control-power-in-panel',
+    ],
+  },
+  {
+    path: '/how-to/plc-how-to/create-a-pid-loop',
+    kind: 'howto',
+    title: 'How to Create a PID Loop in a PLC',
+    summary:
+      'Set up a PID instruction from scratch: scale the PV and CV, pick the action, set the execution rate, configure limits and anti-windup, tune conservatively, and test the manual and auto transitions before it controls anything.',
+    answer:
+      'To create a PID loop, scale the process variable into engineering units and the output into the range the final element expects, set the controller action so an increase in output moves the process variable the right way, execute the instruction at a fixed interval matched to the process, set output limits with anti-windup, initialize in manual with bumpless transfer, then tune starting with proportional only and add integral slowly.',
+    keyPoints: [
+      'Scale first. A PID loop on raw counts has gains nobody can interpret.',
+      'Get the action right before anything else. A loop with the wrong action runs to a limit.',
+      'Execute at a fixed interval, in a periodic task, not in the main scan.',
+      'Set output limits and anti-windup, or integral will wind up during every start.',
+      'Start in manual. Tune proportional first, then integral. Leave derivative off unless there is a reason.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['PLC', 'PID', 'How-To', 'Programming'],
+    supplies: [
+      'The control narrative or a one-line description of what the loop holds and with what',
+      'The transmitter calibrated range and the final element range (drive speed, valve position)',
+      'Programming software with online monitoring and a trend',
+      'A simulated PV or a process that can be run safely in manual',
+      'The platform PID instruction manual, for its gain units and equation form',
+    ],
+    blocks: [
+      {
+        t: 'callout',
+        kind: 'safety',
+        title: 'Before you start',
+        text: 'A PID loop drives a pump, a valve, or a chemical feeder. Until the loop is proven, it runs in manual with the output limited to a safe range, operations is told what is being tested, and a hand on the stop is available. A loop with the wrong action runs the output to its limit in seconds.',
+      },
+      { t: 'h2', text: 'Procedure' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Define the loop on paper', text: 'Write one sentence: hold X at setpoint by moving Y. Wet well level at 4.0 ft by pump speed. Discharge pressure at 65 psi by pump speed. Chlorine residual at 1.5 mg/L by feeder stroke. If the sentence is hard to write, the loop is not ready to be built.' },
+          { title: 'Scale the process variable', text: 'Convert the analog input to engineering units before it reaches the PID instruction, using the transmitter calibrated range. Record the range in the instruction comments. Some platforms expect the PV in engineering units; others expect it in percent of range. Check which, and match it.' },
+          { title: 'Scale the output', text: 'Decide the CV range: 0 to 100 percent is conventional. Map it to the final element in a separate scaling instruction: percent to drive speed reference counts, or percent to valve position. Keep the PID output in percent so that gains are meaningful across loops.' },
+          { title: 'Set the controller action', text: 'Direct action: output increases when PV rises above setpoint. Reverse action: output decreases when PV rises. Level control with a pump that empties the well is direct: level up, speed up. Pressure control with a pump that raises pressure is reverse: pressure up, speed down. Get this right before tuning; a wrong action cannot be tuned.' },
+          { title: 'Choose the execution interval', text: 'Run the instruction in a periodic task at a fixed interval, typically 100 to 500 ms for pressure and flow, 1 to 5 s for level and residual. The interval must be consistent, because the integral and derivative terms depend on it. Do not run PID in the continuous task where scan time varies.' },
+          { title: 'Set output limits and anti-windup', text: 'Clamp the CV between the minimum and maximum the final element can use: a drive minimum speed of 40 percent, a valve minimum of 5 percent. Enable the instruction anti-reset-windup so integral stops accumulating at a limit. Without this the loop overshoots badly after every period at a limit.' },
+          { title: 'Configure manual mode and bumpless transfer', text: 'Provide a manual mode where the operator sets the CV directly. When the loop switches to auto, the instruction initializes its integral so that the output does not jump. Most instructions do this if the manual CV is written to the instruction output while in manual; confirm it in the manual.' },
+          { title: 'Handle a bad PV', text: 'If the PV signal fails, the loop must not chase it. Use the signal validation flags: on bad PV, force the loop to manual at the last good output or a safe fixed output, and alarm. Test this by pulling the input wire on the bench.' },
+          { title: 'Set initial tuning', text: 'Start with proportional only: a gain that produces a visible but modest response, often 1.0 in dimensionless units or its equivalent in the platform gain units. Integral off, or a very long reset time. Derivative off.' },
+          { title: 'Test in manual', text: 'With the loop in manual, step the output and watch the PV. Confirm the direction, note the dead time and how long the PV takes to settle. Those two numbers guide the tuning: integral time roughly equal to the process time constant, and a gain that does not amplify the dead time into oscillation.' },
+          { title: 'Switch to auto and tune', text: 'Switch to auto at a setpoint near the current PV. Make a small setpoint change. Raise gain until the response is brisk without sustained oscillation, then back off by a third. Add integral until offset is removed in a reasonable time without overshoot. Trend PV, SP, and CV together throughout.' },
+          { title: 'Document', text: 'Record the final gains, the action, the execution interval, the limits, and the date, in the program and on the loop sheet. The next person will need the reasons, not just the numbers.' },
+        ],
+      },
+      { t: 'h2', text: 'Gain units differ by platform' },
+      {
+        t: 'p',
+        text: 'Every platform expresses PID tuning differently. Some use proportional gain, some proportional band, which is 100 divided by gain. Integral may be in repeats per minute, minutes per repeat, or seconds. Some instructions use the independent equation, where each term has its own gain; others use the dependent, or ISA, form, where the controller gain multiplies all three terms. Moving tuning values between platforms without converting them is a common way to build a loop that oscillates or never moves.',
+      },
+      {
+        t: 'table',
+        head: ['Parameter', 'Common forms', 'Conversion'],
+        rows: [
+          ['Proportional', 'Gain Kc; proportional band PB in percent', 'Kc = 100 / PB'],
+          ['Integral', 'Reset time Ti in minutes or seconds per repeat; reset rate in repeats per minute', 'Repeats per minute = 1 / Ti in minutes'],
+          ['Derivative', 'Rate time Td in minutes or seconds', 'Usually zero'],
+          ['Equation', 'Dependent (ISA): CV = Kc × (e + (1/Ti) ∫e dt + Td de/dt). Independent: CV = Kp e + Ki ∫e dt + Kd de/dt', 'Ki = Kc / Ti and Kd = Kc × Td'],
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Leave derivative off',
+        text: 'Derivative reacts to noise and to measurement steps, and most water and wastewater loops are slow enough that it adds nothing. Use it only on a loop with a clean, filtered PV and a demonstrated need, such as a fast pressure loop, and only after the loop works without it.',
+      },
+      { t: 'h2', text: 'Verification' },
+      {
+        t: 'ul',
+        items: [
+          'A setpoint step in either direction is followed without sustained oscillation and settles within a few process time constants.',
+          'Switching between manual and auto does not bump the output.',
+          'Holding the output at a limit for a minute and then releasing does not produce a large overshoot.',
+          'Pulling the PV signal forces the loop to the defined safe state and raises the alarm.',
+          'The tuning and configuration are recorded in the program and on the loop sheet.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Should the PID run in the PLC or in the drive?',
+        a: 'Most drives include a PID controller, and for a single pump on a single pressure or level loop it can work well. Running it in the PLC keeps the tuning, the limits, the failure handling, and the alarming in one place, visible on SCADA, and consistent across loops. Use the drive PID for a standalone application; use the PLC for anything with more than one pump or any interaction with the rest of the process.',
+      },
+      {
+        q: 'How do I know whether my loop is direct or reverse acting?',
+        a: 'Ask what happens to the process variable when the output increases. If PV rises, the loop must reduce output when PV is above setpoint: reverse acting. If PV falls when output increases, as with a pump emptying a wet well, the loop must increase output when PV is above setpoint: direct acting. Platforms name these differently; test in manual to be certain.',
+      },
+      {
+        q: 'What execution rate should I use?',
+        a: 'Fast enough that the loop sees changes as they happen and slow enough that noise does not dominate. Ten to twenty executions per process time constant is a reasonable rule. A wet well that takes ten minutes to move a foot does not need a 50 ms loop, and running it that fast only amplifies noise through the derivative and integral terms.',
+      },
+      {
+        q: 'The loop oscillates slowly. What is wrong?',
+        a: 'Slow oscillation with a period of several process time constants is usually too much integral, or gain too high on a loop with long dead time. Reduce integral first. Fast oscillation is usually gain. A loop that oscillates in manual is not a tuning problem at all; it is the process or a valve with stiction.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/analog-control/pid',
+      '/controls/plc-systems/analog-control/scaling',
+      '/controls/plc-systems/analog-control/signal-validation',
+      '/controls/plc-systems/plc-fundamentals/tasks',
+      '/water-wastewater/water-systems/water-pumping/pressure-control',
+      '/how-to/plc-how-to/scale-a-4-20-ma-input',
+    ],
+  },
+  {
+    path: '/how-to/plc-how-to/add-an-alarm',
+    kind: 'howto',
+    title: 'How to Add an Alarm',
+    summary:
+      'From a request to a working alarm: define it against the philosophy, build the condition in the PLC with deadband and delays, configure the SCADA alarm with priority and message, test it end to end, and record it in the master alarm database.',
+    answer:
+      'Adding an alarm properly means deciding first whether it is an alarm at all, then defining its setpoint, deadband, delay, priority, and operator action, building the detection in the controller so the condition is evaluated close to the process, configuring the SCADA alarm record with a message that says what to do, testing it from the field to the operator screen and any notification path, and recording it in the master alarm database.',
+    keyPoints: [
+      'Answer the rationalization questions before configuring anything.',
+      'Detect in the controller, present in SCADA. The condition must exist when SCADA is down.',
+      'Deadband and delay are part of the alarm, not an afterthought.',
+      'The message tells the operator what happened and what to do.',
+      'Test from the field, and record the alarm in the database with its basis.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['Alarms', 'PLC', 'SCADA', 'How-To'],
+    supplies: [
+      'The alarm philosophy and the priority matrix',
+      'The master alarm database, or the spreadsheet standing in for it',
+      'PLC programming software and SCADA configuration access',
+      'A way to drive the condition: a calibrator, a simulated value, or a controlled process change',
+      'Access to the notification system configuration if the alarm will call out',
+    ],
+    blocks: [
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'Before you start',
+        text: 'Every alarm added to a system is one more thing the operator must read. An alarm that does not need an operator action is an event or a maintenance notification, and it goes somewhere else. Start with the questions, not the configuration.',
+      },
+      { t: 'h2', text: 'Procedure' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Answer the rationalization questions', text: 'What condition, what causes it, what happens if no one acts, what the operator must do, how long they have, what class it belongs to. If there is no operator action, stop here and configure an event instead. Write the answers down; they go in the database at the end.' },
+          { title: 'Set the setpoint and its basis', text: 'Choose the value from something defensible: a permit limit less a margin, a manufacturer limit, the operating envelope from a trend, a physical constraint. Record the basis. For a pre-alarm and alarm pair, set both here with different times to respond.' },
+          { title: 'Set the deadband', text: 'The amount the value must recover past the setpoint before the alarm clears. Typically 1 to 5 percent of range, larger on a noisy signal. Without it, a value sitting at the setpoint generates an alarm every few seconds.' },
+          { title: 'Set the delays', text: 'An on-delay so a transient does not alarm: seconds for a pressure, tens of seconds for a level, longer for a slow analyzer. An off-delay if the alarm should not clear on a brief recovery. Delays are tuning values and are recorded with the alarm.' },
+          { title: 'Assign priority', text: 'From the matrix, using the consequence and time to respond decided in step 1. Not from how important the equipment is.' },
+          { title: 'Build the detection in the controller', text: 'Compare the value to the setpoint with the deadband, through the on-delay timer, and gate it on the signal being valid: a bad-quality input must not generate a process alarm, but must generate its own. Latch the result into a dedicated alarm bit with a clear name. Add any state-based suppression from step 1: the low flow alarm is inhibited when the pump is commanded off.' },
+          { title: 'Add acknowledgment handling if the platform needs it', text: 'Some systems acknowledge in SCADA only; others carry an acknowledge bit back to the controller for local indication or a horn. Build what the site standard requires, and nothing more.' },
+          { title: 'Configure the SCADA alarm', text: 'Create the alarm record on the alarm bit: priority, area or group, and the message. The message states the equipment, the condition, and the action in a form that reads at a glance. Set the notification rule if the alarm calls out.' },
+          { title: 'Test end to end', text: 'Drive the real condition where it is safe, or inject the signal at the field terminals. Confirm the alarm appears with the correct priority and message, that the on-delay holds, that the deadband works on recovery, that acknowledgment behaves, that suppression inhibits it when it should, and that the notification path delivers it to the on-call phone. Test the bad-quality case by disconnecting the input.' },
+          { title: 'Record it', text: 'Enter the alarm in the master alarm database with every answer from step 1 and every setting from steps 2 to 8. Update the loop sheet or the I/O list. Tell the operators, and add the new alarm to the training record.' },
+        ],
+      },
+      { t: 'h2', text: 'What the message should say' },
+      {
+        t: 'table',
+        head: ['Poor', 'Better', 'Why'],
+        rows: [
+          ['LT-101 HI', 'LS-12 wet well level high. Verify pumps running; dispatch if level rising.', 'Names the place, the condition, and the action'],
+          ['Pump fault', 'P-2 fault: check drive display for fault code, reset if clear, alternate to P-1.', 'Tells the operator where to look and what to do next'],
+          ['Comm fail', 'Communication lost to LS-12. Station on local control. Check radio if not restored in 15 min.', 'States the consequence and the time to respond'],
+          ['Alarm', 'Never acceptable', 'A message that says nothing is worse than no alarm'],
+        ],
+      },
+      { t: 'h2', text: 'Where alarms should be detected' },
+      {
+        t: 'p',
+        text: 'Detecting the alarm in the controller, rather than as a SCADA limit on a tag, is the general rule. The controller evaluates the condition every scan with the real value, it can gate the alarm on signal quality and process state, it keeps working when SCADA or communications are down, and the same bit can drive a local horn or a hardwired dialer. SCADA limit alarms are acceptable for information alarms on values that exist only in SCADA, such as a calculated total, and for quick temporary alarms during commissioning. They should not be the permanent home of a process alarm.',
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Do not copy the alarm from the tag next to it',
+        text: 'Duplicating an existing alarm record and changing the tag name copies its setpoint, deadband, priority, and message from a different device. Half the wrong-priority and wrong-message alarms in a system got there this way. Build each alarm from its own answers.',
+      },
+      { t: 'h2', text: 'Verification' },
+      {
+        t: 'ul',
+        items: [
+          'The alarm appears on the operator screen and in the summary with the intended priority and message when the condition is driven from the field.',
+          'The on-delay and deadband behave as configured on both edges.',
+          'A bad-quality input produces the signal alarm and not the process alarm.',
+          'State-based suppression inhibits and releases correctly.',
+          'The notification path delivers and escalates as configured.',
+          'The master alarm database has the complete record.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Can I just set a high limit on the SCADA tag?',
+        a: 'For a temporary or information-only alarm, yes. For a process alarm, no: it depends on SCADA being up and the poll being current, it cannot be gated on process state without more configuration, and it does not exist for the local panel or a hardwired dialer. Build it in the controller and present it in SCADA.',
+      },
+      {
+        q: 'How much deadband is right?',
+        a: 'Enough that normal noise on the signal cannot re-trigger the alarm after it clears. Look at the trend: the peak-to-peak noise at steady state is the minimum. Two to five percent of range is typical; less on a very clean signal, more on a turbulent level.',
+      },
+      {
+        q: 'Should a new alarm call out?',
+        a: 'Only if the rationalization answer says it needs a response when the site is unstaffed and within the time available. Adding notification to every new alarm is how on-call phones end up ignored. Notification is a separate decision recorded with the alarm.',
+      },
+      {
+        q: 'Who approves a new alarm?',
+        a: 'The alarm philosophy says. At many utilities, operations approves any new alarm and its priority, and a regulatory or safety class alarm requires a documented change record. A new alarm added at a keyboard without approval is a change that bypasses the system the philosophy set up.',
+      },
+    ],
+    related: [
+      '/controls/scada-hmi/alarm-management/rationalization',
+      '/controls/scada-hmi/alarm-management/alarm-priority',
+      '/controls/scada-hmi/alarm-management/alarm-floods',
+      '/controls/scada-hmi/alarm-management/notification',
+      '/controls/plc-systems/analog-control/deadband',
+      '/controls/plc-systems/analog-control/signal-validation',
+    ],
+  },
+  {
+    path: '/how-to/instrumentation-how-to/calibrate-a-pressure-transmitter',
+    kind: 'howto',
+    title: 'How to Calibrate a Pressure Transmitter',
+    summary:
+      'A five-point calibration with a pressure source and a reference: isolate and vent, record as-found, decide whether to adjust, trim the sensor and the output separately, verify as-left, and record it so the next calibration means something.',
+    answer:
+      'To calibrate a pressure transmitter, isolate it from the process and vent it, apply zero and a series of known pressures from a calibrator while reading the output current, and compare each to the expected 4-20 mA value. Record the as-found data. If the error exceeds the tolerance, perform a sensor trim against the reference pressures and, separately, a current output trim against a reference meter, then repeat the five points as-left and record both sets.',
+    keyPoints: [
+      'As-found before any adjustment. That record is the value of the calibration.',
+      'Sensor trim and output trim are different adjustments. Do not use one to correct the other.',
+      'A zero check in place is not a calibration. It catches drift but not span error.',
+      'Tolerance comes from the loop, not the transmitter data sheet. Decide it before you start.',
+      'Return the transmitter to service in the right valve sequence, or the first reading after calibration is wrong.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['Instrumentation', 'How-To', '4-20 mA', 'Commissioning'],
+    supplies: [
+      'A pressure calibrator or hand pump with a reference gauge at least four times more accurate than the tolerance',
+      'A loop calibrator or precision milliammeter to read the output',
+      'A HART communicator or the platform software, for trims on a smart transmitter',
+      'The transmitter calibrated range and the loop tolerance from the instrument list or loop sheet',
+      'The calibration form, paper or electronic',
+      'Fittings and a bleed for the impulse line or manifold',
+    ],
+    blocks: [
+      {
+        t: 'callout',
+        kind: 'safety',
+        title: 'Before you start',
+        text: 'Isolating a transmitter removes a measurement from the control system. Tell operations, put any loop that uses it in manual, and confirm nothing will start, stop, or alarm as a result. Bleed process pressure safely: chemical lines need the right protective equipment, and a blocked-in line on a hot day can be at more pressure than expected.',
+      },
+      { t: 'h2', text: 'Procedure' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Gather the facts', text: 'Calibrated range, for example 0 to 100 psig. Expected output at each test point: 4 mA at 0, 8 at 25, 12 at 50, 16 at 75, 20 at 100 psig. Tolerance for the loop, typically 0.25 to 1 percent of span for utility service. Check the calibrator range and accuracy against these.' },
+          { title: 'Isolate and vent', text: 'Close the process isolation valve. Open the vent or the manifold drain to release the line pressure. On a differential transmitter, open the equalizer first, then the drains. Confirm zero pressure at the transmitter before connecting anything.' },
+          { title: 'Connect the calibrator and the meter', text: 'Pressure source to the transmitter high side. Milliammeter in series with the loop, or the loop calibrator in measure mode across the test jacks. Let the transmitter and calibrator sit for a few minutes to reach the same temperature.' },
+          { title: 'Record as-found at five points', text: 'Apply 0, 25, 50, 75, and 100 percent of range going up, then 75, 50, 25, and 0 coming down. Record the applied pressure from the reference and the output current at each point. The down points show hysteresis. Do not adjust anything yet.' },
+          { title: 'Decide whether to adjust', text: 'Compare each point with the expected current. If every point is within tolerance, the transmitter passes as-found and nothing is adjusted: record it and return to service. Adjusting a transmitter that is in tolerance adds error rather than removing it.' },
+          { title: 'Trim the sensor if needed', text: 'On a smart transmitter, the sensor trim corrects what the transmitter measures. Use the communicator: a zero trim at true zero pressure, then a lower and upper sensor trim at reference pressures near the ends of the range. On an analog transmitter, adjust the zero and span potentiometers in turn, rechecking each after adjusting the other.' },
+          { title: 'Trim the output if needed', text: 'The output trim corrects the digital-to-analog conversion: the transmitter is told to send exactly 4 mA and 20 mA, the meter reading is entered, and the transmitter corrects itself. This is separate from the sensor trim. If the sensor reads right in the communicator but the current is off, the output trim is the adjustment, not the sensor.' },
+          { title: 'Record as-left at five points', text: 'Repeat the up-and-down series and record every point. Both as-found and as-left go on the form. Confirm every as-left point is within tolerance.' },
+          { title: 'Return to service', text: 'Remove the calibrator, close the vent, and open the isolation valve slowly. On a differential transmitter, open the high side isolation, then close the equalizer, then open the low side. Check for leaks. Confirm the reading agrees with a local gauge or the process expectation and that the loop in the control system reads correctly.' },
+          { title: 'Complete the record', text: 'Date, technician, transmitter tag and serial, calibrator identification and its calibration due date, as-found and as-left data, tolerance, pass or fail, and any adjustment made. Return the loop to auto and tell operations.' },
+        ],
+      },
+      { t: 'h2', text: 'Sensor trim versus output trim' },
+      {
+        t: 'table',
+        head: ['Symptom', 'Adjustment', 'Not this'],
+        rows: [
+          ['Communicator shows the transmitter measuring the wrong pressure', 'Sensor trim', 'Output trim, which would leave the digital value wrong for HART readers'],
+          ['Communicator shows the right pressure but the loop current is off', 'Output trim at 4 and 20 mA', 'Sensor trim, which would corrupt a correct measurement'],
+          ['Right pressure and right current, but the PLC reads wrong', 'PLC scaling or the input card', 'Any transmitter adjustment'],
+          ['Zero is off, span is right', 'Zero trim only', 'A full re-trim that moves the span too'],
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Re-ranging is not calibrating',
+        text: 'Changing the range of a smart transmitter from the communicator changes what 4 and 20 mA represent. It does not check or correct the sensor. A transmitter can be re-ranged perfectly and still read 2 percent wrong. Range changes go on the loop sheet and in the PLC scaling; calibration is the five-point check.',
+      },
+      { t: 'h2', text: 'Verification' },
+      {
+        t: 'ul',
+        items: [
+          'As-found and as-left data at five points, up and down, both on the form.',
+          'Every as-left point within the loop tolerance.',
+          'The control system displays the correct value with the transmitter back in service.',
+          'The valve sequence was completed and there are no leaks.',
+          'The calibrator used was itself in calibration.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'How often should a pressure transmitter be calibrated?',
+        a: 'On the schedule the utility sets, based on the criticality of the loop and the history of the transmitter. Annually is common; compliance measurements may require more. The as-found records tell you: a transmitter that is always in tolerance at twelve months can go longer, one that drifts needs a shorter interval or replacement.',
+      },
+      {
+        q: 'Can I calibrate in place without isolating?',
+        a: 'A zero check can sometimes be done by equalizing a differential transmitter or, with the process at a known state, comparing to a reference gauge. It catches zero drift. It does not check span, and it is not a calibration for the record.',
+      },
+      {
+        q: 'What accuracy does the calibrator need?',
+        a: 'The reference should be at least four times more accurate than the tolerance being checked, and ten times is better. For a 0.5 percent loop tolerance, a 0.1 percent reference is adequate and a 0.05 percent reference is comfortable. A calibrator that has not itself been calibrated is not a reference.',
+      },
+      {
+        q: 'The transmitter passed calibration but the PLC still reads wrong. Why?',
+        a: 'The problem is downstream: the input card range, the PLC scaling, or the calibrated range in the PLC not matching the one in the transmitter. Inject a known current at the panel terminals and follow the value through the scaling.',
+      },
+    ],
+    related: [
+      '/controls/instrumentation/pressure/pressure-transmitters',
+      '/how-to/instrumentation-how-to/test-a-4-20-ma-loop',
+      '/controls/instrumentation/signals/hart',
+      '/how-to/plc-how-to/scale-a-4-20-ma-input',
+      '/controls/instrumentation/signals/4-20-ma-signals',
+    ],
+  },
+  {
+    path: '/how-to/instrumentation-how-to/diagnose-ground-loops',
+    kind: 'howto',
+    title: 'How to Diagnose a Ground Loop',
+    summary:
+      'Prove that a noisy or offset analog signal is a ground loop, find the second ground, and fix it the right way: remove the extra ground, isolate the signal, or correct the shield termination. With the measurements that make the diagnosis certain.',
+    answer:
+      'To diagnose a ground loop, confirm the symptom correlates with load or with a specific piece of equipment, measure the AC and DC voltage between the two ends of the signal circuit reference, then break the suspected second ground path and watch the symptom disappear. The fix is to remove the extra ground where it can be removed, and to install a signal isolator where the second ground is inherent, such as a grounded sensor or a transmitter with a grounded case.',
+    keyPoints: [
+      'A ground loop needs two grounds and a path between them. Find both.',
+      'Measure voltage between the grounds. More than a few hundred millivolts is suspicious.',
+      'The proof is lifting one ground and watching the symptom vanish. Do it deliberately, not by accident.',
+      'Shields grounded at both ends are the usual second path.',
+      'When the second ground cannot be removed, isolate the signal.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['Instrumentation', 'Grounding', 'How-To', 'Signals', 'Troubleshooting'],
+    supplies: [
+      'A true-RMS multimeter with AC and DC voltage ranges down to millivolts',
+      'A clamp meter that reads AC current on a single conductor, ideally down to milliamps',
+      'The loop drawings or the wiring diagram showing shield and ground terminations',
+      'A loop calibrator for substitution tests',
+      'A signal isolator of the right type on hand, if a fix is expected on the same visit',
+    ],
+    blocks: [
+      {
+        t: 'callout',
+        kind: 'safety',
+        title: 'Before you start',
+        text: 'Lifting a ground is a deliberate test on a signal circuit, never on an equipment grounding conductor. The equipment ground on a panel, a motor, or an enclosure stays connected at all times. If a test requires disconnecting a conductor that might be carrying fault current or that bonds a chassis, stop and involve a qualified electrician.',
+      },
+      { t: 'h2', text: 'Procedure' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Characterize the symptom', text: 'A ground loop produces a signal offset that changes with load, a 60 Hz hum on the signal, or noise that appears when a specific motor or drive runs. Trend the signal against equipment run status. A reading that is offset by a constant amount that does not change with load is more likely a scaling or calibration problem.' },
+          { title: 'Identify the reference points', text: 'Find where the signal circuit is referenced to ground at the panel end: the negative of the loop power supply, the input card common, or the instrument ground bar. Then find every other place the circuit could touch ground: the transmitter case, a grounded sensor element, the cable shield at the field end, a junction box, a conduit body where a cable is damaged.' },
+          { title: 'Measure the voltage between grounds', text: 'With the circuit intact, measure AC and DC volts between the panel signal ground and the field ground, using long leads if necessary. A few tens of millivolts is normal. Several hundred millivolts, or volts, is a potential difference that will drive current through any path between them.' },
+          { title: 'Measure current in the shield', text: 'Clamp the shield drain wire alone. Any measurable AC current in a shield means it is grounded at both ends or is touching ground somewhere. A shield should carry no current.' },
+          { title: 'Lift the suspected second ground', text: 'With the loop in manual and operations informed, disconnect the field end of the shield, or lift the transmitter from its grounded mount with an insulating adapter, or disconnect whatever the drawing shows as the second reference. Watch the signal. If the noise or offset vanishes, the diagnosis is made. Reconnect and confirm it returns.' },
+          { title: 'Substitute the transmitter', text: 'If lifting the shield changes nothing, disconnect the transmitter and inject a fixed current with the calibrator at the field end. A clean signal now means the transmitter or its mounting provides the second ground: a case-grounded transmitter, a grounded sensor, or moisture in the head.' },
+          { title: 'Check the panel end', text: 'Confirm the shield is landed on the instrument ground bar and not on a terminal that is also the equipment ground for a drive or a starter. Confirm the loop supply negative is grounded at one point. Look for a second supply feeding the same loop from another panel.' },
+          { title: 'Fix it', text: 'Remove the extra ground where it is not needed: re-terminate the shield at one end only, insulate the transmitter mount, repair a damaged cable. Where the second ground is inherent, install a loop isolator between the field device and the input. Where the shield must be grounded at both ends for high-frequency noise, ground one end solidly and the other through a capacitor, as the platform grounding guide describes.' },
+          { title: 'Verify under load', text: 'Reproduce the condition that showed the symptom: run the drive, start the motor, wait for the load that correlated with the offset. A fix tested with the plant quiet has not been tested.' },
+          { title: 'Record it', text: 'Note the second ground that was found, the fix, and the measured voltages before and after, on the loop sheet. Ground loops recur when the next person re-grounds the shield to be safe.' },
+        ],
+      },
+      { t: 'h2', text: 'Reading the measurements' },
+      {
+        t: 'table',
+        head: ['Measurement', 'Normal', 'Suspicious', 'Meaning'],
+        rows: [
+          ['AC volts between panel signal ground and field ground', 'Under 50 mV', 'Over 500 mV, or varying with load', 'A potential difference exists to drive loop current'],
+          ['DC volts between the same points', 'Near zero', 'Over 100 mV', 'A DC offset that adds directly to the signal at the input'],
+          ['AC current in the shield', 'Zero', 'Any', 'The shield is grounded at more than one point'],
+          ['Signal change when the shield field end is lifted', 'None', 'Noise or offset disappears', 'The shield was the second ground path'],
+          ['Signal change with the transmitter replaced by a calibrator', 'None', 'Noise or offset disappears', 'The transmitter or its mounting is grounded'],
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'A ground loop and a missing ground are different problems',
+        text: 'Noise on a signal can also come from a panel or a field device that has no ground at all, so that its reference floats and picks up whatever is nearby. The measurements distinguish them: a ground loop shows current in a path that should carry none; a missing ground shows a large, unstable voltage between a device and earth. The fix for one makes the other worse.',
+      },
+      { t: 'h2', text: 'Verification' },
+      {
+        t: 'ul',
+        items: [
+          'The symptom is reproduced, then eliminated by the fix, then confirmed absent under the load that produced it.',
+          'Voltage between the grounds is measured before and after and recorded.',
+          'The shield is grounded at exactly one documented end, or the two-end scheme is deliberate and recorded.',
+          'Equipment grounds were never lifted.',
+          'The loop sheet records the fix.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Why does grounding the shield at both ends cause a problem?',
+        a: 'The two ground points are at slightly different potentials, and the shield connects them, so current flows in the shield. That current induces a voltage into the signal pair and, if the shield shares any part of the signal return, adds directly to the signal. One ground means no path for the current.',
+      },
+      {
+        q: 'Where should the shield be grounded?',
+        a: 'At the panel end, on the instrument ground bar, is the usual practice for 4-20 mA and other low-frequency signals. The field end is insulated. Some platforms and some high-frequency applications call for grounding both ends or for a hybrid capacitor ground; follow the platform grounding guide when it says so and document it.',
+      },
+      {
+        q: 'Can an isolator fix every ground loop?',
+        a: 'An isolator breaks the galvanic path between the field side and the panel side, which eliminates the loop as far as the signal is concerned. It does not fix a damaged cable, a wet junction box, or a floating reference, and it adds a device that needs power and can fail. Use it when the second ground is inherent to the field device.',
+      },
+      {
+        q: 'The signal is fine on the bench and noisy in the field. Is that a ground loop?',
+        a: 'Possibly, and it is the classic pattern: on the bench there is only one ground. It can also be induced noise from cable routing near drive conductors, which needs no second ground. The shield current measurement and the lift test tell them apart.',
+      },
+    ],
+    related: [
+      '/controls/instrumentation/signals/ground-loops',
+      '/troubleshooting/instrumentation-troubleshooting/4-20-ma-signal-unstable',
+      '/controls/instrumentation/signals/4-20-ma-signals',
+      '/how-to/instrumentation-how-to/test-a-4-20-ma-loop',
+      '/controls/instrumentation/signals/hart',
+    ],
+  },
+  {
+    path: '/how-to/plc-how-to/configure-modbus',
+    kind: 'howto',
+    title: 'How to Configure a Modbus Connection',
+    summary:
+      'Set up a Modbus RTU or TCP link between a controller and a device: get the register map, match the physical and protocol settings, build the reads and writes, handle data types and the addressing offset, and verify with a protocol tool before trusting a value.',
+    answer:
+      'To configure a Modbus connection, get the register map from the device manual, set the physical layer (serial parameters and wiring for RTU, IP address and port 502 for TCP), set the unit identifier, build read requests that cover the registers you need in as few polls as possible, decode the data types the device uses, resolve the one-based versus zero-based addressing offset, add a write for each command, and verify every value against the device display with a Modbus test tool before the controller uses it.',
+    keyPoints: [
+      'The register map is the specification. Nothing works without it.',
+      'Function code, address, and count per request; group registers to minimize polls.',
+      'Resolve the addressing offset once, on the first register, and apply it to all.',
+      'Decode data types deliberately: 16-bit, 32-bit with word order, floats, scaled integers, bit fields.',
+      'Verify with a protocol tool against the device display, then set poll rate and timeout for the link.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['Modbus', 'PLC', 'Communications', 'How-To'],
+    supplies: [
+      'The device manual with its Modbus register map and communication settings',
+      'A Modbus master test tool on a laptop, serial or TCP as appropriate',
+      'For RTU: an RS-485 adapter, shielded twisted pair, and termination resistors',
+      'For TCP: the IP addressing plan and access to the switch',
+      'The controller programming software and its Modbus configuration or instruction manual',
+      'A signal list of the values and commands the controller needs from the device',
+    ],
+    blocks: [
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'Before you start',
+        text: 'A Modbus write changes a setpoint or a command on a live device. Configure and verify reads first, with the device in a state where a wrong write cannot start anything, and test writes to a harmless register before the real ones. Tell operations what device is being connected.',
+      },
+      { t: 'h2', text: 'Procedure' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Get the register map', text: 'From the device manual, the section usually called Modbus register map, holding registers, or communication. It lists each value with its register number or address, function code or register type, data type, scaling, and read-write access. Print it; you will annotate it.' },
+          { title: 'Decide what the controller needs', text: 'From the signal list: the process values to read, the status words, the commands and setpoints to write. Mark them on the map. Do not read the whole map; read what is needed, grouped.' },
+          { title: 'Set the physical layer', text: 'RTU: baud rate, data bits, parity, and stop bits identical on both ends, commonly 9600 or 19200, 8, none or even, 1. Two-wire RS-485 with A to A and B to B, a signal common, and 120 ohm termination at both ends of the bus only. TCP: a static IP on the device in the control subnet, port 502 unless the manual says otherwise, and a switch port it can reach.' },
+          { title: 'Set the unit identifier', text: 'RTU: the slave address, unique on the bus, 1 to 247. TCP: the unit ID, often 1 or 255, and required by gateways that front several serial devices. The manual says what the device expects.' },
+          { title: 'Resolve the addressing offset', text: 'Modbus addresses on the wire are zero-based; register maps are often written one-based, and some use the traditional 40001 style for holding registers. Pick the first register, read it with the test tool at the documented number and at the number minus one, and see which returns the value the display shows. Apply that offset to every register in the map.' },
+          { title: 'Build the read requests', text: 'Group contiguous registers into single requests of up to 125 holding registers or 2000 coils. A device that reports ten values in registers 100 to 119 is one request, not ten. Separate requests for different register types: coils and discrete inputs with function codes 1 and 2, input registers with 4, holding registers with 3.' },
+          { title: 'Decode the data types', text: 'From the map: a 16-bit signed or unsigned integer, a 32-bit integer or float in two registers with the word order the device uses, a scaled integer with a documented multiplier, a bit-packed status word. Configure the controller conversion for each and note it on the map. Word order is the item most often wrong on 32-bit values.' },
+          { title: 'Build the writes', text: 'One request per command or setpoint, with function code 6 or 16 for holding registers and 5 or 15 for coils, written only on change or on operator action, never every scan. Confirm the device accepts the function code; some accept only 16 even for a single register.' },
+          { title: 'Verify with the test tool', text: 'Before the controller is involved, read every configured register with the test tool and compare with the device display or a known state. Change a value on the device and confirm the register changes. Write a harmless register and confirm it took.' },
+          { title: 'Configure the controller', text: 'Enter the same requests in the controller Modbus configuration or instructions, with the poll rate, the timeout, and the retry count. Map the results to tags with descriptive names and the decoded engineering units.' },
+          { title: 'Verify from the controller', text: 'Compare every tag with the device display. Confirm the communication status tag goes bad when the cable is pulled and good when it is restored. Confirm the controller logic treats a bad status as bad data, not as zero.' },
+          { title: 'Record', text: 'The annotated register map, the serial or IP settings, the unit ID, the request list with function codes and addresses, the data type decoding, the poll rate and timeout, and the date, in the project documentation and on the network drawing.' },
+        ],
+      },
+      { t: 'h2', text: 'Poll rate and timeout' },
+      {
+        t: 'table',
+        head: ['Setting', 'Typical value', 'Note'],
+        rows: [
+          ['Poll rate', '500 ms to 5 s per device', 'As slow as the process allows; a serial bus with many devices shares the time, and each request takes tens of milliseconds at 9600 baud'],
+          ['Timeout', '1 s serial, 1 to 3 s TCP', 'Longer than the slowest device response including a radio hop; shorter than the poll rate'],
+          ['Retries', '2 or 3', 'A device declared offline after retries fail, with a communication alarm'],
+          ['Inter-frame delay', '3.5 character times minimum on RTU', 'Some devices need more; a device that answers the previous request while the next is sent corrupts both'],
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'One request too many',
+        text: 'A Modbus device usually returns an exception, illegal data address, if a request includes one register it does not have. A request for registers 100 to 120 on a device that stops at 119 fails entirely, and every value in it goes bad. Build requests from the map, and when a request fails, check its last register first.',
+      },
+      { t: 'h2', text: 'Verification' },
+      {
+        t: 'ul',
+        items: [
+          'Every configured register reads correctly against the device display with the test tool and from the controller.',
+          'A 32-bit value reads correctly at a value that would reveal a word order error, such as one above 65535.',
+          'Each write changes the intended value on the device and nothing else.',
+          'Pulling the cable produces a communication alarm within the timeout and retry period, and reconnecting clears it.',
+          'The controller uses the communication status to invalidate the data.',
+          'The register map annotations and the settings are in the project record.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'The device returns values but they are wrong. What is the most likely cause?',
+        a: 'The addressing offset, the word order on 32-bit values, or a scaling factor from the map that was not applied. Read a register whose value you know from the display, and work through those three in that order.',
+      },
+      {
+        q: 'The device does not answer at all. Where do I start?',
+        a: 'On RTU: serial settings, A and B polarity, the unit address, and termination. Swap A and B and try again before anything else. On TCP: ping the device, then confirm port 502 with the test tool, then the unit ID. A gateway in front of a serial device often needs the unit ID of the serial device, not 1.',
+      },
+      {
+        q: 'How many devices can share an RS-485 bus?',
+        a: 'Electrically, 32 unit loads without a repeater, and more with modern low-load transceivers. Practically, the poll time per device times the device count sets the update rate, and a bus of a dozen devices at 9600 baud updates each every few seconds. Use a second port or a higher baud rate before it gets slow.',
+      },
+      {
+        q: 'Should the controller be the master or the device?',
+        a: 'The controller is the master and the device is the slave in nearly every case; the controller polls and writes. A device that must initiate, such as one that reports on exception, is not Modbus in the usual sense and needs a different protocol.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/communications/modbus-rtu',
+      '/controls/plc-systems/communications/modbus-tcp',
+      '/controls/plc-systems/communications/serial-communications',
+      '/troubleshooting/communications-troubleshooting/modbus-device-intermittently-offline',
+      '/controls/plc-systems/analog-control/signal-validation',
+    ],
+  },
+  {
+    path: '/how-to/scada-how-to/diagnose-bad-quality',
+    kind: 'howto',
+    title: 'How to Diagnose a Bad Quality Tag',
+    summary:
+      'Trace a bad quality indication from the SCADA screen back to its source: the tag configuration, the driver and device connection, the controller tag, and the field signal, using the diagnostics each layer provides, and separate a stale value from a bad one.',
+    answer:
+      'To diagnose a bad quality tag, first read the quality code and the driver diagnostics to learn which layer is reporting it, then work outward: confirm the tag address and data type match the controller, confirm the driver connection to the device is up and polling, confirm the controller tag exists and holds a value, and only then look at the field signal. Most bad quality is a communication or configuration fault, not an instrument fault, and the quality code says which.',
+    keyPoints: [
+      'Read the quality code first. It names the layer that failed.',
+      'One tag bad with the others good is configuration. All tags on a device bad is communication.',
+      'Check the driver diagnostics before touching the controller or the field.',
+      'A frozen good value and a bad value are different problems with different causes.',
+      'Fix the cause, then confirm the quality returns and the value moves.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['SCADA', 'Troubleshooting', 'How-To', 'Communications'],
+    supplies: [
+      'SCADA configuration access and the driver diagnostic tool',
+      'The tag database export or the tag configuration screen',
+      'The controller programming software with online access',
+      'The network drawing with device addresses',
+      'A laptop that can ping and, for serial devices, a protocol test tool',
+    ],
+    blocks: [
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'Before you start',
+        text: 'A tag with bad quality is telling the truth: the system does not know the value. Do not clear the indication by overriding the tag or forcing a value while the cause is unknown. Operations should treat the value as unknown until the quality is good again.',
+      },
+      { t: 'h2', text: 'Procedure' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Read the quality code', text: 'Every platform carries a quality code with the value: an OPC-style code such as Bad, Bad Not Connected, Bad Config Error, Bad Device Failure, Uncertain, or a platform-specific equivalent. Find it on the tag detail or in the tag browser. Not Connected and Device Failure point to communication; Config Error and Bad Address point to the tag configuration; Uncertain points to a stale or clamped value.' },
+          { title: 'Scope the failure', text: 'Look at the other tags from the same device and the same driver. All bad means the connection; one bad means that tag. Tags from other devices on the same driver bad too means the driver or the network segment.' },
+          { title: 'Open the driver diagnostics', text: 'Every driver has a status view: connection state, poll counts, success and failure counters, last error, response time. A connection that shows failures climbing names the device. An error text such as timeout, connection refused, illegal address, or exception code narrows it.' },
+          { title: 'For a connection problem, test the path', text: 'Ping the device from the SCADA server. If ping fails, the network drawing and the switch diagnostics are next: link light, VLAN, cable, the device power. If ping works and the driver cannot connect, check the port, the unit ID or slot number, and whether another master has the device connection count exhausted.' },
+          { title: 'For a configuration problem, check the address', text: 'Compare the tag address in SCADA with the controller: tag name and case, program scope, array index, data type, and on register-based devices the register number and the addressing offset. A tag renamed in the controller and not in SCADA is the most common single cause.' },
+          { title: 'Check the data type', text: 'A SCADA tag configured as an integer reading a controller REAL, or a 16-bit read of a 32-bit value, produces a bad or a nonsense value depending on the driver. Match them exactly.' },
+          { title: 'Check the controller', text: 'Online with the controller, confirm the tag exists, holds a value, and is being updated by the program. A controller tag that is fine while SCADA shows bad confirms the problem is between them.' },
+          { title: 'For an Uncertain or stale value, check the timestamp', text: 'A value with a timestamp that stopped advancing is stale: the driver stopped updating it, or the controller stopped writing it. Compare the tag timestamp with the current time and with the poll rate. A stale good value is a different failure from a bad one, and its causes are on the frozen values page.' },
+          { title: 'Look at the field only when the layers above are clean', text: 'If the driver reads the controller and the controller tag is bad or out of range, the input channel and the field device are next: an input card fault, an open loop, an under-range signal. The controller has its own diagnostics for those, and they point to the channel.' },
+          { title: 'Fix, confirm, record', text: 'Correct the cause. Confirm the quality returns to Good and that the value changes when the process changes. Record the cause and the fix; a bad quality that came from a tag rename will come from the next rename too.' },
+        ],
+      },
+      { t: 'h2', text: 'Reading the quality code' },
+      {
+        t: 'table',
+        head: ['Quality', 'Usual meaning', 'Look at'],
+        rows: [
+          ['Bad, Not Connected', 'The driver has no connection to the device', 'Network, device power, port, connection limits'],
+          ['Bad, Device Failure', 'The device answered with an error or stopped answering', 'Driver diagnostics, device status, controller fault'],
+          ['Bad, Config Error or Bad Address', 'The tag address does not exist on the device', 'Tag name, scope, index, register number, offset'],
+          ['Bad, Data Type Mismatch', 'The address exists but the type does not match', 'Data type on both ends; 16 versus 32 bit'],
+          ['Bad, Comm Failure after good', 'The connection was up and dropped', 'Intermittent network or serial; timeouts; retries'],
+          ['Uncertain, Last Usable Value', 'The last good value is being shown because updates stopped', 'Timestamp; poll rate; the frozen values page'],
+          ['Uncertain, Sensor Not Accurate or Out of Range', 'The controller flagged the input', 'The input channel and the field signal'],
+          ['Good, Local Override', 'Someone forced the tag', 'The override list; remove it when the cause is fixed'],
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'One tag bad on a healthy device is almost always a name',
+        text: 'When every other tag from a controller is good and one is bad, the tag was renamed, moved into a program scope, had its array size changed, or was deleted in the controller, and SCADA was not updated. Compare the address character by character; case matters on most platforms.',
+      },
+      { t: 'h2', text: 'Verification' },
+      {
+        t: 'ul',
+        items: [
+          'The quality code on the tag is Good and the timestamp advances.',
+          'The value changes when the process or the controller value changes.',
+          'The driver diagnostics show a stable connection with failures no longer climbing.',
+          'Any override or force used during diagnosis is removed.',
+          'The cause and the fix are recorded, and the tag database is corrected if the cause was configuration.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Why does the tag show bad quality only sometimes?',
+        a: 'Intermittent communication: a serial bus with a marginal device, a radio path with fades, a network with packet loss, or a timeout set too close to the device response time. The driver counters show the failure rate. Lengthen the timeout if it is the cause; fix the path if it is not.',
+      },
+      {
+        q: 'Can bad quality come from the historian?',
+        a: 'A trend that shows gaps or a bad marker reads the quality the historian stored, which came from the driver at the time. A live tag with good quality and a trend with bad quality means the problem was earlier and is now fixed, or the historian collection failed. Check both timestamps.',
+      },
+      {
+        q: 'What should the display show when quality is bad?',
+        a: 'The value in a distinct style with a visible bad quality indicator: an outline, a color from the reserved palette, a marker such as a question mark or an X, and no number that could be read as a real value. Displaying the last value as if it were live is the failure the quality code exists to prevent.',
+      },
+      {
+        q: 'The controller has no fault and SCADA shows every tag bad. What is it?',
+        a: 'The connection between them: the SCADA server network interface, the switch, a changed IP address, a firewall rule, a driver license or service that stopped, or the controller connection limit reached by another client. The driver diagnostics and a ping from the server narrow it in minutes.',
+      },
+    ],
+    related: [
+      '/troubleshooting/scada-troubleshooting/tag-shows-bad-quality',
+      '/troubleshooting/scada-troubleshooting/values-frozen-on-screen',
+      '/troubleshooting/network-troubleshooting/ethernet-device-drops-offline',
+      '/controls/plc-systems/communications/ethernet-ip',
+      '/controls/scada-hmi/scada-fundamentals/scada-architecture',
+    ],
+  },
+  {
+    path: '/how-to/panel-how-to/calculate-sccr',
+    kind: 'howto',
+    title: 'How to Calculate a Panel SCCR',
+    summary:
+      'Determine the short-circuit current rating of a control panel by the UL 508A Supplement SB method: list every power circuit component, find each rating, apply published series combinations and current limiting, and mark the panel with the lowest result.',
+    answer:
+      'To calculate a panel short-circuit current rating, list every component in the power circuit from the incoming terminals to each load, find the SCCR or interrupting rating of each from its listing or the UL 508A default table, raise any that have a published series combination or current-limiting protection ahead of them, and take the lowest value as the panel SCCR. The result is marked on the panel nameplate and compared with the available fault current at the installation, which must not exceed it.',
+    keyPoints: [
+      'The panel SCCR is the lowest rating of any power circuit component, after allowed increases.',
+      'Control circuit components do not count; power circuit components all do, including terminal blocks and wire.',
+      'A component with no marked rating gets the UL 508A default, often 5 kA or less.',
+      'Increases come only from published series combinations or listed current-limiting fuse let-through, never from reasoning.',
+      'The marked SCCR must equal or exceed the available fault current at the panel. That is a code requirement.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['Panels', 'UL 508A', 'NEC', 'How-To'],
+    supplies: [
+      'The panel drawings and bill of materials',
+      'The data sheet or listing information for every power circuit component',
+      'UL 508A, Supplement SB, or the panel shop worksheet based on it',
+      'Manufacturer series combination tables and current-limiting fuse let-through data',
+      'The available fault current at the installation, from the utility and a short-circuit calculation',
+    ],
+    blocks: [
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Before you start',
+        text: 'An SCCR is a safety rating. A panel marked higher than its components can withstand may fail violently under fault, with arc flash consequences for the person in front of it. Follow the method exactly, use only published data, and have the result checked. When in doubt, the number is lower.',
+      },
+      { t: 'h2', text: 'Procedure' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Identify the power circuit', text: 'Every component that carries current from the incoming terminals to a load: disconnect, fuses and breakers, terminal blocks, busbars and wire, contactors, overload relays, drives, soft starters, power supplies on the line side, transformers, and receptacles. The control circuit downstream of the control transformer or the power supply is excluded, provided it is protected as UL 508A requires.' },
+          { title: 'Draw the branches', text: 'From the incoming terminals, trace each branch to its load. A component sees the fault current at its position, and the increases from a protective device apply only downstream of that device.' },
+          { title: 'Find each component rating', text: 'From the component marking or data sheet: the SCCR for devices such as contactors, overloads, drives, and terminal blocks; the interrupting rating for fuses and breakers. Record the rating and the condition it applies under, which often names a specific fuse class or breaker ahead of it.' },
+          { title: 'Apply defaults where nothing is marked', text: 'UL 508A Supplement SB Table SB4.1 gives default ratings for unmarked components: 5 kA for many contactors and overloads under a certain size, 10 kA for some, less for others. An unmarked terminal block or a receptacle takes the default too.' },
+          { title: 'Apply series combinations', text: 'Where a manufacturer publishes a tested combination, such as this breaker or this fuse class ahead of this contactor and overload gives 65 kA, the downstream components take that rating in that combination only. Record the source. Combinations across manufacturers exist only if one of them tested and published them.' },
+          { title: 'Apply current-limiting let-through', text: 'Where a listed current-limiting fuse or a current-limiting breaker with published let-through is ahead of a branch, Supplement SB allows the components downstream to be applied at the let-through current, under the conditions the supplement states, for components with an SCCR in the categories it allows. Use the peak let-through tables for the fuse at the available fault current. This is the most misapplied step; read the supplement conditions.' },
+          { title: 'Handle drives and power conversion', text: 'A drive has its own SCCR that usually depends on a specific upstream protective device named in its listing. Use that device and that rating. A drive with a 5 kA marking and no listed combination limits the panel to 5 kA whatever else is done.' },
+          { title: 'Handle the transformer branch', text: 'A control transformer primary is in the power circuit. Its primary protection and the transformer take the rating at their position; the secondary is a control circuit if it meets the control circuit rules.' },
+          { title: 'Take the lowest', text: 'The panel SCCR is the lowest of every component rating after increases, across every branch. Write the table: component, rating, basis, and the resulting branch rating.' },
+          { title: 'Compare with the available fault current', text: 'From the utility at the service and the short-circuit calculation through the transformers and conductors to the panel location. The panel SCCR must be equal to or greater than it. If not, the design changes: higher-rated components, a series combination, or current-limiting fuses at the main.' },
+          { title: 'Mark and record', text: 'The SCCR on the panel nameplate as UL 508A and the NEC require, and the calculation table in the panel documentation. The table is what an inspector, and the next engineer, will ask for.' },
+        ],
+      },
+      { t: 'h2', text: 'A worked example' },
+      {
+        t: 'table',
+        head: ['Component', 'Marked rating', 'Basis for increase', 'Applied rating'],
+        rows: [
+          ['Main disconnect with Class J fuses, 100 A', '200 kA interrupting', 'None needed', '200 kA'],
+          ['Power distribution block', '10 kA marked', 'Manufacturer table: 100 kA with Class J fuses up to 200 A ahead', '100 kA'],
+          ['Branch breaker, pump 1, 30 A', '14 kA interrupting', 'Manufacturer series table with Class J main: 65 kA', '65 kA'],
+          ['Contactor and overload, pump 1', '5 kA default', 'Manufacturer combination with the branch breaker: 65 kA', '65 kA'],
+          ['Drive, pump 2, with Class J semiconductor fuses per drive listing', '100 kA with the listed fuses', 'As listed', '100 kA'],
+          ['Terminal blocks, power', '10 kA marked', 'Let-through of Class J fuses at 65 kA available: 8 kA peak per table, within the supplement conditions', '65 kA'],
+          ['Control transformer primary breaker, 3 A', '10 kA interrupting', 'No published combination', '10 kA'],
+        ],
+      },
+      {
+        t: 'p',
+        text: 'The panel SCCR in this example is 10 kA, set by the control transformer primary breaker, which has no series rating. Replacing it with a Class CC fuse rated 200 kA raises the panel to 65 kA, limited then by the pump 1 breaker combination. One small breaker, chosen without thought, cost the panel its rating; that is the usual story.',
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'Where the numbers come from',
+        text: 'Every rating in the table has a source that can be produced: a component marking, a data sheet, a manufacturer series combination table, a fuse let-through table, or the Supplement SB default table. A rating that cannot be sourced is not a rating. Panel shops keep the sources with the calculation for exactly this reason.',
+      },
+      { t: 'h2', text: 'Verification' },
+      {
+        t: 'ul',
+        items: [
+          'Every power circuit component appears in the table with a sourced rating.',
+          'Every increase cites a published combination or let-through table and meets the supplement conditions.',
+          'The panel SCCR is the lowest applied rating across all branches.',
+          'The available fault current at the installation is documented and does not exceed the SCCR.',
+          'The nameplate marking matches the calculation, and the calculation is in the panel documentation.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'What SCCR do most utility panels need?',
+        a: 'Whatever the available fault current at the panel is, which depends on the service transformer size and the distance. A small lift station on a pole-mounted transformer at the end of a long secondary may see under 10 kA; a panel next to a large plant transformer may see 40 kA or more. Get the number; do not assume it.',
+      },
+      {
+        q: 'Can I raise the SCCR by putting current-limiting fuses at the main?',
+        a: 'Often, and it is the usual method, but only for the component categories and conditions Supplement SB allows, using the fuse let-through at the available fault current, and not for every device. Drives and some devices require their own listed combination regardless of what is ahead of them.',
+      },
+      {
+        q: 'Does the control circuit affect the SCCR?',
+        a: 'Not if it is a control circuit as UL 508A defines it: fed through a control transformer or a power supply with the required protection, and used only for control. The components on it do not enter the calculation. A receptacle or a heater fed directly from the power circuit is in the power circuit.',
+      },
+      {
+        q: 'Who is responsible for the SCCR?',
+        a: 'The panel builder determines and marks it. The engineer or the installer determines the available fault current and confirms the panel rating is adequate at the installation. An inspector checks both. A panel with an adequate rating in the shop can be inadequate on a site with more fault current than assumed.',
+      },
+    ],
+    related: [
+      '/controls/control-panels/panel-design/sccr',
+      '/controls/control-panels/panel-design/ul-508a',
+      '/controls/control-panels/panel-components/circuit-breakers',
+      '/controls/control-panels/panel-components/fuses',
+      '/controls/control-panels/pump-panels/vfd',
+    ],
+  },
+  {
+    path: '/how-to/instrumentation-how-to/configure-radar-level',
+    kind: 'howto',
+    title: 'How to Configure a Radar Level Transmitter',
+    summary:
+      'Commission a non-contact radar on a wet well or tank: mount it, set the reference and range from measured elevations, map false echoes with the vessel empty, set damping and the output, and verify against a tape at two levels before the controller uses it.',
+    answer:
+      'To configure a radar level transmitter, mount it with a clear view of the surface away from walls, inflows, and obstructions, enter the distance from its reference point to the vessel bottom and the span you want as 4 to 20 mA, run a false echo mapping with the level as low as possible so the transmitter ignores fixed reflections, set damping for the application, confirm the output direction, and verify the reading against a tape measure at two levels. Record every setting and the elevations they were derived from.',
+    keyPoints: [
+      'The reference point is on the transmitter, and every distance is measured from it. Find it in the manual first.',
+      'Range settings come from a tape measure, not from the drawing.',
+      'Map false echoes with the well as empty as it will get. A map made at high level hides the obstructions below.',
+      'Damping smooths the reading and delays it. A few seconds on a wet well; less on a fast process.',
+      'Verify at two levels. A one-point check cannot find a span error.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['Instrumentation', 'Level', 'How-To', 'Commissioning'],
+    supplies: [
+      'The transmitter manual, with the reference point drawing and the menu structure',
+      'A HART communicator, the manufacturer software, or the local display',
+      'A tape measure long enough to reach the bottom, with a weight',
+      'A loop calibrator or milliammeter for the output check',
+      'The instrument list with the intended range and the controller scaling',
+      'The mounting hardware: a flange or bracket that places the antenna where it needs to be',
+    ],
+    blocks: [
+      {
+        t: 'callout',
+        kind: 'safety',
+        title: 'Before you start',
+        text: 'A wet well is a confined space. Mounting and tape measurements are done from the hatch and the walkway, not from inside. Put the level control in manual or on float backup while the transmitter is configured, tell operations, and be aware that the pumps will respond to whatever value the transmitter sends once it is back in control.',
+      },
+      { t: 'h2', text: 'Procedure' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Find the reference point', text: 'The manual shows where on the transmitter the measured distance starts: the flange face, the antenna tip, or a mark on the housing. Every range setting is a distance from that point. Getting this wrong offsets every reading by the difference.' },
+          { title: 'Check the mounting', text: 'The antenna perpendicular to the surface, with a clear cone of view to the lowest level. Away from the wall by the distance the manual gives, away from the inflow stream and the pump discharge turbulence, and not above a ladder, a pump cable, a guide rail, or a float that swings through the beam. A nozzle or standpipe must be the size and length the manual allows, or the echo comes from the nozzle.' },
+          { title: 'Measure the distances', text: 'With the tape, from the reference point to the vessel bottom or to the lowest point you want to measure. Note the elevation of the reference point against a site datum if elevations are used. Measure the current level at the same time, from the reference point to the surface.' },
+          { title: 'Enter the empty and full distances', text: 'Empty distance, the distance from the reference point to the 4 mA point, usually the bottom or the low-level cutoff. Full distance, or span, the distance from the reference point to the 20 mA point, usually near the top of the range with margin below the antenna dead band. These two settings define the output. Copy them from the tape, and copy the resulting range to the instrument list and the controller scaling.' },
+          { title: 'Set the application parameters', text: 'Medium type, liquid; vessel type, open or closed; surface condition, calm or turbulent; and for wastewater, the fast-changing or agitated surface option if offered. These tune the echo processing.' },
+          { title: 'Run the false echo mapping', text: 'With the level as low as it can safely go, so that as much of the well as possible is in view, run the mapping function. The transmitter records the fixed echoes from the walls, the pumps, the rails, and the inflow pipe and ignores them thereafter. Mapping with the well full records nothing useful and leaves the obstructions below the surface unmapped.' },
+          { title: 'Set damping', text: 'The time constant applied to the reading. Two to five seconds on a wet well smooths turbulence without hiding a real change. Less on a tank with fast fill and draw; more on a very turbulent surface. Damping delays every change by about its value, so keep it short enough for the control.' },
+          { title: 'Set the output and failure behavior', text: 'Direction, 4 mA at empty and 20 mA at full unless the loop is designed otherwise. Failure current on lost echo, high or low per the site standard, so the controller can detect it. Echo-lost timeout, the seconds the transmitter holds the last value before declaring a fault.' },
+          { title: 'Verify at two levels', text: 'At the current level, compare the transmitter reading with the tape. Then at a second level, after the pumps have moved the well or by pumping down deliberately, compare again. Both should agree within an inch or two. A consistent offset at both is the reference point; a difference that grows with level is the span or the empty distance.' },
+          { title: 'Check the loop and the controller', text: 'Read the output current with the calibrator at the panel and confirm the controller shows the tape reading in engineering units. Confirm the low-level cutoff and the pump setpoints in the controller correspond to the elevations intended.' },
+          { title: 'Record', text: 'Reference point location, empty and full distances, mapping level, damping, failure current, the two verification readings, and the date, on the loop sheet and the instrument list.' },
+        ],
+      },
+      { t: 'h2', text: 'Settings that cause trouble' },
+      {
+        t: 'table',
+        head: ['Setting', 'Symptom when wrong', 'Fix'],
+        rows: [
+          ['Empty distance from the drawing, not the tape', 'Constant offset at all levels', 'Measure and re-enter'],
+          ['Mapping done at high level', 'Reading jumps to a fixed value as the well pumps down past an obstruction', 'Re-map at the lowest level'],
+          ['Dead band ignored', 'Reading stuck at full when the surface rises near the antenna', 'Lower the 20 mA point below the dead band, or raise the transmitter'],
+          ['Damping too long', 'Level lags; pumps overshoot the stop setpoint', 'Shorten damping; check the controller filter too'],
+          ['Failure current same as a valid reading', 'Lost echo looks like a real level', 'Set failure current outside 4 to 20 mA and validate in the controller'],
+          ['Nozzle too long or too narrow', 'Reading fixed at the nozzle end', 'Shorten the nozzle, use the correct antenna, or map it if the manual allows'],
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'The two-point tape check is the whole verification',
+        text: 'Radar transmitters are accurate to millimeters; almost every wrong reading in the field is a configuration distance or a mapping issue. Two tape readings at different levels, compared with the transmitter, find both. Do them every time the transmitter is touched.',
+      },
+      { t: 'h2', text: 'Verification' },
+      {
+        t: 'ul',
+        items: [
+          'Transmitter reading agrees with the tape at two levels at least a foot apart.',
+          'The controller displays the tape reading in engineering units.',
+          'The reading follows a pump-down smoothly through the full range without jumps at obstructions.',
+          'A blocked or lost echo produces the configured failure current and the controller alarms it.',
+          'All settings and the measured distances are recorded on the loop sheet.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Why does the level jump to a fixed value part way through a pump-down?',
+        a: 'An unmapped fixed echo, usually a pump, a rail, or the inflow pipe, that the transmitter starts tracking as the surface passes it. Re-run the false echo map with the level below the obstruction.',
+      },
+      {
+        q: 'Can I configure the transmitter with the well full?',
+        a: 'You can enter the distances and set the output, but you cannot map the false echoes usefully, and the two-point verification needs a second level. Enter the settings, then finish the mapping and the verification at low level, even if that means a return visit.',
+      },
+      {
+        q: 'What about foam and grease on the wet well surface?',
+        a: 'Radar reads the top of foam poorly and a grease mat inconsistently. Higher frequency radars with narrow beams do better; the application settings help; and where the surface is regularly covered, a submersible pressure transmitter as the second measurement with cross-checking in the controller is the practical answer.',
+      },
+      {
+        q: 'Should the empty distance be the bottom of the well?',
+        a: 'It should be the point you want to read as 4 mA, which is usually the bottom or a little above it, below the low-level cutoff. Setting it at the cutoff loses the ability to see the well below that level, which is useful for a dry-run diagnosis. Setting it far below the bottom wastes range.',
+      },
+    ],
+    related: [
+      '/controls/instrumentation/level/radar-level',
+      '/controls/instrumentation/level/wet-well-level',
+      '/how-to/plc-how-to/scale-a-4-20-ma-input',
+      '/controls/plc-systems/analog-control/signal-validation',
+      '/water-wastewater/wastewater-systems/lift-stations/wet-well-control',
+    ],
+  },
+  {
+    path: '/how-to/network-how-to/assign-ip-addresses',
+    kind: 'howto',
+    title: 'How to Assign IP Addresses on a Control Network',
+    summary:
+      'Build an addressing plan before the first device is configured: one subnet per zone and site, a fixed block layout so an address says what the device is, static addresses on everything that controls a process, and a schedule that is kept current.',
+    answer:
+      'To assign IP addresses on a control network, choose a private range that will not collide with vendor defaults or home routers, give each site and each security zone its own /24 subnet, lay out fixed blocks inside every subnet for gateways, switches, controllers, I/O, instruments, servers, and laptops, assign static addresses to every device that takes part in control, record every address in an IP schedule with the device, MAC address, location, VLAN, and switch port, and verify with ping and the ARP table that no address is duplicated.',
+    keyPoints: [
+      'Plan the whole system first; a network addressed one device at a time cannot be segmented or routed later.',
+      'One /24 per zone per site. The second and third octets say where and what; the last octet says which.',
+      'Static addresses on controllers, I/O, drives, instruments, and servers. No DHCP pool on a control VLAN.',
+      'Avoid 192.168.0.0/24 and 192.168.1.0/24; they collide with vendor defaults, cellular modems, and VPN clients.',
+      'The IP schedule is part of the drawings. An address that is not on the schedule does not exist.',
+      'Verify with ping and ARP from inside the subnet; a duplicate address shows up as two MAC addresses answering.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['Networking', 'Ethernet', 'Design', 'Documentation', 'How-To'],
+    supplies: [
+      'The list of sites, zones, and every network device with its role',
+      'The existing addresses of anything already installed, from the device displays or a network scan',
+      'Access to the switch and firewall configuration',
+      'The programming software for each controller and a laptop with an Ethernet port',
+      'A spreadsheet or the project network schedule template',
+      'Label material for the devices and the drawings',
+    ],
+    blocks: [
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Changing a live address',
+        text: 'Changing the address of a running controller breaks every connection to it: the HMI, the historian, remote I/O, and peer controllers. Readdress during a planned outage, change the clients at the same time, and keep the old address written down until everything reconnects.',
+      },
+      { t: 'h2', text: 'Procedure' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Inventory what exists', text: 'List every device that has or will have an address: controllers, I/O adapters, drives, instruments with Ethernet, switches, firewalls, radios, cellular modems, servers, HMIs, printers, cameras. Record the current address, mask, gateway, and MAC of anything already running. Read the address from the device itself, not from memory.' },
+          { title: 'Choose the private range', text: 'Use the 10.0.0.0/8 range for anything larger than one panel. It gives 65,000 subnets and does not collide with the 192.168.x.x defaults used by vendor equipment, cellular modems, home routers, and VPN clients. Keep 192.168.x.x for temporary bench work and out-of-box device defaults only.' },
+          { title: 'Assign a subnet per zone per site', text: 'Give each site a number and each security zone a number, and form the subnet as 10.SITE.ZONE.0/24. A plant with a control zone, a supervisory zone, and a management zone at site 5 uses 10.5.10.0, 10.5.20.0, and 10.5.99.0. Remote sites follow the same pattern with their own site number, so a site-to-site VPN can route without address translation.' },
+          { title: 'Lay out fixed blocks inside every subnet', text: 'Reserve the same host ranges in every subnet, per the table below, so that the last octet identifies the device class anywhere in the system. A technician who sees 10.7.10.21 knows it is a controller at site 7 in the control zone without looking anything up.' },
+          { title: 'Assign static addresses', text: 'Every controller, I/O adapter, drive, instrument, server, and switch gets a static address from its block. Set it in the device, set the mask to 255.255.255.0, and set the gateway only if the device must talk across subnets; a device with no gateway cannot be reached from another subnet, which is a feature for I/O and a fault for a server.' },
+          { title: 'Handle the devices that insist on DHCP', text: 'A few devices ship with DHCP on and no way to set a static address until they get one. Use a DHCP reservation tied to the MAC on the management network for the first configuration, then set the static address. Do not leave a DHCP pool active on a control VLAN; an address that changes at lease renewal is an intermittent communication failure waiting to happen.' },
+          { title: 'Set the switch and firewall interfaces', text: 'The firewall interface for each subnet takes .1, the gateway address. Switch management addresses go in the management subnet, not in the control subnet, so a switch is reachable only through the management VLAN.' },
+          { title: 'Write the schedule', text: 'One row per address: address, hostname or tag, device model, MAC, location, VLAN, switch and port, and a note. Include the spare blocks so nobody invents an address. Put the schedule with the network drawing and revise both together.' },
+          { title: 'Label', text: 'The address goes on the device label, on the network drawing, and in the switch port description. A controller whose address is visible on its label is diagnosed in seconds; one whose address is in a laptop somewhere is diagnosed in an hour.' },
+          { title: 'Verify', text: 'From a laptop inside each subnet, ping every address on the schedule and confirm the ARP table shows one MAC per address. Ping every spare address and confirm nothing answers. Then check reachability across subnets only where the firewall rules intend it.' },
+        ],
+      },
+      { t: 'h2', text: 'Block layout inside each /24' },
+      {
+        t: 'table',
+        caption: 'A fixed layout that applies in every subnet at every site',
+        head: ['Last octet', 'Use', 'Note'],
+        rows: [
+          ['.1', 'Gateway (firewall or router interface)', 'Same in every subnet'],
+          ['.2 to .9', 'Switches and network infrastructure', 'Management addresses normally live in the management subnet; these are for switches that must be reachable locally'],
+          ['.10 to .49', 'Controllers and PLC communication modules', 'Primary controller at .10 or .11, redundant partner adjacent'],
+          ['.50 to .99', 'Remote I/O adapters and drives', 'In order of the drawing; adapter, then its drives'],
+          ['.100 to .149', 'Instruments and analyzers with Ethernet', 'Match the loop number where possible'],
+          ['.150 to .199', 'Servers, HMIs, historians, workstations', 'Redundant servers adjacent'],
+          ['.200 to .239', 'Engineering laptops and temporary devices', 'Reserved addresses, not a pool'],
+          ['.240 to .254', 'Spare', 'Never assigned without updating the schedule'],
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'When one /24 is not enough',
+        text: 'A site with more than 40 controllers or more than 50 I/O adapters in one zone is unusual. Before enlarging the mask to /23, split the zone into two subnets by process area; a smaller broadcast domain contains a storm, a chatty device, or a loop to one area, and the firewall between areas becomes possible later.',
+      },
+      { t: 'h2', text: 'Checking for duplicates' },
+      {
+        t: 'p',
+        text: 'A duplicate address is intermittent by nature: whichever device answered ARP last gets the traffic. Check from a laptop in the same subnet.',
+      },
+      {
+        t: 'code',
+        lang: 'text',
+        caption: 'Windows commands to confirm which device holds an address',
+        code: `ping 10.5.10.21
+arp -a | findstr 10.5.10.21
+
+REM one line with one MAC is correct
+REM ping the address, unplug the device you think it is, ping again
+REM if it still answers, something else has the address`,
+      },
+      {
+        t: 'p',
+        text: 'On a managed switch, the MAC address table shows the port for each MAC. Two MACs claiming one address show up in the switch log as an IP conflict on some platforms, and always show up as two different ports answering the same address over time.',
+      },
+      { t: 'h2', text: 'Verification' },
+      {
+        t: 'ul',
+        items: [
+          'Every device on the schedule answers ping from inside its subnet with one MAC in the ARP table.',
+          'No spare or unassigned address answers.',
+          'Cross-subnet traffic works only where a firewall rule permits it, and fails everywhere else.',
+          'The controller, HMI, historian, and I/O all reconnected after any readdressing.',
+          'The schedule, the network drawing, the device labels, and the switch port descriptions agree.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Why not just use 192.168.1.x like the vendor defaults?',
+        a: 'Because everything else uses it too. A cellular modem, a laptop on a home network over VPN, a vendor tool, and a new device out of the box all default into 192.168.0.x or 192.168.1.x, and every one of them collides with a control network that lives there. A 10.x.x.x plan avoids every collision and gives room to number sites and zones.',
+      },
+      {
+        q: 'Can two remote sites use the same subnet?',
+        a: 'Only if they will never be connected. Two sites at 192.168.1.0/24 cannot be joined by a VPN or a central SCADA without address translation, which is confusing to troubleshoot. Give every site its own subnet from the start; it costs nothing.',
+      },
+      {
+        q: 'Should the gateway be set on every device?',
+        a: 'Set it where the device must communicate outside its subnet: servers, HMIs, controllers that report to a central SCADA. Leave it blank on remote I/O adapters, drives, and instruments that only talk to the local controller; without a gateway they cannot be reached from, or reach, another subnet even if a firewall rule is wrong.',
+      },
+      {
+        q: 'What about IPv6?',
+        a: 'Turn it off on control devices and workstations where the option exists, and do not plan around it. Control equipment overwhelmingly uses IPv4, and an IPv6 stack left enabled on a workstation is an unmanaged path that no firewall rule was written for.',
+      },
+    ],
+    related: [
+      '/how-to/network-how-to/configure-vlans',
+      '/cybersecurity/network-segmentation/zones-and-conduits',
+      '/cybersecurity/firewalls/firewall-rule-design',
+      '/how-to/network-how-to/troubleshoot-ethernet',
+      '/controls/plc-systems/communications/ethernet-ip',
+    ],
+  },
+  {
+    path: '/how-to/network-how-to/configure-vlans',
+    kind: 'howto',
+    title: 'How to Configure VLANs on a Control Network',
+    summary:
+      'Turn a zone plan into switch configuration: a VLAN per zone with its own subnet, access ports for devices, tagged trunks between switches, a native VLAN that carries nothing, a separate management VLAN, and routing between VLANs only through the firewall.',
+    answer:
+      'To configure VLANs on a control network, map each security zone to a VLAN ID and a subnet, create the VLANs on every switch, set each device port as an access port in the VLAN of its zone, set the links between switches and to the firewall as 802.1Q trunks that carry only the VLANs needed, move the native VLAN off VLAN 1 to an unused ID, put switch management in its own VLAN, configure the firewall as the gateway for every VLAN so that traffic between zones passes its rules, and verify that devices reach their own zone and cannot reach another without a rule.',
+    keyPoints: [
+      'A VLAN is a separate broadcast domain on shared switches; it is only a security boundary when a firewall sits between VLANs.',
+      'One VLAN per zone, one subnet per VLAN, the same IDs at every site.',
+      'Device ports are access ports. Only switch-to-switch and switch-to-firewall links are trunks, and trunks carry only the VLANs they need.',
+      'Nothing lives on VLAN 1. Set the native VLAN on every trunk to an unused ID.',
+      'Switch management goes in its own VLAN, reachable only from the engineering zone.',
+      'Route between VLANs at the firewall, never on a layer 3 switch that bypasses it.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['Networking', 'Ethernet', 'Cybersecurity', 'Design', 'How-To'],
+    supplies: [
+      'The zone and conduit diagram with the VLAN ID and subnet for each zone',
+      'The IP schedule with every device, its VLAN, switch, and port',
+      'Console access to every managed switch and the firewall',
+      'The switch vendor manual for the VLAN and trunk commands',
+      'A laptop that can be moved between ports for testing',
+      'A backup of every switch configuration before starting',
+    ],
+    blocks: [
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Changing a port VLAN on a live system',
+        text: 'Moving a port to a new VLAN disconnects the device from everything it was talking to until its clients are moved and its address matches the new subnet. Do the work in an outage window, one zone at a time, with the console cable connected so a mistake on the management VLAN cannot lock you out of the switch.',
+      },
+      { t: 'h2', text: 'Procedure' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Map zones to VLANs', text: 'Take the zone diagram and assign a VLAN ID and a subnet to each zone, using the same IDs at every site: VLAN 10 for the control zone, 20 for supervisory, 30 for remote I/O, 99 for switch management, for example. Write the plan as a table before touching a switch.' },
+          { title: 'Back up every switch', text: 'Export the running configuration of every switch and the firewall to a file with the date. A VLAN change that goes wrong is undone by restoring the file, not by remembering what you typed.' },
+          { title: 'Create the VLANs on every switch', text: 'Every switch that carries a VLAN must have it defined, including switches that only pass it through. Name each VLAN with its zone so the name shows in status displays.' },
+          { title: 'Configure access ports', text: 'Each device port is an access port in the VLAN of its zone. Disable trunk negotiation on access ports; a device port that can be talked into becoming a trunk is a way into every VLAN. Add a port description with the device tag.' },
+          { title: 'Configure trunks', text: 'Links between switches and to the firewall are 802.1Q trunks. Restrict each trunk to the VLANs it must carry; a trunk that carries everything by default lets a mistake on one switch reach every zone.' },
+          { title: 'Move the native VLAN', text: 'Frames without a tag on a trunk land in the native VLAN, which is VLAN 1 by default on most switches. Set the native VLAN on every trunk to an unused ID such as 999, and put no ports in it, so untagged frames from a misconfigured device go nowhere.' },
+          { title: 'Set up the management VLAN', text: 'Give each switch its management address in the management VLAN, remove the address from VLAN 1, and allow the management VLAN only on trunks that reach the engineering zone. Confirm you can still reach the switch before you disconnect the console cable.' },
+          { title: 'Configure the firewall as gateway', text: 'Create a sub-interface on the firewall for each VLAN with the .1 address of that subnet, and write the rules that allow the intended conduits between zones. Devices in different VLANs can now talk only through those rules.' },
+          { title: 'Move devices zone by zone', text: 'For each zone: readdress the devices if their subnet changed, move their ports, move their clients, and confirm communication returns before starting the next zone.' },
+          { title: 'Verify and document', text: 'Test reachability within and between zones as described below. Save the configuration on every switch, export a fresh backup, and update the network drawing and IP schedule with the VLAN IDs and port assignments.' },
+        ],
+      },
+      { t: 'h2', text: 'Example VLAN plan' },
+      {
+        t: 'table',
+        caption: 'One site; the same IDs repeat at every other site with its own second octet',
+        head: ['VLAN', 'Name', 'Subnet', 'Members'],
+        rows: [
+          ['10', 'CONTROL', '10.5.10.0/24', 'Controllers, local HMI panels'],
+          ['20', 'SUPERVISORY', '10.5.20.0/24', 'SCADA servers, historian, operator workstations'],
+          ['30', 'IO', '10.5.30.0/24', 'Remote I/O adapters, drives, Ethernet instruments'],
+          ['40', 'DMZ', '10.5.40.0/24', 'Data relay, remote access jump host'],
+          ['99', 'MGMT', '10.5.99.0/24', 'Switch and firewall management interfaces'],
+          ['999', 'NATIVE', 'none', 'Native VLAN on trunks; no members'],
+        ],
+      },
+      { t: 'h2', text: 'Example switch configuration' },
+      {
+        t: 'p',
+        text: 'Command-line syntax varies by vendor, but the objects are the same everywhere: a VLAN database, access ports, trunks with an allowed list and a native VLAN, and a management interface. This example uses IOS-style syntax, which also applies to the industrial switches built on it.',
+      },
+      {
+        t: 'code',
+        lang: 'text',
+        caption: 'Access port, trunk, and management interface',
+        code: `vlan 10
+ name CONTROL
+vlan 30
+ name IO
+vlan 99
+ name MGMT
+vlan 999
+ name NATIVE
+!
+interface GigabitEthernet1/0/5
+ description PLC-101
+ switchport mode access
+ switchport access vlan 10
+ switchport nonegotiate
+ spanning-tree portfast
+!
+interface GigabitEthernet1/0/24
+ description TRUNK-to-FW
+ switchport mode trunk
+ switchport trunk native vlan 999
+ switchport trunk allowed vlan 10,20,30,40,99
+!
+interface Vlan99
+ ip address 10.5.99.2 255.255.255.0
+!
+no interface Vlan1`,
+      },
+      {
+        t: 'p',
+        text: 'Switches configured through a web page use the same terms: a VLAN table, a port VLAN membership page with untagged for access and tagged for trunk, a PVID that is the native VLAN of a port, and a management VLAN setting.',
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Multicast on the I/O VLAN',
+        text: 'Some remote I/O and drive connections use multicast. Enable IGMP snooping on the I/O VLAN and configure an IGMP querier on it, otherwise every switch floods the multicast to every port in the VLAN. This is a per-VLAN setting, and one more reason the I/O lives in its own VLAN.',
+      },
+      { t: 'h2', text: 'Verification' },
+      {
+        t: 'ul',
+        items: [
+          'Every switch shows the same VLAN list, and each trunk shows the intended allowed VLANs and native VLAN.',
+          'A laptop on an access port in VLAN 10 pings devices in VLAN 10 across the trunk between switches.',
+          'The same laptop cannot ping a device in VLAN 20 or 30 unless a firewall rule permits it, and the firewall log shows the denied attempt.',
+          'Switch management pages answer only from the engineering zone.',
+          'Nothing has a port in VLAN 1 or in the native VLAN.',
+          'All controller, HMI, historian, and I/O connections are restored, and the configuration is saved and backed up.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Is a VLAN a security boundary?',
+        a: 'Only with a firewall between VLANs. Two VLANs on the same switch with no router between them cannot talk, which isolates them, but the moment a layer 3 switch or a router joins them the boundary is whatever that device enforces. Route between zones on the firewall, where rules and logs exist.',
+      },
+      {
+        q: 'Why not use the layer 3 switch to route between VLANs? It is faster.',
+        a: 'It is also unfiltered and unlogged unless access lists are written and maintained on it, which rarely happens. Control traffic between zones is small; a firewall handles it without difficulty. Reserve switch routing for cases where the firewall is the documented bottleneck, and then write the access lists.',
+      },
+      {
+        q: 'What is the harm in using VLAN 1?',
+        a: 'It is the default for every port and every trunk native VLAN, so a new switch, a reset switch, or a forgotten port lands in it, and management traffic on it mixes with anything untagged. Keeping VLAN 1 empty means those defaults land in a VLAN that connects to nothing.',
+      },
+      {
+        q: 'How do I add a VLAN to an unmanaged switch?',
+        a: 'You cannot. An unmanaged switch passes tagged frames without understanding them, which sometimes works between two managed switches, and puts every device on it in whatever VLAN its uplink port is assigned. Replace unmanaged switches in the path with managed ones before building VLANs.',
+      },
+    ],
+    related: [
+      '/how-to/network-how-to/assign-ip-addresses',
+      '/cybersecurity/network-segmentation/zones-and-conduits',
+      '/cybersecurity/network-segmentation/dmz-design',
+      '/cybersecurity/firewalls/firewall-rule-design',
+      '/cybersecurity/firewalls/industrial-firewalls',
+    ],
+  },
+  {
+    path: '/how-to/network-how-to/troubleshoot-ethernet',
+    kind: 'howto',
+    title: 'How to Troubleshoot an Ethernet Connection',
+    summary:
+      'Work an Ethernet problem one layer at a time: link light and cable, then speed, duplex, and VLAN on the switch port, then address, mask, and gateway, then the application port through the firewall. Each layer has a one-minute test that rules it in or out.',
+    answer:
+      'To troubleshoot an Ethernet connection, establish what changed and whether one device or many are affected, check the link light and the switch port status and swap the cable, read the port speed, duplex, and error counters on the switch, confirm the port VLAN matches the device subnet, confirm the device address, mask, and gateway, ping from a laptop in the same subnet before testing across the firewall, check the ARP and MAC tables to see who is actually answering, test the application port with a TCP connection test, and record the cause when the connection is restored.',
+    keyPoints: [
+      'Bottom up: physical, then switch port, then addressing, then firewall and application. Do not skip a layer because it looks fine.',
+      'The switch port counters tell the truth: CRC errors and late collisions mean a cable or a duplex mismatch, not a software problem.',
+      'Test from inside the subnet first. A ping across the firewall tests three things at once and tells you nothing when it fails.',
+      'A duplex mismatch works at low traffic and fails under load; force both ends or auto-negotiate both ends, never one of each.',
+      'Ping proves the network path; only a connection to the application port proves the device will talk.',
+      'Write down what changed, what you measured, and what fixed it; the next failure is usually the same one.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['Networking', 'Ethernet', 'Troubleshooting', 'Communications', 'How-To'],
+    supplies: [
+      'A laptop with an Ethernet port, a known-good patch cable, and the switch console or management login',
+      'The network drawing and IP schedule for the affected segment',
+      'A cable tester or a spare cable of the right length',
+      'The device manual for its Ethernet status indicators',
+      'Access to the firewall log',
+      'The controller or SCADA communication status display',
+    ],
+    blocks: [
+      {
+        t: 'callout',
+        kind: 'safety',
+        title: 'Working inside a live panel',
+        text: 'Ethernet cables in a control panel run next to control power and sometimes next to drive output cables. Wear the PPE the panel label requires, and do not open a drive compartment to reach a switch without following the lockout procedure.',
+      },
+      { t: 'h2', text: 'Procedure' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Define the failure', text: 'One device or many? Total or intermittent? Since when, and what changed just before: a firmware update, a new cable, a moved port, a firewall rule, a power event? A failure across many devices behind one switch or link points at that switch or link; a single device points at its cable, port, or configuration.' },
+          { title: 'Check the physical layer', text: 'Look at the link light on the device and the port light on the switch. No light on either end means the cable, the port, or the device port is dead: swap in the known-good cable, then try another switch port. Fiber: confirm the transceiver type matches at both ends and the fibers are not swapped.' },
+          { title: 'Read the switch port status', text: 'On the switch, show the port status: up or down, speed, duplex, VLAN, and the error counters. A port that is administratively down or error-disabled was turned off by a person or by a protection feature, and the log says which.' },
+          { title: 'Check speed and duplex', text: 'Both ends should agree. Auto on one end and forced on the other produces a duplex mismatch: the auto end falls back to half duplex, and the port shows late collisions on the half side and CRC or alignment errors on the full side. Set both ends to auto-negotiate or both to the same forced setting.' },
+          { title: 'Check the error counters over time', text: 'Clear the counters, wait ten minutes under normal traffic, and read them again. CRC and input errors that climb point at the cable, a connector, or noise coupled from a nearby drive cable. Output drops point at congestion. Zero errors with no communication means the problem is above the physical layer.' },
+          { title: 'Confirm the VLAN', text: 'The port VLAN must match the subnet the device is addressed in. A device moved to another switch port on a different VLAN links fine and reaches nothing.' },
+          { title: 'Confirm the device addressing', text: 'Read the address, mask, and gateway from the device itself. A mask of 255.255.0.0 on a device whose neighbors use 255.255.255.0, a gateway in the wrong subnet, or a duplicate address each produces a device that partly works.' },
+          { title: 'Ping from inside the subnet', text: 'Put the laptop on an access port in the same VLAN with an address in the same subnet, and ping the device. Success here means the device, cable, port, and VLAN are good and the problem is routing or firewall. Failure here rules those out and keeps the search local.' },
+          { title: 'Check who is answering', text: 'Look at the ARP table on the laptop after the ping and at the MAC address table on the switch. The MAC should be the device and the port should be the one on the drawing. A different MAC is a duplicate address; a different port is a mislabeled cable.' },
+          { title: 'Test across the firewall', text: 'Now ping from the client that actually needs the device. If it fails while the local ping works, read the firewall log for the denied connection and check the gateway on both devices.' },
+          { title: 'Test the application port', text: 'Ping success does not mean the protocol works. Test a TCP connection to the port the application uses, such as 502 for Modbus TCP or 44818 for EtherNet/IP. A refused or timed-out connection with a working ping is a service not running, a device connection limit, or a firewall rule that allows ping but not the port.' },
+          { title: 'Restore and record', text: 'After the fix, watch the counters and the communication status for long enough to see the original failure would have recurred. Record the symptom, the measurements, the cause, and the fix on the work order and in the network notes.' },
+        ],
+      },
+      { t: 'h2', text: 'Symptoms and where to look' },
+      {
+        t: 'table',
+        head: ['Symptom', 'Most likely layer', 'First check'],
+        rows: [
+          ['No link light either end', 'Physical', 'Cable swap, then another switch port, then the device port'],
+          ['Link light, no ping from same subnet', 'Port or addressing', 'Port VLAN, device address and mask, duplicate address'],
+          ['Ping works locally, not from the client', 'Routing or firewall', 'Gateway on both ends, firewall log'],
+          ['Ping works, protocol does not', 'Application', 'TCP test to the port, device connection count, service enabled'],
+          ['Works then drops under load', 'Duplex mismatch or congestion', 'Late collisions, CRC errors, output drops on the port'],
+          ['Drops when a drive runs', 'Noise', 'Cable routing next to drive output cable, shield bonding, CRC errors that track the drive'],
+          ['Whole switch or area drops for seconds', 'Loop or spanning tree', 'Switch log for topology changes, a new cable between two switches, storm control counters'],
+        ],
+      },
+      { t: 'h2', text: 'Useful commands' },
+      {
+        t: 'code',
+        lang: 'text',
+        caption: 'Windows and PowerShell on the laptop; IOS-style commands on the switch',
+        code: `ipconfig /all
+ping 10.5.10.21 -t
+arp -a
+tracert 10.5.10.21
+Test-NetConnection 10.5.10.21 -Port 502
+
+show interfaces status
+show interfaces GigabitEthernet1/0/5
+show mac address-table interface GigabitEthernet1/0/5
+show logging | include 1/0/5
+clear counters GigabitEthernet1/0/5`,
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Cables in drive panels',
+        text: 'A patch cable that shares a wireway with a drive output cable picks up enough noise to produce CRC errors every time the drive runs. Route Ethernet away from drive output cables, cross them at right angles where they must meet, use shielded cable with metal connectors bonded at the switch, and keep the patch cable short.',
+      },
+      { t: 'h2', text: 'Verification' },
+      {
+        t: 'ul',
+        items: [
+          'Link is up at the expected speed and duplex on both ends.',
+          'Error counters do not increase over ten minutes of normal traffic, including with drives running.',
+          'Ping from inside the subnet and from the client both succeed with no loss.',
+          'The application connection is established and the communication status on the controller or SCADA is good.',
+          'The cause is recorded and the drawing or schedule is corrected if it was wrong.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'The link light is on but the switch shows the port down. How?',
+        a: 'The device sees a carrier from the switch while the switch has the port administratively down, error-disabled, or in a state that stops forwarding. Read the switch port status and log; the port was disabled by configuration, by a security feature such as port security or BPDU guard, or by a loop protection feature.',
+      },
+      {
+        q: 'Should I force 100 Mb full duplex on PLC ports?',
+        a: 'Only if both ends are forced identically and the setting is documented. Modern equipment auto-negotiates reliably, and the classic failure is a forced switch port talking to an auto device, which negotiates to half duplex. Default to auto on both ends.',
+      },
+      {
+        q: 'The device pings but its web page and its protocol both time out. What does that mean?',
+        a: 'The network path is good and the device is not serving the port. Common causes: the service is disabled, the device has reached its connection limit and needs old connections to time out, the firmware crashed the TCP stack while ICMP still answers, or a firewall allows ICMP but not the port. Power cycle the device only after checking the firewall and connection count.',
+      },
+      {
+        q: 'How do I find a loop?',
+        a: 'A loop shows as every port on the switch flashing continuously, high CPU on the switch, and devices across the whole VLAN dropping. Look at the switch log for topology changes and the storm control counters, then find the cable that was added most recently between two switches or between two ports on the same switch. Enable spanning tree and loop protection so the next one is blocked instead of felt.',
+      },
+    ],
+    related: [
+      '/troubleshooting/network-troubleshooting/ethernet-device-drops-offline',
+      '/how-to/network-how-to/diagnose-packet-loss',
+      '/troubleshooting/communications-troubleshooting/device-times-out',
+      '/how-to/network-how-to/assign-ip-addresses',
+      '/how-to/network-how-to/configure-vlans',
+    ],
+  },
+  {
+    path: '/how-to/network-how-to/diagnose-packet-loss',
+    kind: 'howto',
+    title: 'How to Diagnose Packet Loss',
+    summary:
+      'Find where and why frames are dropped: measure loss with a continuous ping, localize it hop by hop from both directions, read the port counters on the path, and match the pattern to its cause: a cable, a duplex mismatch, congestion, a loop, or a radio link.',
+    answer:
+      'To diagnose packet loss, confirm it with a continuous timestamped ping from a station near the affected device, then ping each hop along the path in turn to find the first segment that loses packets, ping from the far end back to confirm the segment, clear and read the error and drop counters on every switch port in that segment, and match the pattern of loss to its cause: random loss with CRC errors is a cable or noise, loss under load is congestion or a duplex mismatch, periodic bursts are a device or a scheduled job, brief total loss is a link flap or spanning tree, and loss behind a radio is the radio link.',
+    keyPoints: [
+      'Measure before you touch anything: a timestamped continuous ping gives the loss rate and the pattern.',
+      'Localize by hop: the first hop that loses is where the problem is, and the far-end ping confirms it.',
+      'Port counters name the layer: CRC errors are physical, output drops are congestion, both zero means the loss is beyond the switch.',
+      'The pattern is the diagnosis. Random, under load, periodic, and burst each have a short list of causes.',
+      'A controller that drops pings under load is often the controller, not the network; the protocol timeouts are the real measure.',
+      'Zero loss over an hour, with counters not moving, is the finish line.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 10,
+    tags: ['Networking', 'Ethernet', 'Troubleshooting', 'Telemetry', 'How-To'],
+    supplies: [
+      'A laptop that can be plugged into the switches along the path',
+      'The network drawing with every switch, link, and radio on the path',
+      'Management access to every switch on the path and to any radio or cellular modem',
+      'The controller or SCADA communication status and timeout counters',
+      'A spare patch cable and, for fiber, a light meter',
+      'A text file or notebook for the ping logs and counter readings',
+    ],
+    blocks: [
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'What ping does and does not tell you',
+        text: 'Ping measures whether a small packet crosses the path and comes back. A control protocol that times out at one second can fail from delay that ping reports as success, and a busy controller can drop pings while its protocol works. Use ping to find where frames are lost, and use the protocol communication status to decide whether the problem is solved.',
+      },
+      { t: 'h2', text: 'Procedure' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Confirm and measure the loss', text: 'From a station as close to the affected device as practical, run a continuous ping with timestamps for at least fifteen minutes and save the output. Note the loss percentage and the pattern: single random drops, bursts, drops at regular intervals, or long outages.' },
+          { title: 'Walk the path on the drawing', text: 'List every hop between the client and the device: switches, trunks, fiber links, radios, the firewall. Loss on a path can only come from a link, a switch, or the end device, so the list is the list of suspects.' },
+          { title: 'Ping hop by hop', text: 'From the same station, ping the management address of each switch along the path in order, then the far device. The first target that shows loss marks the segment: the loss is between the last clean target and the first lossy one. If every switch is clean and only the device loses, it is the device, its cable, or its port.' },
+          { title: 'Ping from the far end', text: 'Plug the laptop in beside the affected device and ping back toward the client. Loss that appears in both directions on the same segment confirms the segment. Loss in one direction only is often a duplex mismatch or a half-broken pair in one cable.' },
+          { title: 'Read the counters on the segment', text: 'On both ports of the suspect link, clear the counters, wait ten minutes, and read input errors, CRC errors, output drops, and collisions. CRC and input errors are physical: cable, connector, transceiver, noise. Output drops are congestion. Late collisions are a duplex mismatch. Clean counters on a lossy segment point at a radio, a loop elsewhere flooding the VLAN, or the far device.' },
+          { title: 'Check the radio or cellular link', text: 'If the segment includes a radio, read its received signal strength, signal-to-noise ratio, and error or retry counters on both ends, and compare with the values recorded at commissioning. Loss on a radio link that tracks weather, time of day, or a new obstruction is the link, not the network.' },
+          { title: 'Check for a loop or a storm', text: 'Loss across a whole VLAN at once, switches with high CPU, and every port light solid are a loop or a broadcast storm. Read the switch logs for topology changes and the storm control counters, and find the new cable.' },
+          { title: 'Check the end device', text: 'A controller that loses pings only when it is busy, and whose protocol connections stay good, is deprioritizing ICMP. A controller whose protocol connections also time out under load has too many clients or too fast a poll; count the connections and slow the polls.' },
+          { title: 'Fix the cause, not the symptom', text: 'Replace the cable or transceiver, correct the duplex, enable IGMP snooping for multicast flooding, enable spanning tree and storm control for loops, realign or re-aim the antenna, isolate the chatty device, or spread the polls. Then repeat the measurement.' },
+          { title: 'Verify and record', text: 'Run the continuous ping again for an hour with the counters cleared. Save the before and after ping logs and counter readings with the work order so the next person has a baseline.' },
+        ],
+      },
+      { t: 'h2', text: 'Loss patterns and their causes' },
+      {
+        t: 'table',
+        head: ['Pattern', 'Likely cause', 'Confirming evidence'],
+        rows: [
+          ['Random single drops, 1 to 5 percent', 'Cable, connector, transceiver, or noise', 'CRC and input errors climbing on one port; loss tracks a drive or a motor running'],
+          ['Loss only under load', 'Duplex mismatch or congestion', 'Late collisions on one side; output drops on a trunk; loss disappears when polling is paused'],
+          ['Drops at a regular interval', 'A scheduled job or a device with a periodic burst', 'Timestamps match a backup, a scan, a historian job, or a device that floods multicast on a timer'],
+          ['Complete loss for 10 to 60 seconds, then recovery', 'Link flap or spanning tree reconvergence', 'Switch log shows the port going down and up or a topology change at the same time'],
+          ['Loss to everything behind one link', 'That link: fiber, radio, cellular, or the trunk', 'Both ends of the link show it; devices on the near side are clean'],
+          ['Loss to one device only', 'Its cable, port, or the device itself', 'Every switch on the path is clean; counters on its port or none at all'],
+          ['Loss across a whole VLAN', 'Loop, broadcast storm, or multicast flood', 'Switch CPU high, storm control counters, all port lights solid, IGMP snooping off'],
+        ],
+      },
+      { t: 'h2', text: 'Measuring' },
+      {
+        t: 'code',
+        lang: 'text',
+        caption: 'Continuous ping, per-hop loss, and port counters',
+        code: `REM Windows: continuous ping, then per-hop loss
+ping 10.5.10.21 -t
+pathping 10.5.10.21
+
+# Linux: 1000 pings at 200 ms, then per-hop loss
+ping -c 1000 -i 0.2 10.5.10.21
+mtr -r -c 200 10.5.10.21
+
+# Switch: clear, wait, read
+clear counters GigabitEthernet1/0/24
+show interfaces GigabitEthernet1/0/24 | include error|drops|collision`,
+      },
+      {
+        t: 'p',
+        text: 'A ping with a large payload, near 1400 bytes, finds problems that a default 32-byte ping misses: a marginal cable drops long frames first, and a path with a mismatched maximum frame size drops them entirely. Run both sizes when the default ping looks clean and the protocol still times out.',
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Loss versus latency on radio and cellular',
+        text: 'A cellular link normally shows latency of 50 to 200 milliseconds and occasional loss of a percent or two; a licensed radio link normally shows almost none. Compare the measurement with the baseline recorded at commissioning before calling either one a fault, and set poll timeouts on those links to several times the normal round trip so a normal delay is not counted as a lost poll.',
+      },
+      { t: 'h2', text: 'Verification' },
+      {
+        t: 'ul',
+        items: [
+          'A one-hour continuous ping shows zero loss on wired paths, or loss within the commissioning baseline on radio and cellular paths.',
+          'CRC, input error, output drop, and collision counters on every port in the path stay at zero over the same hour.',
+          'The controller and SCADA communication status stays good, and the timeout counters stop incrementing.',
+          'The switch logs show no link flaps or topology changes during the test.',
+          'The before and after measurements and the cause are recorded with the work order.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'The switch counters are all zero but ping still loses packets. Where is the loss?',
+        a: 'Somewhere the counters do not see: a radio link that retries silently, a firewall that rate-limits ICMP, an unmanaged switch in the path, or the end device dropping pings under load. Ping the far side of each of those in turn, and test with the protocol rather than ping if the end device is the suspect.',
+      },
+      {
+        q: 'How much loss is acceptable?',
+        a: 'On a wired control network, none; a switched Ethernet path with good cables delivers every frame. On radio and cellular, a percent or two is normal and the protocol timeouts and retries are designed for it. Anything above the commissioning baseline on any link is a fault to find.',
+      },
+      {
+        q: 'Ping loss started after a firmware update on the controller. What changed?',
+        a: 'Probably the priority the controller gives to ICMP, or the number of connections it accepts. Check the protocol communication status first; if it is good, the loss is a measurement artifact. If the protocol also fails, the update may have changed connection limits or the default port speed and duplex.',
+      },
+      {
+        q: 'Can a bad cable on one device cause loss on other devices?',
+        a: 'On a switched network, a bad cable affects only its own port, unless the errors are severe enough to flood the switch with malformed frames or the cable is a trunk. Loss on several devices at once points at a shared link, a loop, or a storm, not at one device cable.',
+      },
+    ],
+    related: [
+      '/how-to/network-how-to/troubleshoot-ethernet',
+      '/troubleshooting/network-troubleshooting/ethernet-device-drops-offline',
+      '/troubleshooting/communications-troubleshooting/device-times-out',
+      '/troubleshooting/communications-troubleshooting/modbus-device-intermittently-offline',
+      '/how-to/scada-how-to/diagnose-bad-quality',
     ],
   },
 ];

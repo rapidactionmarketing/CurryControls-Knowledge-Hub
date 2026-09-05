@@ -170,6 +170,8 @@ Everything is under `artifacts/currycontrols`.
   returns an `error` rather than a number. The ampacity calculator refusing 14 AWG aluminum is the
   reference behaviour.
 
+- **NEC tables are diameter-sourced and build-gated.** `src/data/nec-chapter9.ts` stores only diameters; every area is derived as pi/4 x d^2 and rounded the way the printed tables are. `scripts/validate-nec-tables.mjs` holds a separately recorded copy of the published areas, plus Table 310.16 ampacity, Table 430.250 motor full-load current and the 240.6(A) ratings, and `pnpm run build` runs it first so a bad edit cannot ship. Two independent recalls agreeing is the strongest check available in this environment; it is not a code book, and the adopted edition still governs. Known rounding boundary: IMC 2 in computes to 3.6305 and prints 3.631 where the book prints 3.630. Not covered: Table 5A compact-stranded conductors, RHW without its outer covering, HDPE, RTRC, and PVC Types A and EB.
+
 ## Pointers
 
 - See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details

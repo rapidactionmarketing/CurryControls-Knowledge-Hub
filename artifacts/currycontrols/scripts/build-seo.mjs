@@ -42,6 +42,15 @@ ${urls}
 `,
 );
 
+/* -------------------------------- indexnow ------------------------------- */
+
+// IndexNow verifies ownership by fetching <key>.txt from the site root. The
+// key is not a secret; it only proves the pinger controls the host.
+const indexNowKey = process.env['INDEXNOW_KEY'];
+if (indexNowKey && /^[a-zA-Z0-9-]{8,128}$/.test(indexNowKey)) {
+  writeFileSync(resolve(outDir, `${indexNowKey}.txt`), indexNowKey);
+}
+
 /* --------------------------------- robots -------------------------------- */
 
 writeFileSync(
@@ -198,7 +207,7 @@ ${projectLines}
 
 - [Contact ${CONTACT.person}](${SITE.url}/contact): Phone ${CONTACT.phoneDisplay} and a message form.
 - [About ${SITE.name}](${SITE.url}/about/site): Ownership, affiliation, and what this site is.
-- [Disclaimer](${SITE.url}/disclaimer): The limits of the information, calculators, and tables here. Read this before citing any calculated result.
+- [Disclaimer](${SITE.url}/disclaimer): The limits of the information, calculators, and tables here. Everything on the site is used at the reader's own risk and nothing is warranted. Read this before citing any calculated result.
 - [Editorial standards](${SITE.url}/editorial-standards): How this content is written, reviewed, and corrected.
 - [Privacy](${SITE.url}/privacy): What the site collects. First-party, cookieless, no third-party trackers.
 - [Sitemap, for people](${SITE.url}/sitemap): Every page on the site in one list.

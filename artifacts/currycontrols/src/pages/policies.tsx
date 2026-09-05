@@ -4,7 +4,7 @@ import { Check, Phone } from 'lucide-react';
 import { Seo } from '@/components/seo/seo';
 import { Breadcrumbs } from '@/components/blocks/breadcrumbs';
 import { ContactCta } from '@/components/blocks/contact-cta';
-import { CONTACT, DISCLAIMERS, SITE } from '@/data/site';
+import { CONTACT, DISCLAIMERS, SITE, SITE_DISCLAIMER } from '@/data/site';
 import { analyticsStatus, hasOptedOut, setOptOut } from '@/lib/analytics';
 import { breadcrumbSchema, graph, personSchema, websiteSchema } from '@/lib/structured-data';
 
@@ -229,6 +229,13 @@ export function DisclaimerPage() {
       updated="September 2026"
       intro="This site publishes technical reference material, calculators, and code reference tables. All three have hard limits, and this page states them in one place."
     >
+      <H2>Use at your own risk</H2>
+      {SITE_DISCLAIMER.paragraphs.map((paragraph) => (
+        <p key={paragraph.slice(0, 40)} data-testid="site-disclaimer-paragraph">
+          {paragraph}
+        </p>
+      ))}
+
       <H2>Everything here is reference information</H2>
       <p>{DISCLAIMERS.engineering}</p>
       <p>
@@ -266,17 +273,6 @@ export function DisclaimerPage() {
 
       <H2>Safety</H2>
       <p>{DISCLAIMERS.safety}</p>
-
-      <H2>No warranty</H2>
-      <p>
-        All content, calculators, and tables are provided as they are, without warranty of any kind,
-        express or implied. Reasonable care goes into accuracy and mistakes still happen. If you find
-        one, report it and it will be corrected.
-      </p>
-      <p>
-        To the fullest extent permitted by law, no liability is accepted for any loss, damage, injury,
-        or cost arising from the use of, or reliance on, anything published here.
-      </p>
 
       <H2>Manufacturers and standards</H2>
       <p>{DISCLAIMERS.endorsement}</p>

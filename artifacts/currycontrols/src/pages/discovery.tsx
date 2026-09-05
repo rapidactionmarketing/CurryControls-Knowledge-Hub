@@ -8,7 +8,7 @@ import { Disclaimer } from '@/components/blocks/disclaimer';
 import { Icon } from '@/components/icon';
 import { NAV_SECTIONS } from '@/data/navigation';
 import { getChildren, getEntry, label } from '@/data/nav-index';
-import { ALL_TAGS, ENTRIES_BY_RECENCY, entriesWithTag, hasContent } from '@/data/content';
+import { TOPIC_TAGS, ENTRIES_BY_RECENCY, entriesWithTag, hasContent } from '@/data/content';
 import { GLOSSARY_ALPHABETICAL, glossaryPath } from '@/data/glossary';
 import { CALCULATORS, calculatorPath } from '@/data/calculators';
 import { REFERENCE_TABLES, tablePath } from '@/data/tables';
@@ -232,7 +232,7 @@ export function tagSlug(tag: string): string {
 }
 
 const TAG_BY_SLUG: Record<string, string> = Object.fromEntries(
-  ALL_TAGS.map(({ tag }) => [tagSlug(tag), tag]),
+  TOPIC_TAGS.map(({ tag }) => [tagSlug(tag), tag]),
 );
 
 export function isTagSlug(slug: string): boolean {
@@ -261,7 +261,7 @@ export function TopicsIndexPage() {
           itemListSchema(
             'Topics',
             '/topics',
-            ALL_TAGS.map(({ tag }) => ({ name: tag, path: `/topics/${tagSlug(tag)}` })),
+            TOPIC_TAGS.map(({ tag }) => ({ name: tag, path: `/topics/${tagSlug(tag)}` })),
           ),
           breadcrumbSchema(trail),
         )}
@@ -280,7 +280,7 @@ export function TopicsIndexPage() {
 
       <div className="cc-container py-10">
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {ALL_TAGS.map(({ tag, count }) => (
+          {TOPIC_TAGS.map(({ tag, count }) => (
             <li key={tag}>
               <Link href={`/topics/${tagSlug(tag)}`} className="cc-card group flex items-center justify-between gap-3 p-4">
                 <span>
@@ -357,7 +357,7 @@ export function TopicPage({ slug }: { slug: string }) {
             Other topics
           </h2>
           <ul className="mt-4 flex flex-wrap gap-2">
-            {ALL_TAGS.filter((t) => t.tag !== tag).map(({ tag: other }) => (
+            {TOPIC_TAGS.filter((t) => t.tag !== tag).map(({ tag: other }) => (
               <li key={other}>
                 <Link href={`/topics/${tagSlug(other)}`} className="cc-tag">
                   {other}

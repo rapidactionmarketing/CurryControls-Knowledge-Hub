@@ -1,13 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { ArrowRight, ChevronDown, ExternalLink } from 'lucide-react';
-import { NAV_SECTIONS, type NavNode, type NavSection } from '@/data/navigation';
+import { NAV_LINKS, NAV_SECTIONS, type NavNode, type NavSection } from '@/data/navigation';
 import { countDescendants, getEntry, label } from '@/data/nav-index';
 import { hasContent } from '@/data/content';
 import { Icon } from '@/components/icon';
 
 /**
  * Desktop multi-level mega menu.
+ *
+ * Only the open panel is mounted. The panels for all nine sections were
+ * previously rendered on every page and hidden with CSS, which put 88 KB of
+ * markup and nearly 600 links into every prerendered document. The bar with
+ * its triggers is still server-rendered, so the header is complete before
+ * JavaScript runs; a panel appears when opened, on the client.
  *
  * Rendered entirely from the navigation tree, so depth and breadth are a data
  * concern rather than a component concern. Supports hover and click, closes on
@@ -28,6 +34,8 @@ export function MegaMenu() {
    * change alone, and a menu the reader never asked for covers the article.
    */
   const hoverArmed = useRef(false);
+  /** Set when a panel is opened from the keyboard, so focus follows it in. */
+  const focusPanel = useRef(false);
 
   const clearTimer = () => {
     if (hoverTimer.current) {
@@ -77,8 +85,21 @@ export function MegaMenu() {
 
   useEffect(() => clearTimer, []);
 
+  // After a keyboard open, put focus on the first link in the panel that has
+  // just mounted. Pointer opens leave focus alone.
+  useEffect(() => {
+    if (!open || !focusPanel.current) return;
+    focusPanel.current = false;
+    document.getElementById(`mega-${open}`)?.querySelector<HTMLElement>('a[href]')?.focus();
+  }, [open]);
+
   const onTriggerKeyDown = (event: React.KeyboardEvent, index: number) => {
     const sections = NAV_SECTIONS;
+    if (event.key === 'Enter' || event.key === ' ') {
+      // The click that follows opens the panel; this only asks for focus to follow.
+      focusPanel.current = true;
+      return;
+    }
     if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
       event.preventDefault();
       const delta = event.key === 'ArrowRight' ? 1 : -1;
@@ -86,16 +107,47 @@ export function MegaMenu() {
       triggerRefs.current.get(next.slug)?.focus();
     } else if (event.key === 'ArrowDown') {
       event.preventDefault();
+      focusPanel.current = true;
       setOpen(sections[index]!.slug);
       setPinned(true);
     }
   };
 
+  // The bar is sections in order, with each declared link dropped in after the
+  // section it names. Order lives in the data file, not here.
+  const barItems: (
+    | { kind: 'section'; section: NavSection }
+    | { kind: 'link'; href: string; label: string }
+  )[] = [];
+  for (const section of NAV_SECTIONS) {
+    barItems.push({ kind: 'section', section });
+    for (const link of NAV_LINKS) {
+      if (link.after === section.slug) {
+        barItems.push({ kind: 'link', href: link.href, label: link.label });
+      }
+    }
+  }
+
   return (
     <div ref={containerRef} className="cc-desktop-only relative">
       <nav aria-label="Main navigation" className="cc-navbar">
         <ul className="flex items-center gap-0.5">
-          {NAV_SECTIONS.map((section, index) => {
+          {barItems.map((item) => {
+            if (item.kind === 'link') {
+              return (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    className="cc-navlink"
+                    data-current={location === item.href || location.startsWith(`${item.href}/`)}
+                    data-testid={`nav-link-${item.href.slice(1)}`}
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              );
+            }
+            const section = item.section;
             const isOpen = open === section.slug;
             const isCurrent = location === `/${section.slug}` || location.startsWith(`/${section.slug}/`);
             return (
@@ -123,7 +175,7 @@ export function MegaMenu() {
                   data-current={isCurrent}
                   data-testid={`nav-trigger-${section.slug}`}
                   aria-expanded={isOpen}
-                  aria-controls={`mega-${section.slug}`}
+                  aria-controls={isOpen ? `mega-${section.slug}` : undefined}
                   aria-haspopup="true"
                   onClick={() => {
                     clearTimer();
@@ -133,7 +185,7 @@ export function MegaMenu() {
                       setPinned(true);
                     }
                   }}
-                  onKeyDown={(event) => onTriggerKeyDown(event, index)}
+                  onKeyDown={(event) => onTriggerKeyDown(event, NAV_SECTIONS.indexOf(section))}
                 >
                   {label(section)}
                   <ChevronDown
@@ -148,7 +200,7 @@ export function MegaMenu() {
         </ul>
       </nav>
 
-      {NAV_SECTIONS.map((section) => (
+      {NAV_SECTIONS.filter((section) => section.slug === open).map((section) => (
         <MegaPanel
           key={section.slug}
           section={section}

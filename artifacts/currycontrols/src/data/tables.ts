@@ -12,11 +12,12 @@ import {
   AMPACITY_310_16,
   AWG_SIZES,
   DATA_TYPES,
-  EMT_AREA,
   MOTOR_FLC_3PH,
   STANDARD_OCPD,
   TEMP_CORRECTION,
 } from './reference-data';
+import { CONDUIT_TYPES, INSULATION_TYPES, TRADE_SIZES, conductorArea, conduitArea } from './nec-chapter9';
+
 
 export type RefTableCategory =
   | 'Electrical'
@@ -161,7 +162,7 @@ export const REFERENCE_TABLES: RefTable[] = [
       `${(size.cmil / 6530).toFixed(1)}x of 12 AWG`,
     ]),
     notes: [
-      'Insulated areas are for THHN and THWN-2. Other insulation types have different areas, and using the wrong one changes a conduit fill result.',
+      'Insulated areas here are for THHN and THWN-2. The insulated conductor area table lists XHHW, TW, THW and RHW alongside, and using the wrong one changes a conduit fill result.',
       'Circular mils are used directly in the voltage drop formula. Doubling the circular mils halves the voltage drop at the same current and distance.',
     ],
     relatedCalculators: ['voltage-drop', 'conduit-fill', 'wire-size-for-voltage-drop'],
@@ -210,28 +211,57 @@ export const REFERENCE_TABLES: RefTable[] = [
     relatedCalculators: ['conductor-ampacity', 'motor-branch-circuit'],
   },
   {
-    slug: 'emt-conduit-fill',
-    title: 'EMT Conduit Areas and Fill Limits',
+    slug: 'conduit-fill-areas',
+    title: 'Conduit Internal Area by Type and Trade Size',
     category: 'Electrical',
     summary:
-      'Internal area of electrical metallic tubing by trade size, with the usable area at the 53, 31, and 40 percent fill limits.',
+      'Internal cross-sectional area of EMT, ENT, FMC, IMC, LFMC, LFNC-B, RMC, and Schedule 40 and 80 PVC by trade size, the figure conduit fill is measured against.',
     answer:
-      'Conduit fill limits are 53% for a single conductor, 31% for two conductors, and 40% for three or more. Half-inch EMT has an internal area of 0.304 square inches, which gives 0.122 square inches usable at the 40% limit.',
+      'Conduit fill is measured against the raceway internal area from NFPA 70 Chapter 9 Table 4, and that area differs by conduit type at the same trade size. Half-inch EMT has 0.304 square inches, half-inch RMC 0.314, half-inch IMC 0.342, and half-inch Schedule 80 PVC only 0.217. The usable share is 53% for one conductor, 31% for two, and 40% for three or more.',
     basis:
-      'Areas as commonly published for NFPA 70 Chapter 9 Table 4 for EMT, with the fill percentages from Chapter 9 Table 1. Verify against your adopted edition.',
-    keywords: ['conduit fill', 'EMT', 'raceway', 'chapter 9', '40 percent'],
-    head: ['Trade size', 'Total area, sq in', '1 conductor (53%)', '2 conductors (31%)', '3+ conductors (40%)'],
-    rows: Object.entries(EMT_AREA).map(([size, area]) => [
+      'Internal diameters as commonly published for NFPA 70 Chapter 9 Table 4. Areas are computed as pi/4 times the diameter squared, which is how the table itself is derived, and every value is checked at build time against a separately recorded copy of the published area. Fill percentages are from Chapter 9 Table 1. Verify against your adopted edition.',
+    keywords: ['conduit fill', 'EMT', 'RMC', 'IMC', 'PVC', 'ENT', 'LFMC', 'FMC', 'raceway', 'chapter 9', 'table 4', '40 percent'],
+    head: ['Trade size', ...CONDUIT_TYPES.map((c) => `${c.label}, sq in`)],
+    rows: TRADE_SIZES.map((size) => [
       `${size} in`,
-      area.total.toFixed(3),
-      area.fill53.toFixed(3),
-      area.fill31.toFixed(3),
-      area.fill40.toFixed(3),
+      ...CONDUIT_TYPES.map((c) => {
+        const id = c.internalDiameter[size];
+        return id === undefined ? '—' : conduitArea(id).total.toFixed(3);
+      }),
     ]),
     notes: [
-      'These areas are for EMT. Rigid metal conduit, IMC, PVC, and flexible raceways have different internal areas.',
+      'Values are the 100% internal area. Multiply by 0.53, 0.31, or 0.40 for the usable area with one, two, or three or more conductors, or use the conduit fill calculator, which does this and reports the smallest size that fits.',
+      'A dash means the raceway is not made in that trade size under its article.',
       'A nipple not over 24 inches long is permitted 60% fill under Chapter 9 Note 4.',
       'Every conductor counts toward fill, including equipment grounding conductors, even though grounding conductors do not count toward the ampacity adjustment factor.',
+      'EMT, ENT, FMC, IMC, LFMC, LFNC-B, RMC and PVC are governed by Articles 358, 362, 348, 342, 350, 356, 344 and 352 respectively.',
+    ],
+    relatedCalculators: ['conduit-fill'],
+  },
+  {
+    slug: 'conductor-insulation-areas',
+    title: 'Insulated Conductor Area by Insulation Type',
+    category: 'Electrical',
+    summary:
+      'Approximate cross-sectional area of THHN, XHHW, TW, THW, and RHW conductors from 14 AWG to 1000 kcmil, the figures that are summed for conduit fill.',
+    answer:
+      'The space a conductor occupies in a raceway depends on its insulation, not just its gauge. A 12 AWG THHN conductor is about 0.0133 square inches, the same size in THW is 0.0260, and in RHW with its outer covering 0.0353, nearly three times the THHN figure. Using THHN areas for another insulation understates fill.',
+    basis:
+      'Approximate diameters as commonly published for NFPA 70 Chapter 9 Table 5. Areas are computed as pi/4 times the diameter squared, which is how the table is derived, and every value is checked at build time against a separately recorded copy of the published area. Verify against your adopted edition and the manufacturer data for the specific product.',
+    keywords: ['conductor area', 'THHN', 'THWN-2', 'XHHW', 'TW', 'THW', 'RHW', 'chapter 9', 'table 5', 'conduit fill'],
+    head: ['Size', ...INSULATION_TYPES.map((i) => `${i.label}, sq in`)],
+    rows: AWG_SIZES.map((size) => [
+      size.label,
+      ...INSULATION_TYPES.map((i) => {
+        const area = conductorArea(i, size.label);
+        return area === undefined ? '—' : area.toFixed(4);
+      }),
+    ]),
+    notes: [
+      'TW and THW share dimensions from 6 AWG up; they differ only in 14 through 8 AWG.',
+      'RHH, RHW and RHW-2 are listed with their outer covering. Without it they are smaller, and the code table has a separate column for that case.',
+      'Compact-stranded conductors are smaller and use Chapter 9 Table 5A, which is not reproduced here.',
+      'These are approximate dimensions. The manufacturer data for a specific product governs where it differs.',
     ],
     relatedCalculators: ['conduit-fill'],
   },

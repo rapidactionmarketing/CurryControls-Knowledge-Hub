@@ -235,23 +235,6 @@ export const MOTOR_VOLTAGE_INDEX: Record<string, 0 | 1 | 2 | 3 | 4> = {
   '575': 4,
 };
 
-/**
- * Internal area of electrical metallic tubing, as commonly published for
- * NFPA 70 Chapter 9 Table 4. Values are square inches.
- */
-export const EMT_AREA: Record<string, { total: number; fill40: number; fill53: number; fill31: number }> = {
-  '1/2': { total: 0.304, fill40: 0.122, fill53: 0.161, fill31: 0.094 },
-  '3/4': { total: 0.533, fill40: 0.213, fill53: 0.283, fill31: 0.165 },
-  '1': { total: 0.864, fill40: 0.346, fill53: 0.458, fill31: 0.268 },
-  '1-1/4': { total: 1.496, fill40: 0.598, fill53: 0.793, fill31: 0.464 },
-  '1-1/2': { total: 2.036, fill40: 0.814, fill53: 1.079, fill31: 0.631 },
-  '2': { total: 3.356, fill40: 1.342, fill53: 1.778, fill31: 1.04 },
-  '2-1/2': { total: 5.858, fill40: 2.343, fill53: 3.105, fill31: 1.816 },
-  '3': { total: 8.846, fill40: 3.538, fill53: 4.688, fill31: 2.742 },
-  '3-1/2': { total: 11.545, fill40: 4.618, fill53: 6.119, fill31: 3.579 },
-  '4': { total: 14.753, fill40: 5.901, fill53: 7.819, fill31: 4.573 },
-};
-
 /** Resistivity constants for the circular-mil voltage drop method. */
 export const K_FACTOR = { copper: 12.9, aluminum: 21.2 } as const;
 

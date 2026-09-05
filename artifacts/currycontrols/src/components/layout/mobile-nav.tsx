@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { Link } from 'wouter';
 import { ChevronDown, ExternalLink, Phone, X } from 'lucide-react';
-import { NAV_SECTIONS, type NavNode } from '@/data/navigation';
+import { NAV_LINKS, NAV_SECTIONS, type NavNode } from '@/data/navigation';
 import { label } from '@/data/nav-index';
+import { LIVE_SITES } from '@/data/sites';
 import { hasContent } from '@/data/content';
 import { CONTACT } from '@/data/site';
 import { Icon } from '@/components/icon';
@@ -111,15 +112,44 @@ export function MobileNav({ open, onClose }: { open: boolean; onClose: () => voi
 
         <nav className="flex-1 overflow-y-auto overscroll-contain px-4 pb-24" aria-label="Site navigation">
           {NAV_SECTIONS.map((section) => (
-            <AccordionNode
-              key={section.slug}
-              node={section}
-              path={`/${section.slug}`}
-              depth={0}
-              icon={section.icon}
-              onNavigate={onClose}
-            />
+            <Fragment key={section.slug}>
+              <AccordionNode
+                node={section}
+                path={`/${section.slug}`}
+                depth={0}
+                icon={section.icon}
+                onNavigate={onClose}
+              />
+              {/* Direct links sit in the drawer in the same order as the
+                  desktop bar, after the section each one names. */}
+              {NAV_LINKS.filter((link) => link.after === section.slug).map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={onClose}
+                  className="cc-acc-leaf"
+                  data-testid={`mobile-nav-link-${link.href.slice(1)}`}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </Fragment>
           ))}
+
+          {LIVE_SITES.length > 0 && (
+            <div className="mt-5 border-t border-[hsl(var(--rule))] pt-4" data-testid="mobile-sites">
+              <p className="cc-eyebrow mb-2">Other sites by Eric Sullivan</p>
+              <ul className="space-y-1">
+                {LIVE_SITES.map((site) => (
+                  <li key={site.domain}>
+                    <a href={`https://${site.domain}/`} rel="noopener" className="cc-acc-leaf">
+                      {site.name}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           <Link
             href="/contact"

@@ -1,6 +1,7 @@
 import { Link } from 'wouter';
 import { Phone } from 'lucide-react';
 import { CONTACT } from '@/data/site';
+import { SitesMenu } from './sites-menu';
 
 /**
  * Permanent contact bar above the primary header.
@@ -13,17 +14,13 @@ export function UtilityBar() {
   return (
     <div className="cc-utility cc-no-print" data-testid="utility-bar">
       <div className="cc-container flex h-11 items-center justify-between gap-4">
-        <div className="hidden min-w-0 items-center gap-3 sm:flex">
-          <span className="cc-mono truncate text-[0.7rem] font-semibold uppercase tracking-[0.13em] text-white/70">
-            CurryControls.com
-          </span>
-          <span className="hidden text-white/25 md:inline">|</span>
-          <span className="hidden truncate text-[0.78rem] text-white/70 md:inline">
-            Controls &amp; Automation Knowledge Hub
-          </span>
+        {/* The site identity lives in the primary header directly below; repeating it
+            here read as a double header. The bar carries the sites menu and contact. */}
+        <div className="hidden items-center gap-3 md:flex">
+          <SitesMenu />
         </div>
 
-        <div className="flex min-w-0 flex-1 items-center justify-between gap-3 sm:flex-none sm:justify-end">
+        <div className="flex min-w-0 flex-1 items-center justify-between gap-3 sm:ml-auto sm:flex-none sm:justify-end">
           <span className="hidden text-[0.78rem] text-white/70 lg:inline">
             Need controls help?
           </span>

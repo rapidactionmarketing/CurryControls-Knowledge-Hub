@@ -197,7 +197,7 @@ export const ANALOG_ENTRIES: Entry[] = [
     published: '2026-01-27',
     updated: '2026-07-16',
     readingTime: 8,
-    tags: ['Analog', 'PLC', 'Scaling', 'Programming'],
+    tags: ['Analog', 'PLC', 'Programming'],
     blocks: [
       { t: 'h2', text: 'What the card gives you' },
       {
@@ -471,6 +471,411 @@ All three agree, so the scaling is right.`,
       '/controls/plc-systems/analog-control/filtering',
       '/water-wastewater/water-systems/water-pumping/pressure-control',
       '/how-to/plc-how-to/create-a-pid-loop',
+    ],
+  },
+  {
+    path: '/controls/plc-systems/analog-control/raw-counts',
+    kind: 'reference',
+    title: 'Raw Counts',
+    summary:
+      'What an analog input module actually hands the program: the count range, where 4 mA and 20 mA fall in it, how under-range and over-range show up, and why the module manual is the only source that counts.',
+    answer:
+      'An analog input module converts the field signal to an integer, the raw count, and that integer is what the program receives. The span of counts and where the signal limits fall in it depend on the module and its configuration: a 12-bit module gives 0 to 4,095, a 16-bit module something like 0 to 32,767, and some platforms use their own nominal ranges. Scaling turns counts into engineering units, and it is only right if the counts at 4 mA and 20 mA are the ones the module actually produces, which is what the module manual states.',
+    keyPoints: [
+      'The count range is a property of the module and its configured input range, not of the signal.',
+      'On a module configured for 4 to 20 mA the bottom of the range is 4 mA; on one configured for 0 to 20 mA it is 0 mA, and 4 mA lands a fifth of the way up.',
+      'Under-range and over-range appear as counts beyond the nominal span, as clamped values, or as status bits, depending on the module.',
+      'Twelve bits across 4 to 20 mA is about 0.004 mA per count; sixteen bits is sixteen times finer.',
+      'Read the raw count online before scaling anything. It is the one number that cannot be argued with.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 7,
+    tags: ['Analog', 'PLC', 'Signals', 'Fundamentals'],
+    blocks: [
+      { t: 'h2', text: 'What the converter does' },
+      {
+        t: 'p',
+        text: 'The analog to digital converter on an input module samples the voltage across its input resistor and expresses it as an integer. The number of bits in the converter sets how many distinct values it can produce: twelve bits gives 4,096, fourteen gives 16,384, sixteen gives 65,536. The module firmware maps that converter output onto a count range that the platform has standardized, and that count is what appears in the input image and in the tag.',
+      },
+      {
+        t: 'p',
+        text: 'The mapping is the part that varies. One platform presents a 4 to 20 mA signal as 0 to 32,767 with 4 mA at zero. Another presents 0 to 20 mA as 0 to 32,767, so 4 mA is at 6,553. A third uses a nominal range that ends at 27,648 with room above it for over-range. A fourth can be configured to deliver floating point engineering units directly, so the program never sees a count. None of these is wrong, and all of them break a scaling block written for one of the others.',
+      },
+      {
+        t: 'table',
+        caption: 'Common count conventions, as examples only',
+        head: ['Convention', 'Counts at 4 mA', 'Counts at 20 mA', 'Where it is seen'],
+        rows: [
+          ['12-bit, 4 to 20 mA range', '0', '4,095', 'Older and smaller controllers'],
+          ['12-bit, 0 to 20 mA range', '819', '4,095', 'Modules configured for the wider range'],
+          ['16-bit signed, 4 to 20 mA range', '0', '32,767', 'Many modular platforms'],
+          ['16-bit signed, 0 to 20 mA range', '6,553', '32,767', 'The same modules on the wider range'],
+          ['Nominal 27,648 with over-range', '0', '27,648', 'Platforms that reserve counts above nominal for over-range'],
+          ['Engineering units mode', 'n/a', 'n/a', 'The module scales in firmware and delivers a float'],
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'The table above is illustrative. The module manual is authoritative.',
+        text: 'The count at each end of the signal range is stated in the manual for the specific module and configuration. A scaling block copied from another project with a different module puts the wrong number in the tag, and it reads plausibly at mid-range, which is why it survives commissioning.',
+      },
+      { t: 'h2', text: 'What happens outside the range' },
+      {
+        t: 'p',
+        text: 'A 4 to 20 mA transmitter signalling a fault drives the loop below 3.6 mA or above 21 mA, and a broken wire reads 0 mA. What the module does with a signal outside its nominal range is again a property of the module.',
+      },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Counts continue beyond the span', def: 'The module reports a count below zero or above the nominal maximum, and the program can compare against thresholds. This is the most useful behavior, because 0 mA and 3.6 mA are distinguishable.' },
+          { term: 'Counts clamp at the limits', def: 'Anything below 4 mA reads as the minimum count and anything above 20 mA as the maximum. A broken wire looks like an empty tank. Only the status bits distinguish them.' },
+          { term: 'Status bits', def: 'Under-range, over-range, open wire, and channel fault bits in the module status words. These are the reliable indicators, and the program should read them rather than infer a fault from the count.' },
+        ],
+      },
+      { t: 'h2', text: 'Resolution in the field' },
+      {
+        t: 'p',
+        text: 'Across 16 mA of span, a 12-bit module resolves about 0.004 mA per count, which on a 0 to 20 foot level is about 0.005 feet, or a sixteenth of an inch. A 16-bit module resolves sixteen times finer. For a wet well level either is ample. For a flow total accumulated over a year, or a chemical dose in parts per million, the coarser resolution shows up as a steady error, and the finer module is worth its price. The analog resolution calculator on this site gives the engineering resolution for a given range and bit count.',
+      },
+      { t: 'h2', text: 'Reading the count online' },
+      {
+        t: 'p',
+        text: 'When a scaled value is wrong, the raw count settles the argument. Read the input tag online, with the transmitter driven to 4, 12, and 20 mA by a calibrator or by its own simulation mode, and note the counts. Those three numbers, against the module manual, say whether the module is doing what the scaling assumes. If the counts are right and the scaled value is wrong, the scaling is wrong. If the counts are wrong, the loop or the module is, and no scaling will fix it.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'What is a raw count?',
+        a: 'The integer an analog input module produces from the field signal, before any scaling. Its range depends on the module and its configuration, and the module manual states where the signal limits fall in it.',
+      },
+      {
+        q: 'Why does my scaled value read wrong at the ends of the range but right in the middle?',
+        a: 'The scaling assumes the wrong counts at 4 mA or 20 mA, typically because the module range is 0 to 20 mA and the scaling was written for 4 to 20 mA, or the other way round. Read the raw count at 4 and 20 mA and correct the scaling to match.',
+      },
+      {
+        q: 'How do I tell a broken wire from a real zero?',
+        a: 'On a module that reports counts below the 4 mA point, a broken wire reads far below the minimum. On a module that clamps, only the under-range or open-wire status bit tells you. Use the status bits either way; they are what the module provides for the purpose.',
+      },
+      {
+        q: 'Should I use engineering units mode on the module?',
+        a: 'It moves the scaling from the program into the module configuration, which is cleaner and removes a place for error, at the cost of making the configuration part of the documentation. Either is fine; doing both, scaling in the module and again in the program, is the mistake.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/analog-control/scaling',
+      '/controls/plc-systems/analog-control/4-20-ma',
+      '/controls/plc-systems/analog-control/signal-validation',
+      '/calculators/analog-raw-counts',
+      '/calculators/analog-resolution',
+    ],
+  },
+  {
+    path: '/controls/plc-systems/analog-control/filtering',
+    kind: 'reference',
+    title: 'Filtering Analog Inputs',
+    summary:
+      'How to damp a noisy analog input in the controller without hiding a real process change: the first-order filter, the moving average, the median, where each belongs, and what never to filter.',
+    answer:
+      'A filter trades responsiveness for smoothness. A first-order low-pass filter, one line of arithmetic per scan, removes most of the fuzz on a measurement at the cost of a lag set by its time constant. Choose the time constant so that the lag is small compared to how fast the process can actually change, filter in one place only, and never filter a value used for a safety interlock or a fast alarm. If the signal needs heavy filtering to be usable, the wiring is the problem, not the arithmetic.',
+    keyPoints: [
+      'A first-order filter is y = y + a(x - y), and the smoothing constant a comes from the scan time and the time constant you want.',
+      'The lag is the price. A filter that hides a two-second disturbance also delays a two-second real change.',
+      'A median filter kills single-scan spikes without lag; a moving average smooths but delays; combine them for spiky, noisy signals.',
+      'Filter once, in the controller or the module, and say where in the documentation.',
+      'Interlocks, trips, and fast alarms read the unfiltered value.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['Analog', 'PLC', 'Signals', 'Programming'],
+    blocks: [
+      { t: 'h2', text: 'Why the signal is noisy' },
+      {
+        t: 'p',
+        text: 'Before filtering anything, ask where the noise comes from. Induced noise from a drive cable, a ground loop, or a loop running out of voltage are wiring problems and the pages on those subjects fix them at the source. Turbulence at a level probe or pulsation at a pressure tap is real process movement that a filter legitimately smooths. A filter applied to a wiring problem hides the symptom and leaves the cause to get worse.',
+      },
+      { t: 'h2', text: 'The first-order filter' },
+      {
+        t: 'p',
+        text: 'The workhorse is the exponential, or first-order low-pass, filter. Each scan the filtered value moves a fraction of the way from where it was toward the new reading.',
+      },
+      {
+        t: 'formula',
+        expr: 'y = y + a x (x - y)',
+        where: [
+          'x is the new raw reading this scan',
+          'y is the filtered value, carried from the previous scan',
+          'a is the smoothing constant between 0 and 1, computed as dt / (T + dt)',
+          'dt is the scan or task period and T is the filter time constant, in the same units',
+        ],
+      },
+      {
+        t: 'p',
+        text: 'The time constant T is the tuning knob. After a step change in the input, the filtered value reaches about 63 percent of the change in one time constant and about 95 percent in three. A time constant of two seconds means a real change is mostly visible after six seconds. Choose it from how fast the process can genuinely change, not from how smooth you want the trend to look.',
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Compute a from the task period, do not guess it',
+        text: 'A smoothing constant of 0.1 means something different in a 10 ms task than in a 500 ms task. Put the time constant in a tag in seconds, compute a from the actual period each scan, and the filter behaves the same when someone later changes the task rate.',
+      },
+      { t: 'h2', text: 'Other filters' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Moving average', def: 'The mean of the last N readings. Smooths evenly, delays by about half the window, and costs N words of memory. It is what a chart recorder does, and it is fine for slow signals, but the first-order filter does the same job with less memory and a cleaner response.' },
+          { term: 'Median', def: 'The middle value of the last three or five readings. A single-scan spike from a radio burst or a relay switching never makes it through, and there is almost no lag. It does nothing for continuous fuzz. Put it ahead of a first-order filter on a signal that has both spikes and noise.' },
+          { term: 'Rate limit', def: 'Clamps how far the value can move per scan. Useful where a physical quantity cannot change faster than a known rate, dangerous where it can, because it hides a genuine fast event.' },
+          { term: 'Module hardware filter', def: 'Most analog modules offer an input filter or an integration time, often set to reject 50 or 60 Hz. It is applied before the count reaches the program and it is the right place to handle mains-frequency pickup. It adds lag like any other filter, and it is easy to forget it is there.' },
+        ],
+      },
+      { t: 'h2', text: 'Where to filter and where not to' },
+      {
+        t: 'table',
+        caption: 'What reads the filtered value',
+        head: ['Use', 'Filtered?', 'Why'],
+        rows: [
+          ['Operator display and trend', 'Yes', 'A steady number is easier to read and the lag does not matter'],
+          ['PID measurement', 'Lightly', 'Noise in the measurement drives the output through the derivative and proportional terms; a small time constant helps, a large one destabilizes the loop'],
+          ['Totalizer', 'Yes, lightly', 'Noise averages out over the total anyway, so a light filter changes little'],
+          ['Level start and stop setpoints', 'Yes, with deadband', 'Prevents chatter around the setpoint; the deadband page covers the pairing'],
+          ['High and low alarms', 'Depends on the alarm', 'A nuisance alarm from noise wants a filter or a delay; an alarm that must catch a fast event wants neither'],
+          ['Safety interlock or trip', 'No', 'The lag delays the trip. Use the raw value and a hardwired device where the consequence is serious'],
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'safety',
+        title: 'A filtered value can hide the event the interlock exists for',
+        text: 'A high pressure trip on a filtered signal fires late by the time constant. If the consequence of that delay is a burst pipe or a person hurt, the interlock reads the raw signal, and where the consequence is serious the trip is hardwired and not in the program at all.',
+      },
+      { t: 'h2', text: 'One filter, documented' },
+      {
+        t: 'p',
+        text: 'The failure mode of filtering is not too little; it is too much, in too many places. The transmitter has a damping setting. The module has a hardware filter. The program has a first-order filter. The SCADA tag has a deadband and a smoothing option. Each was added by a different person to fix a symptom, and together they turn a real change into a slow drift that arrives a minute late. Decide where the filter lives, set the others to zero, and write the time constant into the narrative beside the tag.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'What time constant should I use?',
+        a: 'Short enough that the lag is small compared with the fastest change the process can make, and long enough to remove the noise. A level in a wet well can take several seconds. A pressure loop on a pump takes a fraction of a second or none. Start small and lengthen only as far as needed.',
+      },
+      {
+        q: 'Should I filter the input to a PID loop?',
+        a: 'Lightly, if the measurement is noisy, because noise reaches the output through the proportional and derivative terms. A heavy filter adds lag inside the loop and makes it unstable. Fix the noise at the source first.',
+      },
+      {
+        q: 'Where does the transmitter damping setting fit in?',
+        a: 'It is a filter in the transmitter, applied before the signal leaves the field. It is one of the places a filter can live, and it should be the only one if it is used. Note it on the instrument data sheet.',
+      },
+      {
+        q: 'How do I remove single spikes without adding lag?',
+        a: 'A median filter over three or five readings. A single bad reading is never the middle value, so it never reaches the output, and the response to a real change is delayed by one or two scans only.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/analog-control/deadband',
+      '/controls/plc-systems/analog-control/signal-validation',
+      '/controls/plc-systems/analog-control/pid',
+      '/troubleshooting/instrumentation-troubleshooting/4-20-ma-signal-unstable',
+      '/controls/instrumentation/signals/ground-loops',
+    ],
+  },
+  {
+    path: '/controls/plc-systems/analog-control/deadband',
+    kind: 'reference',
+    title: 'Deadband and Hysteresis',
+    summary:
+      'Why a single setpoint chatters, how a deadband turns it into a start point and a stop point, how wide to make it, and where deadbands belong in alarms, level control, and controller outputs.',
+    answer:
+      'A comparison against a single setpoint switches back and forth every scan while the measurement sits near it, because noise crosses the line in both directions. A deadband replaces the one line with two: the action turns on at one value and off at another, and the measurement has to travel the whole gap to change state. The gap is sized from the noise on the measurement, with margin, and from how often the equipment can tolerate switching.',
+    keyPoints: [
+      'One setpoint plus noise equals chatter. Two setpoints with a gap equals a decision that sticks.',
+      'Size the gap at two to three times the peak-to-peak noise on the measurement, and wider if the equipment cannot switch often.',
+      'Level control deadband is the pumping band: it sets cycles per hour and it is a design number, not a tuning afterthought.',
+      'Alarms need deadband too, or they clear and re-alarm continuously at the limit.',
+      'An output deadband on a controller stops a valve or a drive from working for nothing.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 7,
+    tags: ['Analog', 'PLC', 'Programming', 'Control', 'Pumps'],
+    blocks: [
+      { t: 'h2', text: 'The problem' },
+      {
+        t: 'p',
+        text: 'A rung that starts a pump when level is greater than six feet and stops it when level is not greater than six feet works perfectly on paper. In the well the level reads 5.98, 6.01, 5.99, 6.02 as the surface moves and the signal carries a little noise, and the pump starts and stops several times a second until the starter fails. The comparison is not wrong; the measurement is not a single number, and the logic treated it as one.',
+      },
+      { t: 'h2', text: 'Hysteresis' },
+      {
+        t: 'p',
+        text: 'The fix is to make the on decision and the off decision different: start at 6.0 feet, stop at 4.5 feet. Once started, the level has to fall a foot and a half before the pump stops, and noise of a few hundredths cannot do that. The state depends on the history as well as the value, which is what hysteresis means, and every thermostat, pressure switch, and float switch has it built in mechanically. In a program it has to be written.',
+      },
+      {
+        t: 'formula',
+        expr: 'Start when PV >= Start setpoint; stop when PV <= Stop setpoint; otherwise hold the current state',
+        where: [
+          'PV is the measurement',
+          'Start and Stop setpoints differ by the deadband',
+          'The hold is a latched bit or a seal-in rung, not a comparison',
+        ],
+      },
+      {
+        t: 'p',
+        text: 'The logic is a seal-in: the output latches on at the start condition and stays on until the stop condition. Written as two comparisons and a latch, it reads the same way to everyone who opens the program, which matters more than cleverness.',
+      },
+      { t: 'h2', text: 'How wide' },
+      {
+        t: 'p',
+        text: 'The minimum deadband is set by the noise. Look at the measurement on a trend with the process steady and read the peak-to-peak movement; the deadband should be at least two or three times that, so that noise cannot cross both thresholds. Above the minimum, the deadband is set by the process and the equipment.',
+      },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Level control', def: 'The band between start and stop is the storage used per cycle. Wider means fewer, longer runs; narrower means more cycles. Motor starters and pumps are rated for a number of starts per hour, and the wet well cycle calculator turns a band into a cycle time for a given inflow.' },
+          { term: 'Pressure switching', def: 'A hydropneumatic tank and a constant speed pump switch on a pressure band, and the band with the tank volume sets the cycle rate. A band that is too narrow short-cycles the pump.' },
+          { term: 'Temperature', def: 'Heaters and coolers with a deadband run in a band around setpoint. Thermal lag means the temperature keeps moving after the output switches, so the band the process actually sees is wider than the one in the program.' },
+          { term: 'Alarms', def: 'An alarm at 8.0 feet that clears at 7.99 chatters in and out of alarm while the level sits near the limit, filling the log and training the operator to ignore it. Clear it at 7.5 feet, or after a time below the limit.' },
+        ],
+      },
+      { t: 'h2', text: 'Deadband on a controller output' },
+      {
+        t: 'p',
+        text: 'A PID loop with a small persistent error keeps nudging the valve or the drive, and the equipment wears for no benefit. An output deadband holds the output steady while the error is inside a small band around zero, and the loop only acts when the error is worth acting on. It is a separate thing from the setpoint deadband above, it is set in the loop configuration on most platforms, and it is sized from what movement the final element can actually make: a valve that cannot position closer than one percent gains nothing from being asked to move a tenth.',
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Deadband is not a substitute for a filter, and a filter is not a substitute for deadband',
+        text: 'A filter smooths the measurement; a deadband decides when to act. A noisy signal with a wide deadband and no filter switches correctly but displays badly. A filtered signal with no deadband displays well and still chatters at the setpoint, just more slowly. Most control uses both, each doing its own job.',
+      },
+      { t: 'h2', text: 'In SCADA' },
+      {
+        t: 'p',
+        text: 'SCADA tags have a deadband of their own: the change a value has to make before it is logged or transmitted. It exists to keep noise out of the historian and off the network, and it is the reason a trend from the historian looks smoother than the value in the controller. It is a logging decision, not a control one, and it should be documented separately, because a historian deadband set too wide discards the detail that a troubleshooter later needs.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'What is the difference between deadband and hysteresis?',
+        a: 'Hysteresis is the behavior: the state depends on the direction the measurement came from. Deadband is the number: the gap between the value that turns something on and the value that turns it off. In practice the words are used interchangeably.',
+      },
+      {
+        q: 'How do I pick the deadband for a lift station?',
+        a: 'From the cycle rate. The band between lead start and stop, with the well area and the inflow, sets starts per hour, and the pump and starter ratings set the maximum. The wet well cycle calculator on this site does the arithmetic. The band also has to keep the stop level above the pump intake and the start level below the high alarm.',
+      },
+      {
+        q: 'Why does my alarm keep going in and out?',
+        a: 'The alarm sets and clears at the same value, and the measurement is sitting on it. Give the alarm a deadband, so it clears only after the value has moved a useful distance back, or a delay, so it clears only after the value has stayed back for a time.',
+      },
+      {
+        q: 'Where do I put the deadband on a PID loop?',
+        a: 'On the output, in the loop configuration, sized to the smallest movement the valve or drive can usefully make. Not on the setpoint, and not on the measurement, which is the filter’s job.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/analog-control/filtering',
+      '/controls/plc-systems/analog-control/pid',
+      '/water-wastewater/wastewater-systems/lift-stations/wet-well-control',
+      '/calculators/wet-well-cycle',
+      '/controls/plc-systems/programming/alarms',
+    ],
+  },
+  {
+    path: '/controls/plc-systems/analog-control/signal-validation',
+    kind: 'reference',
+    title: 'Signal Validation',
+    summary:
+      'Catching a failed analog input in logic before it runs a pump on a dead transmitter: range checks, module status bits, frozen-value detection, rate checks, and what the program does with a bad value.',
+    answer:
+      'An analog input is validated by checking that it is within the range a healthy loop can produce, that the module reports the channel healthy, that it is changing when the process is, and that it is not moving faster than physics allows. When any check fails, the program marks the value bad, stops controlling on it, does something defined and safe, and alarms. A controller that keeps acting on a value it has no reason to trust is the most common way a good program does a bad thing.',
+    keyPoints: [
+      'Range check against the NAMUR fault bands: below 3.6 mA or above 21 mA is a transmitter fault, not a measurement.',
+      'Use the module status bits. They report open wire, under-range, and over-range without any inference.',
+      'A value that has not changed at all for a long time while the process runs is frozen, and frozen is bad.',
+      'A rate-of-change check catches a spike or a step that the process could not physically produce.',
+      'On bad: hold or substitute according to the narrative, stop the affected control, alarm, and carry the quality to SCADA.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['Analog', 'PLC', 'Signals', 'Programming', 'Alarms'],
+    blocks: [
+      { t: 'h2', text: 'What can go wrong with a good-looking number' },
+      {
+        t: 'p',
+        text: 'A 4 to 20 mA input that reads 12.0 mA is a plausible value for almost anything. It is also what a shorted loop, a frozen transmitter, or a stuck analog input channel can read. The program compares it with a setpoint and acts, and nothing in the comparison knows the number is a lie. Validation is the set of checks that give the program a reason to trust a value, or a reason not to.',
+      },
+      { t: 'h2', text: 'The checks' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Range', def: 'A healthy loop reads between about 3.8 and 20.5 mA, allowing for calibration and over-range. Below 3.6 mA or above 21 mA is the NAMUR NE 43 fault band, which a transmitter uses on purpose to say it has failed, and 0 mA is a broken wire. Compare the raw count, before scaling, against the counts for those currents from the module manual.' },
+          { term: 'Module status', def: 'Diagnostic modules set bits for open wire, under-range, over-range, and channel fault. They are direct evidence and they should be the first thing the validation logic reads.' },
+          { term: 'Frozen value', def: 'A live measurement of a real process changes, if only in the last digit. A value that has been exactly the same for minutes while pumps run and flows vary is frozen: a failed transmitter, a stuck channel, or a stale value from a communication link. Detect it by comparing the current value with the value some time ago, with a tolerance and a time window chosen for the signal.' },
+          { term: 'Rate of change', def: 'A tank cannot fill in a second. A value that jumps by more than the process could move in one scan is a spike or a step from an electrical event. Flag it, and treat the previous value as current until the next reading agrees.' },
+          { term: 'Cross check', def: 'Where two measurements should agree, a transducer and a float, two flowmeters in series, a pressure and a level, disagreement beyond a tolerance is a fault in one of them. It is the strongest check and the one that requires the most thought about which to believe.' },
+        ],
+      },
+      { t: 'h2', text: 'What to do when it fails' },
+      {
+        t: 'p',
+        text: 'A bad flag is only useful if the program does something with it, and what it does is a design decision written into the control narrative for each loop.',
+      },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Stop controlling on the value.', text: 'A PID loop reading a bad measurement goes to manual at its last output, or to a defined safe output. A level control on a bad level falls back to floats or to a timed cycle. The narrative says which.' },
+          { title: 'Substitute or hold.', text: 'Some loops hold the last good value for a limited time. Some substitute a fixed value that puts the process in a safe state. Some stop. Holding forever is the one option that is never right, because the process moves on while the value does not.' },
+          { title: 'Alarm.', text: 'An instrument-failure alarm, distinct from the process alarm, so the operator knows the tank is not reading rather than that the tank is empty. Priority according to what the loop controls.' },
+          { title: 'Carry the quality.', text: 'Set the tag quality bad in SCADA, so the value displays as bad rather than as a plausible number, and so the historian records the gap rather than a flat line.' },
+          { title: 'Recover deliberately.', text: 'When the checks pass again, hold for a settling time before trusting the value, and consider requiring an operator acknowledgment before automatic control resumes on a loop that matters.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'safety',
+        title: 'Failure direction is a design choice',
+        text: 'A transmitter can be configured to fail high or fail low. A level transmitter that fails low reads an empty well and stops the pumps, which is safe for the pumps and disastrous for the neighborhood. Choose the failure direction for each instrument so that the control response to the fault current is the safe one, and make sure the validation logic reacts to the fault before the control logic does.',
+      },
+      { t: 'h2', text: 'Keeping it maintainable' },
+      {
+        t: 'p',
+        text: 'Validation written separately for every input becomes a program nobody can read. Write it once as a routine or a function block that takes the raw count, the status bits, the range limits, and the tolerances, and returns the value with a quality flag, and call it for every analog input. The tolerances then live in tags beside the instrument, documented with it, and a change to the method is made in one place.',
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Test it by failing the instrument',
+        text: 'At FAT and again at startup, disconnect each analog input, drive it out of range with a calibrator, and hold it frozen. Watch the program do what the narrative says. A validation scheme that has never seen a failed signal has not been tested.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'What current means a transmitter has failed?',
+        a: 'Under NAMUR NE 43, below 3.6 mA or above 21 mA, which most transmitters use deliberately to signal a diagnostic failure. A broken wire reads 0 mA. Anything between about 3.8 and 20.5 mA is a measurement, possibly a wrong one.',
+      },
+      {
+        q: 'How long before a value counts as frozen?',
+        a: 'Long enough that a healthy signal would certainly have changed, which depends on the signal. A wet well level changes within a minute or two. A tank level at night might not change for ten minutes. Set the window per signal and the tolerance to a little more than the noise.',
+      },
+      {
+        q: 'Should the program hold the last good value?',
+        a: 'For a short time, while the fault is confirmed and the operator is alerted. Not indefinitely. The process keeps moving while the value does not, and a stale value that looks current is the most dangerous kind.',
+      },
+      {
+        q: 'Do I still need validation if the module has diagnostics?',
+        a: 'Yes. The module catches open wires and out-of-range currents. It cannot tell that a transmitter is frozen at a plausible value or that it disagrees with the float beside it. The status bits are the first check, not the only one.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/analog-control/raw-counts',
+      '/controls/plc-systems/analog-control/filtering',
+      '/controls/instrumentation/signals/4-20-ma-signals',
+      '/controls/instrumentation/level/wet-well-level',
+      '/troubleshooting/instrumentation-troubleshooting/signal-pegged-high-or-low',
     ],
   },
 ];

@@ -26,7 +26,7 @@ export function CalculatorDisclaimer({
       >
         <AlertTriangle size={13} aria-hidden="true" className="mt-0.5 shrink-0 text-[hsl(32_80%_44%)]" />
         <span>
-          Estimating aid only. Verify every result against the applicable code and manufacturer data.{' '}
+          Estimating aid only, used at your own risk. Verify every result against the applicable code and manufacturer data.{' '}
           <Link href="/disclaimer" className="cc-link">
             Full disclaimer
           </Link>
@@ -55,6 +55,9 @@ export function CalculatorDisclaimer({
       </div>
       <p className="mt-2 text-[0.88rem] leading-6.5 text-[hsl(var(--ink))]">{text}</p>
       <p className="mt-2 text-[0.88rem] leading-6.5 text-[hsl(var(--ink))]">{DISCLAIMERS.codeAuthority}</p>
+      <p className="mt-2 text-[0.88rem] leading-6.5 text-[hsl(var(--ink))]" data-testid="calculator-liability">
+        {DISCLAIMERS.risk} {DISCLAIMERS.liability}
+      </p>
       <p className="mt-2.5 text-[0.8rem]">
         <Link href="/disclaimer" className="cc-link font-semibold">
           Full disclaimer and limits of use

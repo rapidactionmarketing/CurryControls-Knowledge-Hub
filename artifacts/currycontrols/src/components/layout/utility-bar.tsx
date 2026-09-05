@@ -1,0 +1,61 @@
+import { Link } from 'wouter';
+import { Phone } from 'lucide-react';
+import { CONTACT } from '@/data/site';
+
+/**
+ * Permanent contact bar above the primary header.
+ *
+ * The phone number is Eric Sullivan's direct contact for CurryControls.com.
+ * It is deliberately NOT presented as a Curry Controls Company or General
+ * Control Systems number — see the ownership notice.
+ */
+export function UtilityBar() {
+  return (
+    <div className="cc-utility cc-no-print" data-testid="utility-bar">
+      <div className="cc-container flex h-11 items-center justify-between gap-4">
+        <div className="hidden min-w-0 items-center gap-3 sm:flex">
+          <span className="cc-mono truncate text-[0.7rem] font-semibold uppercase tracking-[0.13em] text-white/70">
+            CurryControls.com
+          </span>
+          <span className="hidden text-white/25 md:inline">|</span>
+          <span className="hidden truncate text-[0.78rem] text-white/70 md:inline">
+            Controls &amp; Automation Knowledge Hub
+          </span>
+        </div>
+
+        <div className="flex min-w-0 flex-1 items-center justify-between gap-3 sm:flex-none sm:justify-end">
+          <span className="hidden text-[0.78rem] text-white/70 lg:inline">
+            Need controls help?
+          </span>
+          <span className="hidden text-white/25 lg:inline">|</span>
+          <span className="hidden text-[0.78rem] font-semibold text-white/90 sm:inline">
+            {CONTACT.person}
+          </span>
+
+          <a
+            href={CONTACT.phoneHref}
+            className="group flex items-center gap-2 rounded px-1 py-1"
+            data-testid="link-phone-utility"
+            aria-label={`Call Eric Sullivan at ${CONTACT.phoneDisplay}`}
+          >
+            <span className="grid size-6 shrink-0 place-items-center rounded-full bg-white/12 ring-1 ring-white/25">
+              <Phone size={12} aria-hidden="true" />
+            </span>
+            <span className="sm:hidden text-[0.72rem] font-semibold uppercase tracking-wide text-white/75">
+              Call Eric:
+            </span>
+            <span className="cc-phone">{CONTACT.phoneDisplay}</span>
+          </a>
+
+          <Link
+            href="/contact"
+            className="hidden rounded border border-white/25 px-2.5 py-1 text-[0.72rem] font-semibold uppercase tracking-wider text-white/90 hover:border-white/60 hover:text-white md:inline-block"
+            data-testid="link-contact-utility"
+          >
+            Contact
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}

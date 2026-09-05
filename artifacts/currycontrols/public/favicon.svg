@@ -1,3 +1,6 @@
-<svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect width="180" height="180" rx="36" fill="#FF3C00"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="CurryControls.com">
+  <rect width="32" height="32" rx="5" fill="#0A2342"/>
+  <path d="M7 21.5V10.5M7 10.5h4.6a3.2 3.2 0 0 1 0 6.4H7" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M25 12.4a5.6 5.6 0 1 0 0 7.2" stroke="#1E5F9E" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+  <circle cx="16.6" cy="24.5" r="1.5" fill="#2D6A8A"/>
 </svg>

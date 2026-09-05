@@ -2662,4 +2662,782 @@ END_CASE;
       '/water-wastewater/wastewater-systems/wastewater-pump-control/vfd-pump-control',
     ],
   },
+  {
+    path: '/controls/plc-systems/programming/alarms',
+    kind: 'reference',
+    title: 'Alarms in the Controller',
+    summary:
+      'Generating alarm conditions in the controller rather than in the graphics: why the PLC should own the alarm state, a standard alarm block with setpoints, deadband, and delays, equipment alarms, and packing alarm bits for SCADA.',
+    answer:
+      'An alarm condition belongs in the controller because the controller is the one place that sees the process every scan, keeps running when the SCADA server or the network is down, and can act on the condition with an interlock or a shutdown at the same time it reports it. The SCADA system annunciates, prioritizes, records, and notifies, but the decision that a level is high or a pump has failed to start is made once, in logic, with a setpoint, a deadband, and a delay that are documented and adjustable. A standard alarm block applied to every analog and every discrete condition makes the behavior uniform and the list auditable, and packing the alarm bits into words gives SCADA a compact, reliable picture that survives a communication loss with a single bad-quality indication rather than a flood of stale alarms.',
+    keyPoints: [
+      'The controller decides the alarm state; SCADA annunciates it. One source of truth, and it works when the server does not.',
+      'Every analog alarm has a setpoint, a deadband, and an on delay; every discrete alarm has a condition and a delay.',
+      'Use one standard alarm block for the whole program so behavior and documentation are uniform.',
+      'Fail-to-start, fail-to-stop, and rate-of-change alarms catch equipment problems that limit alarms miss.',
+      'Pack alarm bits into words for SCADA, keep the controller alarm list matched to the alarm philosophy, and make setpoints adjustable from the screen with limits.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['PLC', 'Programming', 'Alarms', 'SCADA', 'Standards'],
+    blocks: [
+      { t: 'h2', text: 'Why the controller' },
+      {
+        t: 'ul',
+        items: [
+          'It sees the value every scan, not every poll; a short excursion is caught.',
+          'It keeps working when the SCADA server, the network, or the radio is down, and can drive a local horn, a dialer, or a shutdown.',
+          'The same condition drives the interlock and the alarm, so they can never disagree.',
+          'Setpoints and delays live in one place and are backed up with the program.',
+          'SCADA receives a state, not a value to evaluate, so every client and every historian sees the same alarm at the same time.',
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'What stays in SCADA',
+        text: 'Priority, annunciation, acknowledgment, shelving, notification, and the alarm record belong in the SCADA alarm server, where the operator interacts with them. The controller supplies the condition and, where the design needs it, a latched state that must be reset. Alarm philosophy work, the rationalization, and the priority assignment are done with both in view.',
+      },
+      { t: 'h2', text: 'A standard analog alarm block' },
+      {
+        t: 'table',
+        head: ['Input', 'Purpose', 'Typical value'],
+        rows: [
+          ['PV', 'The engineering unit value being watched', 'The scaled tag'],
+          ['HH, H, L, LL setpoints', 'The four limits', 'From the alarm philosophy; adjustable within limits'],
+          ['Deadband', 'Hysteresis so the alarm does not chatter at the limit', '1 to 2 percent of span, or a process-based value'],
+          ['On delay', 'How long the condition must persist before alarming', '2 to 30 seconds for most process alarms'],
+          ['Off delay', 'How long it must clear before returning to normal', 'Often zero; used where the value oscillates'],
+          ['Enable', 'Suppress by design during a known state, such as a pump starting', 'From the sequence logic'],
+          ['Bad quality', 'Force the value alarms off and raise a separate instrument alarm', 'From signal validation'],
+        ],
+      },
+      {
+        t: 'table',
+        head: ['Output', 'Meaning'],
+        rows: [
+          ['HH, H, L, LL active', 'The condition is true after delay and deadband'],
+          ['Any alarm', 'Combined bit for interlocks and the screen'],
+          ['Instrument fault', 'Bad quality, out of range, or open loop, separate from process alarms'],
+        ],
+      },
+      { t: 'h2', text: 'Discrete and equipment alarms' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Fail to start', def: 'The run command is on and the run feedback is off after a delay long enough for the starter, typically 5 to 10 seconds. Latch it; it needs a person.' },
+          { term: 'Fail to stop', def: 'The run command is off and the feedback stays on; a welded contactor or a wrong feedback wire. Latch it.' },
+          { term: 'Unexpected running', def: 'Feedback on with no command; a hand switch, a bypass, or a wiring fault.' },
+          { term: 'Discrepancy', def: 'A valve commanded open with the closed limit still made after the travel time.' },
+          { term: 'Communication loss', def: 'A watchdog word from a remote site or a device stops changing; alarm after a delay and set the data bad.' },
+          { term: 'Rate of change', def: 'A level rising faster than any pump combination can explain, or dropping faster than a single pump should pump; catches a burst main or a stuck valve before a limit does.' },
+          { term: 'Stale value', def: 'An analog that has not changed by more than its noise for a period; a frozen transmitter or a held gateway value.' },
+          { term: 'Runtime and starts', def: 'Starts per hour above the motor rating, or runtime without a stop beyond what the process should need.' },
+        ],
+      },
+      { t: 'h2', text: 'Delays and deadbands' },
+      {
+        t: 'p',
+        text: 'A delay filters transients: a level that wobbles past the high setpoint for one scan during a pump start is not an alarm. A deadband stops the alarm from setting and clearing repeatedly as the value hovers at the limit: the alarm sets at the setpoint and clears only when the value has moved back through the setpoint by the deadband. Both are values in the block, both are documented in the alarm list, and both come from the process, not from a habit. A chlorine residual alarm might need a two-minute delay and a deadband of a tenth of a milligram per liter; a wet well high alarm needs a few seconds and a few inches.',
+      },
+      {
+        t: 'code',
+        lang: 'text',
+        caption: 'The core of an analog high alarm: hysteresis, then a delay',
+        code: `// Analog high alarm with deadband and on delay (structured text)
+IF PV >= H_SP THEN
+    HighCond := TRUE;
+ELSIF PV < (H_SP - Deadband) THEN
+    HighCond := FALSE;
+END_IF;
+HighTimer(IN := HighCond AND Enable AND NOT BadQuality, PT := OnDelay);
+HighAlarm := HighTimer.Q;`,
+      },
+      { t: 'h2', text: 'Packing for SCADA' },
+      {
+        t: 'p',
+        text: 'Alarm bits are packed into 16-bit or 32-bit words in a contiguous block, with the bit positions fixed in the alarm list, so that SCADA reads the whole alarm state of a site in one or two registers per poll. The SCADA alarm server maps each bit to an alarm with its priority and message. A communication loss then produces one bad-quality condition on the block rather than a flood of individual stale alarms, and adding an alarm is a bit assignment and a list entry rather than a new poll. Setpoints are exposed in a separate block of registers that SCADA can write, with the controller clamping each to a documented range.',
+      },
+      { t: 'h2', text: 'Keeping the list' },
+      {
+        t: 'ul',
+        items: [
+          'One alarm list, in the engineering library, with tag, condition, setpoint, deadband, delay, priority, consequence, and operator action.',
+          'The controller block parameters are set from the list, and the SCADA alarm configuration is generated from or checked against it.',
+          'Setpoint changes from the screen are logged with who and when; the list is updated when a change is made permanent.',
+          'Alarm counts per shift and standing alarms are reviewed; an alarm nobody acts on is removed or re-rationalized.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Should the alarm latch in the controller or in SCADA?',
+        a: 'Process alarms follow the condition and are acknowledged in SCADA. Equipment alarms that need a person, such as fail to start, seal failure, or a discrepancy, latch in the controller and are reset from the screen or the panel after the cause is fixed, so that the equipment does not restart on its own.',
+      },
+      {
+        q: 'How do I stop the alarm flood when communications are lost?',
+        a: 'Package the site alarms in words and have SCADA treat the block quality as one condition: a communication alarm for the site, with the individual alarms held or marked stale rather than tripped. The controller keeps its own alarm state and the flood never happens.',
+      },
+      {
+        q: 'Can operators change setpoints?',
+        a: 'Within limits set by engineering and enforced by the controller, with the change logged. A high level setpoint can be moved within the range the wet well allows; it cannot be set above the overflow. The limits are in the alarm list.',
+      },
+      {
+        q: 'What about alarms for conditions the controller cannot see, like a server disk filling?',
+        a: 'Those are system alarms and belong in SCADA or the network monitor. The controller owns process and equipment alarms; SCADA owns its own health.',
+      },
+    ],
+    related: [
+      '/controls/scada-hmi/alarm-management/isa-18-2',
+      '/controls/scada-hmi/alarm-management/alarm-philosophy',
+      '/how-to/plc-how-to/add-an-alarm',
+      '/controls/plc-systems/analog-control/signal-validation',
+      '/controls/scada-hmi/alarm-management/alarm-floods',
+      '/controls/plc-systems/programming/interlocks',
+    ],
+  },
+  {
+    path: '/controls/plc-systems/programming/sequential-function-chart',
+    kind: 'reference',
+    title: 'Sequential Function Chart',
+    summary:
+      'The IEC 61131-3 language for sequences: steps, transitions, actions and their qualifiers, alternative and simultaneous branches, where it fits in water and wastewater, and the rules that keep a chart from sticking in a step.',
+    answer:
+      'A sequential function chart describes a process as a series of steps connected by transitions: a step is active, its actions run, and when the transition condition below it becomes true the step deactivates and the next one activates. The chart is the natural language for anything that happens in order, such as a filter backwash, a membrane clean-in-place, a chemical batch, or a plant startup, because the chart on the screen is the sequence of operations from the narrative, and the operator can see which step the plant is in. The discipline that makes it reliable is the same as for any state machine: every step has an exit, a timeout, and an abort path; the chart starts in a known step on power-up or after a fault; and manual intervention takes the chart to a defined step rather than leaving it stranded.',
+    keyPoints: [
+      'Steps hold actions; transitions hold conditions; exactly one path is active in a simple chart.',
+      'Action qualifiers say when the action runs: non-stored, set, reset, pulse, delayed, and time limited.',
+      'Alternative branches choose one path; simultaneous branches run several and rejoin.',
+      'Every step needs a timeout and an abort transition, and the chart needs a defined restart step.',
+      'Use it for backwash, clean-in-place, batching, and startup sequences; keep continuous control in ladder or function blocks.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['PLC', 'Programming', 'Standards', 'Control', 'Water'],
+    blocks: [
+      { t: 'h2', text: 'The elements' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Initial step', def: 'The step active on first scan or after a reset; drawn with a double border. Usually an idle or ready state.' },
+          { term: 'Step', def: 'A state of the sequence. It is active or not, has a step timer, and carries actions.' },
+          { term: 'Transition', def: 'A boolean condition between two steps. When the step above is active and the condition is true, the step above deactivates and the step below activates on the next scan.' },
+          { term: 'Action', def: 'Something done while the step is active, with a qualifier that says how: energize an output, set a value, call a routine.' },
+          { term: 'Alternative branch', def: 'Several transitions under one step; the first true one is taken. Used for choices: pass or fail, manual or auto.' },
+          { term: 'Simultaneous branch', def: 'Several steps activated together from one transition and rejoined by one transition that waits for all of them. Used for parallel activities.' },
+          { term: 'Jump', def: 'A return to an earlier step, for loops and restarts.' },
+        ],
+      },
+      {
+        t: 'table',
+        head: ['Qualifier', 'Name', 'Behavior'],
+        rows: [
+          ['N', 'Non-stored', 'Active while the step is active; the usual choice'],
+          ['S', 'Set', 'Turned on when the step activates and stays on until reset by an R action elsewhere'],
+          ['R', 'Reset', 'Turns off an action that was set'],
+          ['P', 'Pulse', 'Executes once when the step activates'],
+          ['D', 'Delayed', 'Starts after a delay from step activation, if the step is still active'],
+          ['L', 'Limited', 'Active for a limited time from step activation'],
+          ['P1, P0', 'Rising and falling pulse', 'Once on activation, once on deactivation'],
+        ],
+      },
+      { t: 'h2', text: 'Where it fits' },
+      {
+        t: 'table',
+        head: ['Sequence', 'Why a chart', 'Typical steps'],
+        rows: [
+          ['Filter backwash', 'Fixed order, timed steps, air and water phases, operator visibility', 'Drain, air scour, air and water, water wash, filter to waste, return to service'],
+          ['Membrane clean-in-place', 'Chemical phases with temperatures and soaks', 'Flush, heat, chemical recirculation, soak, rinse, neutralize'],
+          ['Chemical batching', 'Fill, mix, transfer in order with volumes', 'Charge water, charge chemical, mix, transfer, clean'],
+          ['Plant startup', 'Permissives checked in order, equipment started in sequence', 'Check permissives, open valves, start pumps, ramp, confirm flows'],
+          ['Generator test', 'Timed transfer and retransfer', 'Start, warm, transfer, run, retransfer, cool, stop'],
+        ],
+      },
+      {
+        t: 'p',
+        text: 'Continuous control does not belong in a chart: level control, PID, and lead and lag pumping run every scan whether or not any sequence is active, and they live in ladder or function blocks. A chart that tries to control a level with steps becomes a state machine with hundreds of transitions. Use the chart for what happens in order and the other languages for what happens all the time.',
+      },
+      { t: 'h2', text: 'Design rules' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'A defined start', text: 'The initial step is idle. Power-up, a processor fault recovery, and an operator reset all return to it, and the actions it runs put the equipment in a safe state.' },
+          { title: 'An exit from every step', text: 'A transition that will become true when the step has done its work, and a timeout transition in parallel that takes the chart to a fault or hold step if it does not. A step with no timeout is where the chart will sit for a week.' },
+          { title: 'An abort path', text: 'An emergency stop, a critical alarm, or an operator abort takes the chart from any step to a defined abort step, which shuts things down in the right order and then returns to idle.' },
+          { title: 'Hold and resume', text: 'A hold step that pauses the sequence with equipment in a safe state, and a resume that returns to the held step, for interruptions such as a low chemical level.' },
+          { title: 'Manual mode', text: 'When an operator takes a device to manual during a sequence, the chart either holds or is told, and the step it returns to is defined.' },
+          { title: 'Step time on the screen', text: 'The active step, the time in it, and the transition it is waiting for are displayed. An operator who can see what the chart is waiting for can fix it.' },
+          { title: 'Retentive state', text: 'Decide what the chart does after a power loss mid-sequence: restart from idle, or resume the held step after operator confirmation. Store the step if resuming.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Stuck steps',
+        text: 'The commonest chart failure is a step whose transition never becomes true: a limit switch that did not make, a flow that did not reach setpoint, a timer that was never started. The sequence stops, the operators do not notice for an hour, and the process sits half done. Every transition that depends on the field has a timeout beside it.',
+      },
+      { t: 'h2', text: 'Vendor implementations' },
+      {
+        t: 'p',
+        text: 'The chart language exists in every major platform under its own name and with its own details. Schneider Control Expert calls it SFC or Grafcet and supports the full qualifier set; Rockwell Studio 5000 provides SFC routines with actions written in structured text; Siemens provides S7-GRAPH as a separate option. Smaller platforms often lack it, and there the same design is built as a state machine in ladder with a step register, which is the same discipline in a different notation. The chart is documented against the sequence of operations in the control narrative, with each step and transition named the same in both.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Ladder state machine or a chart?',
+        a: 'A chart when the platform supports it and the sequence has more than a handful of steps or any branching; the chart is self-documenting and the step is visible. A ladder state machine with a step register when the platform lacks charts or the maintenance staff will not touch anything else. Both need the same exits, timeouts, and aborts.',
+      },
+      {
+        q: 'Can two charts run at once?',
+        a: 'Yes, and each should own its own equipment. Two charts that command the same valve will fight. A simultaneous branch inside one chart is the way to run parallel phases of one sequence; separate charts are for separate processes.',
+      },
+      {
+        q: 'What happens on a download or an online edit?',
+        a: 'Platform dependent, and dangerous. A chart may reset to its initial step or keep its active step. Plan edits for an idle sequence, and test what the platform does before relying on it.',
+      },
+      {
+        q: 'How do I test a chart before startup?',
+        a: 'With the transitions forced or simulated one at a time, watching the actions, then with timeouts shortened, then with each abort input. A chart that has never been aborted in testing will be aborted for the first time on a bad night.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/programming/state-machines',
+      '/controls/plc-systems/programming/sequencers',
+      '/controls/plc-systems/programming/iec-61131-3',
+      '/controls/plc-systems/programming/structured-text',
+      '/engineering-library/control-documentation/sequences-of-operation',
+      '/controls/plc-systems/programming/permissives',
+    ],
+  },
+  {
+    path: '/controls/plc-systems/plc-troubleshooting/analog-signal-problems',
+    kind: 'reference',
+    title: 'Analog Signal Problems',
+    summary:
+      'The controller side of a bad analog value: raw counts against the module range, channel diagnostics, scaling that does not match the transmitter, wiring by device type, noise and filtering, resolution, and a symptom table that points at the check.',
+    answer:
+      'When an analog value is wrong at the controller, the fault is in one of five places and the raw count says which: the field loop, the input module and its configuration, the scaling from counts to engineering units, the filtering and data handling in the program, or the value on its way to the screen. A raw count that matches the measured loop current means the loop and the module are fine and the problem is scaling or logic; a raw count that does not means the module, its range setting, or the wiring. Module channel diagnostics report open wire, under-range, and over-range directly, and reading them is faster than any meter. Most analog problems at the controller are configuration: a channel set for the wrong range, a scaling that assumes a different count span, or a data type that clips.',
+    keyPoints: [
+      'Compare the raw count with the measured loop current first; that comparison splits the problem in half.',
+      'Read the channel diagnostics: open wire, under-range, over-range, and module fault are reported, not inferred.',
+      'Scaling must use the exact count span of the module and the exact range of the transmitter.',
+      'Two-wire, three-wire, and four-wire devices are wired differently to the same module; check the terminal drawing.',
+      'Noise is addressed at the source and the shield before any filter in the program.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['PLC', 'Troubleshooting', 'Analog', '4-20 mA', 'Signals'],
+    blocks: [
+      { t: 'h2', text: 'Symptom to check' },
+      {
+        t: 'table',
+        head: ['Symptom at the controller', 'First check', 'Usual finding'],
+        rows: [
+          ['Value frozen at a rail', 'Channel status and loop current', 'Open loop, transmitter fault current, or a scaling clamp'],
+          ['Value reads zero with the transmitter lit', 'Loop current through the input; channel mode', 'Input not in the loop, channel set for voltage, or a jumper'],
+          ['Value offset by a constant', 'Transmitter zero and the scaling minimum', 'A range change, a datum, or a zero drift'],
+          ['Value off by a proportion', 'Scaling maximum and the count span', 'Wrong count span or transmitter span'],
+          ['Value jumps or is noisy', 'Raw count trend; shield and routing', 'Noise coupled into the loop; a ground loop; a loose terminal'],
+          ['Value steps in coarse increments', 'Module resolution and data type', 'A 12-bit module on a wide range, or an integer scaled too coarsely'],
+          ['Value lags the process', 'Filter settings, module filter, transmitter damping', 'Too much filtering in series'],
+          ['Value good in the controller, wrong on the screen', 'The screen tag scaling and format', 'A second scaling or a wrong decimal place'],
+          ['Whole module bad', 'Module status, power, and backplane', 'Module fault, lost 24 volt supply, or a firmware mismatch'],
+        ],
+      },
+      { t: 'h2', text: 'Raw counts against current' },
+      {
+        t: 'p',
+        text: 'The module converts the loop current to a count within a fixed span: 0 to 4095, 0 to 16383, 3277 to 16383, 4000 to 20000, or another depending on the module and its range setting. The count at 4 milliamps and the count at 20 milliamps are in the module manual, and a meter in the loop with the raw count on the screen gives two points that either fall on that line or do not. If they do, everything upstream of the count is right. If they do not, the channel range setting, the wiring, or the module is wrong, and no amount of scaling will fix it.',
+      },
+      {
+        t: 'formula',
+        expr: 'EU = EU_min + (Raw − Raw_min) × (EU_max − EU_min) ÷ (Raw_max − Raw_min)',
+        where: [
+          'EU = engineering value',
+          'Raw = the count from the module',
+          'Raw_min, Raw_max = the counts at 4 and 20 mA from the module manual, for the channel range in use',
+          'EU_min, EU_max = the transmitter lower and upper range values',
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Two points settle it',
+        text: 'A loop calibrator at 4 and at 20 milliamps, with the raw count read at each, checks the module and the wiring; the scaled value read at each checks the scaling. Four numbers, two minutes, and the argument about which side is wrong is over.',
+      },
+      { t: 'h2', text: 'Channel diagnostics' },
+      {
+        t: 'p',
+        text: 'Modern input modules report per channel whether the loop is open, whether the signal is below or above range, and whether the module itself is healthy, and they make those bits available in the controller. The program should use them: a channel with open wire or out-of-range drives a bad-quality flag on the tag, freezes or fails the value safely, and raises an instrument alarm, rather than letting a rail value flow into a control loop. A module that does not offer diagnostics is checked in logic by comparing the raw count with the limits of the live range.',
+      },
+      { t: 'h2', text: 'Wiring by device type' },
+      {
+        t: 'table',
+        head: ['Device', 'Powered by', 'Wires to the module', 'Note'],
+        rows: [
+          ['Two-wire transmitter', 'The loop, from the module or an external supply', 'Two, in series with the input', 'Know whether the module sources loop power'],
+          ['Three-wire device', 'External supply, common shared with signal', 'Supply, signal, common', 'Common must be the module common'],
+          ['Four-wire transmitter', 'Its own supply; isolated output', 'Two signal wires to a passive input', 'Never wire to a loop-powering input'],
+          ['Voltage output device', 'Its own supply', 'Signal and common to a voltage input', 'Or a current input with the channel set for voltage'],
+        ],
+      },
+      { t: 'h2', text: 'Noise and filtering' },
+      {
+        t: 'ul',
+        items: [
+          'Shielded twisted pair, shield grounded at one end, usually the panel, and never at both.',
+          'Analog cables separated from power and drive cables; crossings at right angles.',
+          'The module input filter set for the application: a slower filter rejects more noise at the cost of response time.',
+          'A program filter only after the wiring is right, and only as much as the loop needs; document its time constant.',
+          'A signal that is noisy only when a drive runs is a drive noise problem; the fix is at the drive and the cable, not in the filter.',
+        ],
+      },
+      { t: 'h2', text: 'Resolution and data types' },
+      {
+        t: 'p',
+        text: 'A 12-bit module resolves a span into 4096 steps; on a 0 to 100 foot level that is a step of about a third of an inch, which is fine, and on a 0 to 500 psi transmitter used to control a 5 psi band it is not. A 16-bit module resolves 65,536 steps. The scaled value should be a floating point tag; an integer scaled value loses resolution to its scale factor and clips at its limits, and a rate calculation from an integer level tag is a staircase.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'The raw count is right and the engineering value is wrong.',
+        a: 'The scaling parameters: the raw minimum and maximum for the channel range actually configured, and the engineering minimum and maximum from the instrument list. One of the four is stale, most often after a transmitter re-range or a module replacement with a different count span.',
+      },
+      {
+        q: 'Why does the channel read a small value with nothing connected?',
+        a: 'An open input on some modules floats to a small count rather than zero, and the under-range diagnostic is the reliable indication. Use the channel status, not the count, to detect an open loop.',
+      },
+      {
+        q: 'Can a module channel be damaged by a wiring mistake?',
+        a: 'Yes: 24 volts applied directly across a current input, a four-wire transmitter connected to a loop-powering input, or a lightning surge. A damaged channel reads a fixed count or a fault, and the module is replaced. A surge protector on loops that leave the building prevents the third case.',
+      },
+      {
+        q: 'How much filtering is too much?',
+        a: 'When the filtered value lags the process by more than the control loop or the alarm can tolerate. Transmitter damping, the module filter, and a program filter add up; a level loop with 30 seconds of combined lag hunts. Set one filter deliberately and leave the others at minimum.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/analog-control/raw-counts',
+      '/controls/plc-systems/analog-control/scaling',
+      '/controls/plc-systems/analog-control/filtering',
+      '/controls/plc-systems/analog-control/signal-validation',
+      '/troubleshooting/instrumentation-troubleshooting/4-20-ma-signal-unstable',
+      '/troubleshooting/instrumentation-troubleshooting/loop-powers-up-but-reads-zero',
+    ],
+  },
+  {
+    path: '/controls/plc-systems/plc-troubleshooting/communication-failures',
+    kind: 'reference',
+    title: 'Communication Failures',
+    summary:
+      'What to read when a controller stops talking to a device, another controller, or SCADA: port and connection status, message error codes, timeouts and retries, addressing, limits, and the order of checks that separates controller, cable, device, and network.',
+    answer:
+      'A controller reports its communication problems in detail if anyone looks: each port has a status, each connection has a state, each message instruction returns an error code when it fails, and each protocol driver counts timeouts and retries. Reading those first tells you whether the controller cannot reach the medium at all, can reach it but gets no answer, or gets an answer it rejects, and each of those points at a different place: the port, cable, or switch; the device address, power, or path; or the message format, data type, or register map. The controller-side checks are cheap and they come before any site visit: the port status, the connection status, the last error code, the counters, and the configuration against the network schedule.',
+    keyPoints: [
+      'Port status, connection state, and the message error code are the first three things to read.',
+      'No link is the port, the cable, or the switch; no answer is the address, the device, or the path; a rejected answer is the message or the map.',
+      'Controllers have connection and message rate limits; exceeding them fails the newest messages first.',
+      'Timeouts and retries are configured per message, and set too short they cause the failures they were meant to catch.',
+      'Compare every address, port, and rate against the network schedule before touching hardware.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['PLC', 'Troubleshooting', 'Communications', 'Modbus', 'Ethernet'],
+    blocks: [
+      { t: 'h2', text: 'Three kinds of failure' },
+      {
+        t: 'table',
+        head: ['What the controller shows', 'Kind', 'Look at'],
+        rows: [
+          ['Port down, no link, no activity', 'Cannot reach the medium', 'Port configuration, cable, switch port, media converter, serial converter'],
+          ['Link up, messages time out', 'No answer', 'Device address, device power and state, routing, firewall, a gateway in the path'],
+          ['Answers arrive, message errors', 'Rejected exchange', 'Function code, register address and count, data type, protocol settings, unit identifier'],
+          ['Works, then fails under load', 'Rate or connection limit', 'Message count and rate, connection count, the device capacity'],
+          ['Works, fails intermittently', 'Marginal medium or timing', 'Cable, noise, timeout versus device response time, a duplicate address'],
+        ],
+      },
+      { t: 'h2', text: 'What to read' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Port status', def: 'Link, speed, duplex, and errors on an Ethernet port; signal presence and framing errors on a serial port. The module status page or the port diagnostics.' },
+          { term: 'Connection status', def: 'For connected protocols: the state of each connection, its error count, and the reason for the last drop.' },
+          { term: 'Message error code', def: 'Each message instruction returns a code on failure that names the cause: timeout, connection refused, bad address, bad data, path not found. The controller manual lists them; log them in a tag so the last one is visible.' },
+          { term: 'Counters', def: 'Timeouts, retries, and errors per message or per device, cleared and trended. A device with a rising retry count is failing before it fails.' },
+          { term: 'Configuration', def: 'Addresses, ports, baud rate and parity, unit identifiers, timeouts, and retries, against the network schedule.' },
+        ],
+      },
+      { t: 'h2', text: 'Serial links' },
+      {
+        t: 'ul',
+        items: [
+          'Baud rate, parity, data bits, and stop bits identical at both ends; a mismatch produces framing errors or silence.',
+          'RS-485 polarity, termination at both ends of the bus only, and a bias where the driver needs it.',
+          'One master on the bus; a second master collides with the first.',
+          'Cable length and device count within the standard; a bus that grew past its limit fails at the far end first.',
+          'A converter or radio in the path has its own settings and its own turnaround time; the message timeout must exceed it.',
+        ],
+      },
+      { t: 'h2', text: 'Ethernet links' },
+      {
+        t: 'ul',
+        items: [
+          'Address, mask, and gateway on the controller against the schedule; a missing gateway stops everything off the local network.',
+          'The switch port up, at the expected speed and duplex, with no errors.',
+          'The device reachable from the controller network; a firewall or a virtual network boundary in the path needs a rule.',
+          'The controller connection count against its limit; every SCADA client, historian, programming session, and message consumes connections.',
+          'The message rate against what the device can answer; a small device polled by several masters drops requests.',
+        ],
+      },
+      { t: 'h2', text: 'Timeouts and retries' },
+      {
+        t: 'p',
+        text: 'A timeout shorter than the device response plus the medium latency fails good messages; a timeout too long makes a failure take minutes to notice. Set the timeout from the measured response time with margin: a local Ethernet device that answers in 10 milliseconds can have a 500 millisecond timeout; a radio path with a two second turnaround needs five seconds. Retries follow the same reasoning: one or two on a wired link, more on a radio, and never so many that the retries themselves saturate the medium. A message that fails after retries should set a communication alarm and mark its data bad, and the program should stop sending new requests to a device that is not answering until a probe succeeds.',
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Log the last error',
+        text: 'Move the message error code into a tag with a timestamp every time it changes. When the operator reports that the site was offline at three in the morning, the code says whether it was a timeout, a refusal, or a path error, and the visit starts in the right place.',
+      },
+      { t: 'h2', text: 'The order of checks' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Scope', text: 'One device, several, or everything on a port. Everything on a port is the port or the medium; one device is that device or its message.' },
+          { title: 'Controller side', text: 'Port status, connection state, the error code, and the counters.' },
+          { title: 'Configuration', text: 'Every setting against the schedule, on both ends.' },
+          { title: 'Medium', text: 'Cable, switch port, converter, radio, termination.' },
+          { title: 'Device', text: 'Power, address, state, and a direct test with a laptop tool.' },
+          { title: 'Message', text: 'Function, address, count, and type against the device map; a test message from the laptop that mirrors the controller message.' },
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'The message instruction reports an error but the device answers a laptop tool.',
+        a: 'The controller message differs from the tool message: a different function code, a different address convention, a data type or count the device rejects, or a unit identifier. Compare the two requests byte for byte with the driver diagnostics or a capture.',
+      },
+      {
+        q: 'Communications fail only when the programming software is connected.',
+        a: 'The programming session consumed the last available connection or the controller communication time budget. Raise the time slice for communications or reduce the connections; check the controller limits.',
+      },
+      {
+        q: 'How do I tell a controller port failure from a switch port failure?',
+        a: 'Swap the cable to a known-good switch port; then swap the cable. If the link comes up on another switch port, the switch port was the fault; if it never comes up, the controller port or the cable is.',
+      },
+      {
+        q: 'Should the program keep polling a device that has failed?',
+        a: 'Not at full rate. Back off to a slow probe, alarm, and mark the data bad. Continuous retries to a dead device waste the controller communication budget and delay every other message.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/communications/serial-communications',
+      '/controls/plc-systems/communications/modbus-tcp',
+      '/controls/plc-systems/communications/ethernet-ip',
+      '/troubleshooting/communications-troubleshooting/device-times-out',
+      '/troubleshooting/communications-troubleshooting/wrong-register-data',
+      '/controls/plc-systems/plc-troubleshooting/network-problems',
+    ],
+  },
+  {
+    path: '/controls/plc-systems/plc-troubleshooting/network-problems',
+    kind: 'reference',
+    title: 'Network Problems',
+    summary:
+      'The controller as a network device: addressing, duplicate addresses, link speed and duplex, connection limits, packet rate and storms, multicast for remote I/O, ring protocols, and time synchronization, with the diagnostics that show which is wrong.',
+    answer:
+      'A controller on an Ethernet network can fail as a network device in ways that have nothing to do with its program: a wrong address or mask, a duplicate address, a port negotiating to the wrong speed, a connection table that is full, a packet rate that overloads its network interface, a broadcast storm from a loop elsewhere, or a ring protocol that has not converged. The controller web page or diagnostic display reports most of these, the managed switch reports the rest, and between them the problem is located without a program change. The same diagnostics show when the controller is the cause of the problem for everyone else, which happens when its remote I/O multicast is flooding a network that does not filter it, or when too many clients are polling it.',
+    keyPoints: [
+      'Read the controller network diagnostics: address, link, connections in use, packet rate, and errors.',
+      'A duplicate address takes a controller off the network intermittently; the switch address table finds the other device.',
+      'Every SCADA client, historian, programming session, and messaging peer uses connections; the table fills.',
+      'Packet rate above what the interface can process drops I/O connections first.',
+      'Remote I/O multicast, ring protocols, and time synchronization each need the switches configured to match.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['PLC', 'Troubleshooting', 'Networking', 'Ethernet', 'Communications'],
+    blocks: [
+      { t: 'h2', text: 'Where to look' },
+      {
+        t: 'table',
+        head: ['Symptom', 'Controller diagnostic', 'Switch diagnostic', 'Usual cause'],
+        rows: [
+          ['Controller unreachable', 'Link state, address', 'Port state, address table', 'Wrong address or mask, cable, port down'],
+          ['Intermittently unreachable', 'Duplicate address warning, link flaps', 'Address learned on two ports', 'Duplicate address or a marginal cable'],
+          ['Clients refused', 'Connections in use at maximum', 'Nothing', 'Connection limit reached'],
+          ['I/O connections dropping', 'Packet rate, missed packets', 'Port utilization, discards', 'Overloaded interface or congested link'],
+          ['Everything slow at once', 'Packet rate very high', 'Broadcast rate, processor load', 'Broadcast storm from a loop'],
+          ['Remote I/O flaky through a switch', 'Connection timeouts', 'Multicast flooding or blocked', 'Multicast filtering not configured'],
+          ['Ring does not heal', 'Ring status, fault location', 'Ring protocol status', 'Ring protocol misconfigured or a second break'],
+          ['Timestamps wrong', 'Time source status', 'Time protocol status', 'No time source, or a boundary blocking it'],
+        ],
+      },
+      { t: 'h2', text: 'Addressing' },
+      {
+        t: 'p',
+        text: 'A controller with a static address and no default gateway works on its own network and answers nothing beyond it, which is fine until a historian on another network needs it. A wrong mask makes it treat remote addresses as local, so it never sends them to the gateway. A duplicate address, from a laptop, a replacement device, or a cloned configuration, produces intermittent loss as the switches learn one device and then the other. The controller address, mask, and gateway are on the network schedule; the switch address table shows where each hardware address lives.',
+      },
+      { t: 'h2', text: 'Connections and rate' },
+      {
+        t: 'p',
+        text: 'Every controller has a limit on simultaneous connections and on packets per second through its interface. The limit is shared by SCADA clients, historians, programming sessions, messaging between controllers, and remote I/O. When the connection table is full, the next client is refused; when the packet rate exceeds the interface capacity, I/O connections time out first because they are the most time sensitive. The controller diagnostics show connections in use and the packet rate, and the design keeps both below about three quarters of the limit. The usual growth is a second SCADA server, a historian added later, and a few laptops left connected.',
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Programming sessions count',
+        text: 'A laptop with the programming software online is a connection and a stream of packets. Two engineers online with a SCADA server, a historian, and a redundant server pair can fill a small controller. Go offline when not editing.',
+      },
+      { t: 'h2', text: 'Remote I/O and multicast' },
+      {
+        t: 'p',
+        text: 'Some remote I/O protocols use multicast for input data. On a network of unmanaged switches every port receives the multicast, which works until the traffic grows; on managed switches the multicast is either filtered with a group management protocol and a querier, or flooded. A switch configured to filter without a querier drops the traffic after a timeout, and the I/O connection fails a few minutes after every power cycle. The switches on an I/O network are configured to match the protocol, and unicast is used where the protocol offers it.',
+      },
+      { t: 'h2', text: 'Rings and redundancy' },
+      {
+        t: 'p',
+        text: 'A ring of switches or devices heals a single break only when every device on the ring runs the same protocol with the same settings and one device is the supervisor. A device in the ring that does not participate breaks the protocol and turns the ring into a loop when the break is repaired, which is the broadcast storm. The controller diagnostics show the ring state and, for device-level rings, the location of a fault; the ring should be tested by breaking it during commissioning, and the fault alarmed, because a ring with an undetected break is a line waiting for its second break.',
+      },
+      { t: 'h2', text: 'Time' },
+      {
+        t: 'p',
+        text: 'Controllers stamp alarms and events, and the stamps are only useful if the clock is right. A controller with no time source drifts minutes per month; one set by SCADA has whatever error the write path adds; one synchronized by a network time protocol is within milliseconds. Whichever is used, the source and its status are on the network schedule, the controller alarm on loss of synchronization is enabled, and the boundary firewall passes the time protocol.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'The controller web page says the address is right but nothing can reach it.',
+        a: 'The mask or the gateway, the switch port, or a firewall between. Ping from a device on the same switch first; if that works, the problem is beyond the local network, and it is the mask, the gateway, or a rule.',
+      },
+      {
+        q: 'I/O drops every few minutes after a switch was replaced.',
+        a: 'The new switch is filtering multicast without a querier, or is not configured for the ring the old one was in. Configure the switch to match the I/O protocol and the ring.',
+      },
+      {
+        q: 'How many connections is too many?',
+        a: 'Above about three quarters of the controller limit at normal operation, because failover, maintenance sessions, and retries need the rest. The limit is in the controller specifications and the current count is on its diagnostics page.',
+      },
+      {
+        q: 'Can the controller cause a broadcast storm?',
+        a: 'It can cause a multicast flood on an unfiltered network, and a controller with two ports bridged internally can close a loop if both are cabled to the same switch without ring protection. A loop between switches is the usual storm source; the controller is a rarer one.',
+      },
+    ],
+    related: [
+      '/troubleshooting/network-troubleshooting/duplicate-ip-address',
+      '/troubleshooting/network-troubleshooting/broadcast-storm',
+      '/troubleshooting/network-troubleshooting/ethernet-device-drops-offline',
+      '/controls/plc-systems/communications/remote-i-o',
+      '/how-to/network-how-to/assign-ip-addresses',
+      '/controls/scada-hmi/scada-troubleshooting/time-synchronization',
+    ],
+  },
+  {
+    path: '/controls/plc-systems/plc-troubleshooting/program-faults',
+    kind: 'reference',
+    title: 'Program Faults',
+    summary:
+      'Faults the program causes: an index out of range, division by zero, an invalid indirect address, a missing routine, a type mismatch, or task overlap. Reading the fault record, what a fault handler should do, clearing safely, and logic that does not fault.',
+    answer:
+      'A program fault is the controller refusing to execute an instruction it cannot execute safely: an index outside an array, a pointer to memory that does not exist, a divide by zero on a platform that treats it as fatal, a call to a routine that is not there, or a task that could not finish before it was due to run again. The controller records the fault type, the code, the routine, and the rung or line, and either stops with a major fault or logs a minor one and continues, depending on the fault and the platform. The record is the diagnosis; the fault handler is the place to log it and decide whether to keep running; and the prevention is defensive logic that bounds every index, checks every divisor, and validates every value that comes from a screen or a network before using it.',
+    keyPoints: [
+      'The fault record names the type, the routine, and the rung; read it before clearing anything.',
+      'Major faults stop the controller and its outputs; minor faults are logged and execution continues.',
+      'A fault handler routine can clear recoverable faults and log them, but a handler that clears everything hides a program that is broken.',
+      'Bounds checks on indexes, checks on divisors, and limits on values from screens and networks prevent most program faults.',
+      'Task overlap is a program fault too: the task took longer than its period.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['PLC', 'Troubleshooting', 'Programming', 'Fundamentals', 'Control'],
+    blocks: [
+      { t: 'h2', text: 'The common ones' },
+      {
+        t: 'table',
+        head: ['Fault', 'What happened', 'Typical cause', 'Prevention'],
+        rows: [
+          ['Array index out of range', 'An index addressed beyond the array bounds', 'An index from a screen, a counter that ran past, an off-by-one loop', 'Clamp or check the index before use'],
+          ['Invalid indirect address', 'A pointer or an indexed address pointed outside memory', 'Uninitialized pointer, a computed address that overflowed', 'Validate computed addresses; avoid pointers where indexes will do'],
+          ['Division by zero, overflow', 'Math produced a value the type cannot hold, or divided by zero', 'A flow total divided by a runtime of zero; an integer that overflowed', 'Check the divisor; use floating point for large values'],
+          ['Missing routine or block', 'A call to a routine that does not exist', 'A routine deleted or renamed; a partial download', 'Verify the project before downloading'],
+          ['Type mismatch', 'An instruction received a type it cannot use', 'A tag data type changed after the logic was written', 'Verify after any tag change'],
+          ['Task overlap', 'A periodic task was triggered before its previous execution finished', 'Too much logic in the task, a loop, or communications load', 'Measure the task time; move logic; fix loops'],
+          ['Watchdog', 'A task exceeded its watchdog time', 'As task overlap, or an infinite loop', 'See the watchdog article'],
+          ['Stack or nesting', 'Subroutine calls nested too deep, often recursive', 'A routine that calls itself through another', 'Restructure the calls'],
+        ],
+      },
+      { t: 'h2', text: 'Reading the record' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'The fault type and code', text: 'Major or minor, with a code that the controller manual maps to a description.' },
+          { title: 'The location', text: 'The program, routine, and rung or line where the instruction faulted.' },
+          { title: 'The values', text: 'The index, the address, or the operands at the time; the fault record or the tags at fault time show them.' },
+          { title: 'The history', text: 'Whether this fault has happened before, from the fault log or the controller event log; a fault that recurs on a schedule has a cause on that schedule.' },
+          { title: 'The trigger', text: 'What changed: a download, an online edit, a screen entry, a network write, a new device.' },
+        ],
+      },
+      { t: 'h2', text: 'Fault handlers' },
+      {
+        t: 'p',
+        text: 'Most platforms provide a fault routine that runs when a major fault occurs, and if it clears the fault the controller continues. That is useful for a fault the program can genuinely recover from, such as a bad index from a screen entry, where the handler logs the fault, resets the offending value, and lets the scan continue rather than dropping every output in the plant. It is dangerous as a blanket: a handler that clears every fault turns a broken program into one that silently skips instructions, and the first sign is a process doing something nobody programmed. The handler should log every fault with its code and location to a tag, clear only the fault codes it was written for, and count; a fault that clears more than a few times an hour is escalated to a controlled stop and an alarm.',
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Clearing is not fixing',
+        text: 'Clearing a major fault from the programming software restarts the controller with the fault still in the program. If the cause was a screen entry, it will fault again when someone enters it; if it was a computed index, it will fault when the computation repeats. Read the record, fix the logic, then clear.',
+      },
+      { t: 'h2', text: 'Writing logic that does not fault' },
+      {
+        t: 'ul',
+        items: [
+          'Every index that comes from a calculation, a screen, or a network is clamped to the array bounds before it is used.',
+          'Every divisor is checked for zero, and the result of a zero check is a documented default, not a skipped calculation.',
+          'Values written from screens and networks land in staging tags, are validated against limits, and are then copied to the working tags.',
+          'Integer math that can overflow is done in floating point or checked for range; totals use 32-bit or floating point accumulators with documented rollover.',
+          'Loops have a bounded iteration count and no path that fails to advance the index.',
+          'Task periods are set from measured execution times with margin, and the measured time is trended.',
+          'The project is verified, and a full download is preferred to an online edit for structural changes.',
+        ],
+      },
+      { t: 'h2', text: 'After a fault at a running plant' },
+      {
+        t: 'p',
+        text: 'A major fault drops the outputs, which means the pumps stopped or the valves went to their fail position, and the first job is the process: confirm what state it is in and whether local control or manual operation is holding it. Then the fault record is read and saved before anything is cleared, the cause is found in the logic, and the fix is tested offline where the platform allows. The controller is restarted with the operators aware of what the outputs will do on the first scan, which is the moment a poorly designed program restarts every pump at once.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'The controller faulted once a week for months and cleared itself. Is that a problem?',
+        a: 'Yes. A fault handler is clearing a recurring program fault, and every occurrence skipped some logic. Read the fault log for the code and location and fix the cause; then make the handler count and alarm.',
+      },
+      {
+        q: 'How do I find which screen entry caused an index fault?',
+        a: 'The fault record gives the routine and rung, which names the array and the index tag; the index tag value at fault time, and the audit trail on the screen, name the entry. Then clamp the index and limit the screen field.',
+      },
+      {
+        q: 'Can a communications write cause a program fault?',
+        a: 'Yes, when the written value is used as an index, a divisor, or a pointer without validation. Every value that enters the controller from a network is treated as untrusted and validated before use, for safety and for security.',
+      },
+      {
+        q: 'Should I raise the task period or fix the logic when tasks overlap?',
+        a: 'Fix the logic if the overlap is new or the task time has grown; raise the period if the task genuinely needs the time and the process can tolerate the slower rate. Either way, measure first and document the decision.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/plc-troubleshooting/watchdog-faults',
+      '/controls/plc-systems/plc-troubleshooting/plc-will-not-run',
+      '/troubleshooting/plc-troubleshooting/processor-faulted',
+      '/controls/plc-systems/plc-fundamentals/tasks',
+      '/controls/plc-systems/programming/program-organization',
+      '/cybersecurity/plc-security/mode-switch-and-keyswitch',
+    ],
+  },
+  {
+    path: '/controls/plc-systems/plc-troubleshooting/watchdog-faults',
+    kind: 'reference',
+    title: 'Watchdog Faults',
+    summary:
+      'A task that did not finish in time: what the watchdog protects, why the scan grew, and how to fix it. Measuring task times, finding the loop or instruction that took the time, communications load, and when raising the watchdog is legitimate.',
+    answer:
+      'A watchdog fault means a task ran longer than the time the controller was told to allow it, and the controller faulted rather than let the process run on stale logic. The cause is always that the task took too long, and the reasons are a program that has grown, a loop that iterated more than intended, an instruction that is slow on that platform, such as a string or array operation on a large array, communications servicing that stole the processor, or a task period and watchdog set without margin when the program was small. The fix is to measure the task time, find what grew, and either make the logic cheaper, move it to a slower task, or, when the time is legitimately needed, raise the watchdog with the reason documented. Raising the watchdog without knowing why the task got slow is turning off the alarm.',
+    keyPoints: [
+      'The watchdog fault says the task exceeded its allowed time; the question is what took the time.',
+      'Measure: last, maximum, and average task execution time from the controller diagnostics.',
+      'Loops, large array and string operations, and indirect addressing are the usual slow instructions.',
+      'Communications servicing competes with logic for the processor on many platforms.',
+      'Raise the watchdog only with a measured reason and a documented margin; otherwise fix the logic.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 7,
+    tags: ['PLC', 'Troubleshooting', 'Fundamentals', 'Programming', 'Control'],
+    blocks: [
+      { t: 'h2', text: 'What it protects' },
+      {
+        t: 'p',
+        text: 'The watchdog is a timer that the task must reset by finishing. If the task does not finish, something has gone wrong that the program cannot detect from inside: an infinite loop, a hardware fault, or a load the design never anticipated. Rather than keep the outputs in whatever state the last complete scan left them, while the logic that should be updating them is stuck, the controller faults and drops the outputs to their safe state. The fault is inconvenient; the alternative is a pump running with no logic watching it.',
+      },
+      { t: 'h2', text: 'Why the task got slow' },
+      {
+        t: 'table',
+        head: ['Cause', 'How it shows', 'Fix'],
+        rows: [
+          ['Program growth', 'Task time creeping up over months of additions', 'Move logic to periodic tasks with longer periods; remove dead code'],
+          ['A loop that runs long', 'Task time jumps when a condition is true', 'Bound the iteration count; check the exit condition'],
+          ['Large array or string operations', 'Time spent in a few instructions', 'Process arrays in slices; avoid string handling in fast tasks'],
+          ['Indirect addressing and computed indexes', 'Slow on some platforms', 'Direct addressing where the index is constant'],
+          ['Communications load', 'Task time rises when SCADA or programming sessions connect', 'Raise the communication time slice deliberately, or reduce the clients'],
+          ['Too many periodic tasks', 'Tasks preempting each other; the lowest priority starves', 'Rationalize task periods and priorities'],
+          ['Firmware or hardware', 'Task time rises after an update or on one controller only', 'Check release notes; test the hardware'],
+          ['A watchdog set too tight', 'Fault at the first busy moment with normal times close to the limit', 'Set the watchdog from measured maximum time with margin'],
+        ],
+      },
+      { t: 'h2', text: 'Measuring' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Read the task times', text: 'The controller reports last, maximum, and often average execution time per task. Clear the maximum and watch it through a busy period.' },
+          { title: 'Compare with the period and watchdog', text: 'A periodic task should finish well inside its period; a continuous task should scan within what the process needs. A maximum near the watchdog is the problem even before it faults.' },
+          { title: 'Find the expensive routines', text: 'Some platforms report time per routine; where they do not, disable routines one at a time in a test or add timestamps at routine boundaries to a diagnostic tag.' },
+          { title: 'Correlate', text: 'Task time against communications activity, against a sequence step, against an operator action, to catch the loop or the condition that triggers the growth.' },
+          { title: 'Trend it', text: 'Move the maximum task time to a tag, historize it, and alarm at a fraction of the watchdog. A watchdog fault should never be the first warning.' },
+        ],
+      },
+      {
+        t: 'formula',
+        expr: 'Watchdog ≥ T_max × 1.5, and T_max ≤ 0.6 × Period',
+        where: [
+          'T_max = measured maximum task execution time under load',
+          'Period = the task period for a periodic task',
+          'Margins are a starting point; document the values chosen',
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'Raising the watchdog',
+        text: 'It is legitimate when the measured maximum task time is understood, the task genuinely needs it, and the process tolerates the resulting scan. It is not legitimate as a response to a fault whose cause is unknown, because the next fault is then a longer loop, and the outputs are running on a scan nobody chose.',
+      },
+      { t: 'h2', text: 'After the fault' },
+      {
+        t: 'p',
+        text: 'The fault dropped the outputs, the process is in its fail state, and the restart puts every output back on the first scan according to the logic. Before clearing, read the fault record and the task times, note which task and how long, and look at what was happening. Then restart with operators ready for what starts. If the cause is not found, the controller runs with a task time trend and an alarm until it is; a fault that happened once will happen again, and the second time it should be caught before the watchdog does.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'The task time is normally 8 milliseconds and the watchdog is 500. How did it fault?',
+        a: 'Something took 500 milliseconds once: a loop with a condition that let it run thousands of times, a string operation on a large array, or a communications burst on a platform that services communications inside the task. The maximum time and the fault record show which task; the correlation shows what triggered it.',
+      },
+      {
+        q: 'Does a faster processor fix it?',
+        a: 'It buys time, and it hides a loop that will still run away. Fix the logic first; upgrade when the program legitimately needs more capacity.',
+      },
+      {
+        q: 'Should the fault handler clear a watchdog fault?',
+        a: 'No. A watchdog fault means the program did not complete; clearing it and continuing means running with outputs that a stuck task may not have updated. Stop, alarm, and restart under control.',
+      },
+      {
+        q: 'Why does the task time rise when the programming laptop connects?',
+        a: 'The controller services the programming session from the same processor and, on many platforms, from a time slice inside the scan. Online monitoring of many tags, cross-reference searches, and uploads all add load. Go offline when not editing, and set the communication time slice deliberately.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/plc-fundamentals/watchdog',
+      '/controls/plc-systems/plc-fundamentals/tasks',
+      '/controls/plc-systems/plc-fundamentals/scan-cycle',
+      '/controls/plc-systems/plc-troubleshooting/program-faults',
+      '/troubleshooting/plc-troubleshooting/processor-faulted',
+      '/controls/plc-systems/programming/program-organization',
+    ],
+  },
 ];

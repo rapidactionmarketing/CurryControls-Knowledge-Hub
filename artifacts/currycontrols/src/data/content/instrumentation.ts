@@ -3455,4 +3455,948 @@ export const INSTRUMENTATION_ENTRIES: Entry[] = [
       '/controls/instrumentation/pressure/pressure-installation',
     ],
   },
+  {
+    path: '/controls/instrumentation/analytical/ammonia',
+    kind: 'reference',
+    title: 'Ammonia Analyzers',
+    summary:
+      'Online ammonia measurement in water and wastewater: ion-selective probes, gas-sensing electrodes, and wet-chemistry analyzers, what each is good for, the interferences that decide accuracy, and the maintenance and calibration it demands.',
+    answer:
+      'Ammonia is measured online for three purposes: to control aeration in a treatment plant so that nitrification is complete without wasting blower energy, to control chloramination in a water plant so that free ammonia stays in the narrow band that forms monochloramine without breakpoint or excess, and to monitor effluent for permit compliance. Three technologies serve them: ion-selective electrode probes that sit in the process and read ammonium with compensation for pH, temperature, and potassium; gas-sensing electrodes that raise the sample pH and read ammonia gas through a membrane; and wet-chemistry analyzers that add reagents to a filtered sample and read a color, which are the most accurate and the most demanding. The choice is between the low cost and fast response of a probe and the accuracy of an analyzer, and the maintenance program, cleaning, calibration against laboratory results, and reagent and membrane replacement, is what makes any of them trustworthy for control.',
+    keyPoints: [
+      'Three technologies: ion-selective probes in the process, gas-sensing electrodes with pH elevation, and reagent-based colorimetric analyzers.',
+      'Probes are fast and cheap and drift; analyzers are accurate and slow and need reagents and sample conditioning.',
+      'Ammonium probes need pH, temperature, and potassium compensation; the potassium interference is the one that surprises people.',
+      'The control uses are aeration control, chloramination control, and effluent monitoring, each with its own range and response need.',
+      'Calibration is against laboratory results on grab samples, on a schedule, with the record kept.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 9,
+    tags: ['Instrumentation', 'Wastewater', 'Water', 'Control', 'Standards'],
+    blocks: [
+      { t: 'h2', text: 'Technologies' },
+      {
+        t: 'table',
+        head: ['Technology', 'How it works', 'Strengths', 'Weaknesses'],
+        rows: [
+          ['Ion-selective electrode probe', 'A membrane electrode responds to ammonium ion in the process; pH and temperature electrodes in the same body compensate; a potassium electrode corrects for the main interference', 'Immersed in the process, no sample system, fast, low cost', 'Drift, fouling, potassium and pH sensitivity, electrode life of months, needs matrix calibration'],
+          ['Gas-sensing electrode', 'A reagent raises the sample pH so that ammonium becomes ammonia gas, which diffuses through a membrane to a pH sensor', 'Fewer ionic interferences, good at low range', 'Needs a sample system and reagent, membrane and reagent maintenance'],
+          ['Colorimetric wet chemistry', 'A filtered sample is mixed with reagents to form a colored compound that is read photometrically; the salicylate method is common', 'Accurate, traceable to the laboratory method, stable', 'Sample filtration and conditioning, reagents, waste, slow cycle, higher cost'],
+          ['Ultraviolet or spectral', 'Some spectral analyzers infer ammonia from the spectrum with a model', 'No reagents', 'Matrix dependent; verify against the laboratory'],
+        ],
+      },
+      { t: 'h2', text: 'Uses and ranges' },
+      {
+        t: 'table',
+        head: ['Application', 'Typical range', 'What it controls', 'Response need'],
+        rows: [
+          ['Aeration control', '0 to 10 or 0 to 20 mg/L as nitrogen in the aeration basin', 'Dissolved oxygen setpoint or blower output to finish nitrification without excess air', 'Minutes'],
+          ['Chloramination', '0 to 1 or 0 to 2 mg/L free ammonia after the chlorine', 'Ammonia feed to hold a chlorine to ammonia ratio', 'Minutes; the band is narrow'],
+          ['Effluent monitoring', '0 to 5 mg/L', 'Alarm and record; sometimes a final aeration trim', 'Tens of minutes acceptable'],
+          ['Influent or sidestream', '0 to 50 mg/L or higher', 'Load estimation, sidestream treatment control', 'Slow'],
+        ],
+      },
+      { t: 'h2', text: 'Ammonium probes' },
+      {
+        t: 'p',
+        text: 'The probe reads the ammonium ion, and the fraction of total ammonia that is ammonium depends on pH and temperature, so the probe reads pH and temperature and converts. Potassium ions produce a response on the ammonium membrane, and in wastewater the potassium concentration is comparable to the ammonium at the low end of the range, so a potassium electrode is included and its reading subtracted. Membranes age, foul with biofilm and grease, and respond more slowly with time; a probe with an automatic air-blast or wiper cleaning stays useful longer. Calibration is a matrix adjustment against a laboratory result on a grab sample taken beside the probe, at least weekly at first and then as the drift record allows, and the probe is replaced when the slope falls out of range. A probe in the aeration basin sees the process the controller needs to see; a probe on a sample line sees a delayed and altered sample.',
+      },
+      { t: 'h2', text: 'Wet-chemistry analyzers' },
+      {
+        t: 'p',
+        text: 'The analyzer draws a sample, filters it through a membrane or a ceramic filter, meters it with reagents, waits for the color to develop, and reads it. The cycle takes a few minutes, and the result matches the laboratory closely because it is the laboratory method automated. What it needs is a sample system that delivers a representative, filtered sample continuously without plugging, reagents replaced on schedule and kept in date, a waste route, a temperature-controlled enclosure, and a technician who cleans the filter and the sample lines before they fail. Where the measurement must be accurate, for a permit or for chloramination control, the analyzer earns its cost; where a trend is enough, a probe does.',
+      },
+      { t: 'h2', text: 'Control loops' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Ammonia-based aeration control', def: 'The ammonia at the end of the aeration basin sets the dissolved oxygen setpoint, or the blower output directly, so that the plant supplies only the air nitrification needs. Savings of a fifth to a third of blower energy are typical; the loop is slow, cascaded, and tuned with the dissolved oxygen loop.' },
+          { term: 'Chloramination', def: 'Free ammonia after chlorine addition is held in a narrow band by trimming the ammonia feed; too little and chlorine breaks through, too much and nitrification starts in the distribution system. The analyzer response and the sample lag set how tight the control can be.' },
+          { term: 'Effluent alarm', def: 'A rising effluent ammonia is a nitrification upset hours in the making; the alarm and the trend give the operator time to act on aeration, sludge age, or a toxic load.' },
+        ],
+      },
+      { t: 'h2', text: 'Maintenance and calibration' },
+      {
+        t: 'ul',
+        items: [
+          'Clean the probe or the sample system on the schedule the fouling rate sets; a plant with grease cleans weekly.',
+          'Compare with a laboratory grab sample taken at the probe on a schedule, and adjust the matrix calibration when the difference exceeds the tolerance written in the procedure.',
+          'Replace reagents and standards in date; an expired standard calibrates the analyzer to a wrong value.',
+          'Replace membranes and electrodes on the manufacturer interval or when the slope fails; keep spares.',
+          'Log every cleaning, calibration, and replacement; the drift record decides the schedule.',
+          'Check the temperature and pH compensation values against independent instruments; a bad pH electrode in the probe body makes the ammonia wrong.',
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Units',
+        text: 'Ammonia is reported as nitrogen, in milligrams per liter as N, in almost every regulatory and process context. An analyzer configured to report as ammonia or as ammonium reads 1.2 or 1.3 times higher for the same sample. Configure the unit once, document it, and check it after every firmware update and replacement.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'Probe or analyzer for aeration control?',
+        a: 'A probe in most cases: the loop needs a fast, continuous trend more than absolute accuracy, and the probe sits where the process is. Calibrate it against the laboratory weekly and clean it. An analyzer is chosen when the plant also needs a compliance-grade number from the same instrument.',
+      },
+      {
+        q: 'Why does the probe read high at low ammonia?',
+        a: 'Potassium. At low ammonium, the potassium response is a large fraction of the signal, and a probe without potassium compensation, or with a failed potassium electrode, reads high. Check the potassium electrode and the compensation setting.',
+      },
+      {
+        q: 'How often does the wet-chemistry analyzer need attention?',
+        a: 'Reagents monthly or so depending on the cycle rate, the sample filter weekly to monthly depending on the water, and a full service a few times a year. A plant that budgets no technician time for it will have a very expensive alarm generator.',
+      },
+      {
+        q: 'Can I use the same analyzer for the aeration basin and the effluent?',
+        a: 'With a sample switching system and a range that covers both, yes, at the cost of a slower update on each stream and a more complex sample system. For control on the aeration basin, a dedicated probe is usually better and the analyzer serves the effluent.',
+      },
+    ],
+    related: [
+      '/controls/instrumentation/analytical/dissolved-oxygen',
+      '/controls/instrumentation/analytical/ph',
+      '/controls/instrumentation/analytical/chlorine',
+      '/controls/instrumentation/analytical/nitrate',
+      '/controls/instrumentation/calibration/calibration-procedures',
+      '/controls/instrumentation/calibration/calibration-documentation',
+    ],
+  },
+  {
+    path: '/controls/instrumentation/analytical/conductivity',
+    kind: 'reference',
+    title: 'Conductivity',
+    summary:
+      'Conductivity measurement in water systems: what it indicates, contacting and inductive sensors, cell constants and ranges, temperature compensation, the relation to total dissolved solids, uses from membrane monitoring to blending, and fouling problems.',
+    answer:
+      'Conductivity is the ease with which water carries current, which rises with the dissolved ions in it, so it is the quickest indicator of how much salt a water carries without saying which salt. It is measured with a contacting sensor, two or four electrodes with a known geometry expressed as a cell constant, or with an inductive sensor that induces a current in a loop of the liquid and reads it, which has no electrodes to foul or polarize and suits dirty and high-conductivity water. The reading depends strongly on temperature, so every sensor carries a temperature element and the transmitter compensates to a reference of 25 degrees Celsius. In water systems it monitors membrane feed and permeate to compute rejection, watches brine and concentrate, tracks blending of sources, controls blowdown, and flags a change in a source or an intrusion in a distribution system; in each case the number is meaningful relative to a baseline and the temperature compensation has to be right.',
+    keyPoints: [
+      'Conductivity indicates total dissolved ions, not which ions; it is a ratio measurement against a baseline.',
+      'Contacting sensors for clean water and low range; inductive sensors for dirty, fouling, or high-conductivity water.',
+      'The cell constant sets the range; match it to the water, and use four-electrode or inductive cells for high ranges.',
+      'Temperature compensation to 25 degrees Celsius is essential and the coefficient depends on the water.',
+      'Calibrate with standard solutions of known conductivity, and keep the sensor clean and free of bubbles.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['Instrumentation', 'Water', 'Signals', 'Commissioning', 'Control'],
+    blocks: [
+      { t: 'h2', text: 'Sensors' },
+      {
+        t: 'table',
+        head: ['Sensor', 'Principle', 'Range', 'Where'],
+        rows: [
+          ['Two-electrode contacting', 'Current between two electrodes of known geometry', 'Low to moderate; polarizes at high conductivity', 'Clean water: permeate, boiler and distilled water, low-range monitoring'],
+          ['Four-electrode contacting', 'Current through outer electrodes, voltage sensed at inner ones, which removes polarization', 'Wide, into the high range', 'Feed water, blending, general plant use'],
+          ['Inductive or toroidal', 'A drive coil induces current in a loop of liquid through the sensor bore; a sense coil reads it', 'Moderate to very high', 'Brine, concentrate, wastewater, fouling and corrosive liquids'],
+        ],
+      },
+      { t: 'h2', text: 'Cell constant and range' },
+      {
+        t: 'p',
+        text: 'A contacting cell has a constant, in reciprocal centimeters, that relates the measured conductance to the conductivity of the water: a constant of 0.01 suits very pure water, 0.1 suits permeate and low-range water, 1.0 suits most raw and treated water, and 10 suits brine. A cell with the wrong constant for the water reads at the edge of its range with poor resolution or polarizes. The constant is on the sensor label and is entered in the transmitter, and a sensor replaced with one of a different constant reads wrong until the transmitter is updated.',
+      },
+      { t: 'h2', text: 'Temperature' },
+      {
+        t: 'p',
+        text: 'Conductivity rises with temperature by roughly two percent per degree Celsius for most natural waters, and the transmitter compensates the reading to 25 degrees Celsius using the temperature element in the sensor and a coefficient. The coefficient is not the same for every water: pure water follows a nonlinear curve, brines and acids have their own values, and a transmitter set to the wrong coefficient reads a temperature change as a conductivity change. The setting is chosen from the water type and checked by comparing readings on the same sample at two temperatures. A failed temperature element is the commonest reason a conductivity reading drifts with the weather.',
+      },
+      {
+        t: 'formula',
+        expr: 'κ_25 = κ_T ÷ (1 + α × (T − 25))',
+        where: [
+          'κ_25 = conductivity compensated to 25 °C',
+          'κ_T = measured conductivity at temperature T',
+          'α = temperature coefficient, about 0.02 per °C for natural waters',
+        ],
+      },
+      { t: 'h2', text: 'Total dissolved solids' },
+      {
+        t: 'p',
+        text: 'Total dissolved solids is a mass concentration measured by evaporation in the laboratory; conductivity is an electrical property. The two are related for a given water by a factor, usually between 0.5 and 0.7 milligrams per liter per microsiemens per centimeter, that depends on which ions are present. A transmitter that displays total dissolved solids is multiplying conductivity by a factor someone entered, and the factor is checked against laboratory results for that water. Reporting conductivity and stating the factor is more honest than reporting a derived number as if it were measured.',
+      },
+      { t: 'h2', text: 'Uses' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Membrane monitoring', def: 'Feed and permeate conductivity give the salt rejection of a reverse osmosis or nanofiltration train; a rising permeate conductivity is a damaged membrane, a failed seal, or a fouled element. Concentrate conductivity tracks recovery.' },
+          { term: 'Blending', def: 'The conductivity of a blended water follows the proportions of the sources; a controller can hold a blend to a conductivity target.' },
+          { term: 'Blowdown and concentrate control', def: 'Cooling towers, boilers, and concentrate systems are controlled on conductivity to hold cycles of concentration.' },
+          { term: 'Distribution monitoring', def: 'A step change in conductivity at a monitoring point is a change of source, a cross-connection, or an intrusion, and it arrives before any other instrument notices.' },
+          { term: 'Wastewater', def: 'Conductivity tracks industrial discharges, saltwater infiltration, and the strength of sidestreams.' },
+        ],
+      },
+      {
+        t: 'formula',
+        expr: 'Rejection (%) = (1 − κ_permeate ÷ κ_feed) × 100',
+        where: [
+          'κ_permeate = permeate conductivity, compensated',
+          'κ_feed = feed conductivity, compensated; some methods use the average of feed and concentrate',
+        ],
+      },
+      { t: 'h2', text: 'Calibration and problems' },
+      {
+        t: 'ul',
+        items: [
+          'Calibrate with a standard solution near the operating range, at a known temperature, with the sensor fully immersed and free of bubbles; common standards are near 1413 and 12880 microsiemens per centimeter.',
+          'Clean contacting electrodes with the manufacturer method; a fouled electrode reads low, and a scaled one reads low and slow.',
+          'Air bubbles trapped in a contacting cell or an inductive bore read as low conductivity; mount the sensor so that bubbles escape.',
+          'Polarization on a two-electrode cell at high conductivity reads low; use a four-electrode or inductive sensor.',
+          'Inductive sensors need clearance from pipe walls; a sensor too close to a metal wall reads wrong, and the installation factor is set for the mounting.',
+          'Verify the temperature element against a thermometer; most drift is temperature compensation.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Why does the conductivity reading change with the weather?',
+        a: 'The temperature compensation is wrong or the temperature element has failed, so the seasonal temperature change appears as a conductivity change. Verify the temperature reading and the coefficient.',
+      },
+      {
+        q: 'Which sensor for a reverse osmosis permeate?',
+        a: 'A contacting sensor with a low cell constant, 0.1 or so, since permeate conductivity is low and clean. The feed and concentrate use higher constants or an inductive sensor.',
+      },
+      {
+        q: 'Can conductivity tell me the chloride level?',
+        a: 'Only by a correlation for that water, established against laboratory chloride results, and only if the other ions stay in proportion. It is a proxy, not a chloride measurement.',
+      },
+      {
+        q: 'The two conductivity meters on the same pipe disagree by 5 percent.',
+        a: 'Different cell constants entered, different temperature coefficients, or one sensor fouled. Check the constant and coefficient settings first, then calibrate both in the same standard.',
+      },
+    ],
+    related: [
+      '/controls/instrumentation/analytical/ph',
+      '/controls/instrumentation/analytical/turbidity',
+      '/controls/instrumentation/calibration/calibration-procedures',
+      '/controls/instrumentation/calibration/calibration-troubleshooting',
+      '/controls/instrumentation/signals/4-20-ma-signals',
+      '/controls/plc-systems/analog-control/signal-validation',
+    ],
+  },
+  {
+    path: '/controls/instrumentation/analytical/nitrate',
+    kind: 'reference',
+    title: 'Nitrate Analyzers',
+    summary:
+      'Online nitrate measurement: ultraviolet absorbance probes and analyzers, ion-selective electrodes, and wet chemistry, the interferences from organics, turbidity, and chloride, the uses in denitrification and source monitoring, and maintenance.',
+    answer:
+      'Nitrate is measured online in a wastewater plant to control denitrification, where the nitrate at the end of an anoxic zone or in a recycle stream tells the controller whether to send more mixed liquor back or add carbon, and to fine-tune aeration, and in a water plant or a wellfield to watch a source against the drinking water limit. Ultraviolet absorbance is the dominant online technology: nitrate absorbs strongly in the ultraviolet, a probe or an analyzer measures the absorbance at that wavelength and corrects for organics and turbidity using other wavelengths, and there are no reagents. Ion-selective electrodes read nitrate directly in the process with a chloride correction and drift like every electrode; wet-chemistry analyzers are accurate and slow and used where the number must match the laboratory. The unit is milligrams per liter as nitrogen almost everywhere, and a reading as nitrate is four and a half times larger for the same water.',
+    keyPoints: [
+      'Ultraviolet absorbance is the main online technology: no reagents, fast, with multi-wavelength compensation for organics and turbidity.',
+      'Ion-selective electrodes read in the process and need chloride compensation and frequent calibration.',
+      'Wet chemistry matches the laboratory and needs reagents, sample conditioning, and time.',
+      'The main uses are denitrification control, aeration and recycle control, and source water monitoring against the drinking water limit.',
+      'Report as nitrogen; the factor to nitrate is about 4.43 and a unit mistake is a large error.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['Instrumentation', 'Wastewater', 'Water', 'Control', 'Standards'],
+    blocks: [
+      { t: 'h2', text: 'Technologies' },
+      {
+        t: 'table',
+        head: ['Technology', 'How it works', 'Strengths', 'Weaknesses'],
+        rows: [
+          ['Ultraviolet absorbance probe', 'A lamp and detector across a gap in the process; absorbance near the nitrate peak with correction wavelengths', 'No reagents, fast, in the process, low maintenance with a wiper', 'Organics, turbidity, and nitrite interfere; needs a compensation model fit to the water; optical path fouling'],
+          ['Ultraviolet spectral analyzer', 'A full spectrum across the ultraviolet with a chemometric model for nitrate and other parameters', 'Several parameters from one instrument, good compensation', 'Model must be calibrated to the water; cost'],
+          ['Ion-selective electrode', 'A nitrate-selective membrane electrode with a chloride electrode for compensation', 'Low cost, in the process', 'Drift, chloride and other interferences, membrane life, frequent calibration'],
+          ['Wet chemistry', 'Reduction of nitrate to nitrite and colorimetric reading, automated', 'Laboratory-equivalent accuracy', 'Reagents including a reduction column, sample conditioning, slow, waste'],
+        ],
+      },
+      { t: 'h2', text: 'Ultraviolet measurement' },
+      {
+        t: 'p',
+        text: 'Nitrate absorbs ultraviolet light strongly around two hundred nanometers, and the absorbance across a known path length gives the concentration by the same law the laboratory uses. Dissolved organics and suspended solids also absorb and scatter in that region, so the instrument reads additional wavelengths where nitrate does not absorb and subtracts their contribution using a model. The model is fit for the water at commissioning by comparing readings with laboratory results over a range of conditions, and it is checked whenever the water changes character, after a storm, a process change, or a new industrial discharge. A short path length suits high concentrations; a long path length is needed for the low range in a water source. The optical windows foul, and a probe with an automatic wiper or air cleaning holds its reading for weeks; one without needs cleaning on a schedule the fouling rate sets.',
+      },
+      { t: 'h2', text: 'Uses' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Denitrification control', def: 'Nitrate at the end of the anoxic zone tells the controller whether denitrification is complete: high nitrate means more internal recycle, more carbon, or more anoxic time; near zero means the recycle can be reduced. The loop saves recycle pumping energy and carbon.' },
+          { term: 'Aeration and recycle', def: 'Nitrate in the aerated zone and in the recycle indicates nitrification and sets the recycle rate; with ammonia, it gives the whole nitrogen picture.' },
+          { term: 'Effluent monitoring', def: 'Total nitrogen permits are met by controlling effluent nitrate; the trend gives hours of warning.' },
+          { term: 'Source water', def: 'A well or a river intake is watched against the drinking water maximum of ten milligrams per liter as nitrogen; a rising trend triggers blending, treatment, or a source change.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'As nitrogen or as nitrate',
+        text: 'The drinking water limit, the permit, and the process literature use milligrams per liter as nitrogen. An analyzer set to report as nitrate reads 4.43 times higher for the same sample. Set the unit once, label the tag, and check it after every replacement and update.',
+      },
+      { t: 'h2', text: 'Ion-selective electrodes' },
+      {
+        t: 'p',
+        text: 'A nitrate electrode responds to nitrate and, to a lesser degree, to chloride and other anions; a chloride electrode in the same body corrects for the main interference. The electrode is calibrated against laboratory results on grab samples, drifts, fouls, and is replaced when its slope falls out of range. It is the low-cost choice for a trend in the anoxic zone and the wrong choice for a compliance number.',
+      },
+      { t: 'h2', text: 'Maintenance and verification' },
+      {
+        t: 'ul',
+        items: [
+          'Clean optical windows and electrodes on the schedule the fouling rate sets, and keep the wiper or air cleaning working.',
+          'Compare with laboratory grab samples taken at the probe on a schedule; adjust the model or the calibration when the difference exceeds the written tolerance.',
+          'Refit the ultraviolet compensation model when the water changes character; a model fit in dry weather may read wrong in wet weather.',
+          'Check nitrite when the ultraviolet reading and the laboratory disagree; nitrite absorbs in the same region and a plant with incomplete nitrification has some.',
+          'Log every cleaning, verification, and calibration; the drift record sets the schedule.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Ultraviolet probe or electrode for the anoxic zone?',
+        a: 'An ultraviolet probe with a wiper for most plants: no reagents, less drift, and a reading that holds between cleanings. An electrode where the budget is tight and the loop only needs a trend, with weekly calibration accepted.',
+      },
+      {
+        q: 'The probe reads higher than the laboratory after every rain.',
+        a: 'The organic and solids load rose and the compensation model is not fitting the new water. Refit the model with samples across wet and dry conditions, and check the path length for the range.',
+      },
+      {
+        q: 'Can one instrument measure nitrate and ammonia?',
+        a: 'Some spectral analyzers estimate several parameters from one spectrum, and combined probes exist with separate electrodes. Each parameter still needs its own verification against the laboratory.',
+      },
+      {
+        q: 'How do I verify a source water analyzer near the drinking water limit?',
+        a: 'With laboratory samples on a schedule set by the regulator and the trend, using an accredited method, and with a documented action level below the limit. The online analyzer gives the warning; the laboratory gives the compliance number.',
+      },
+    ],
+    related: [
+      '/controls/instrumentation/analytical/ammonia',
+      '/controls/instrumentation/analytical/dissolved-oxygen',
+      '/controls/instrumentation/analytical/turbidity',
+      '/controls/instrumentation/calibration/calibration-procedures',
+      '/controls/instrumentation/calibration/calibration-troubleshooting',
+      '/engineering-library/standards/epa',
+    ],
+  },
+  {
+    path: '/controls/instrumentation/analytical/orp',
+    kind: 'reference',
+    title: 'ORP',
+    summary:
+      'Oxidation-reduction potential: what the millivolt reading means and does not, the platinum and reference pair, uses in dechlorination control, disinfection indication, anoxic monitoring, and chemical treatment, checking with standards, and electrode drift.',
+    answer:
+      'Oxidation-reduction potential is the voltage between a platinum electrode and a reference electrode in the water, in millivolts, and it rises when oxidizing species such as chlorine dominate and falls when reducing species such as sulfite or the products of anaerobic activity dominate. It is not a concentration: the same reading can come from different chemistries, it responds logarithmically, and it depends on pH and temperature, so it is used where the goal is to hold a chemical condition rather than to measure a species. Its strengths are in dechlorination, where sulfite feed is controlled to an ORP setpoint that ensures the chlorine is gone without overdosing; in disinfection, where an ORP above a threshold indicates an effective oxidizing condition; in anoxic and anaerobic zone monitoring, where the falling potential shows the zone has gone anoxic; and in industrial chemical treatment such as cyanide destruction and chromium reduction. The electrode fouls and the reference junction poisons, and a slow or offset reading is the signal to clean, check with a standard solution, or replace.',
+    keyPoints: [
+      'ORP is a potential in millivolts, not a concentration; it indicates the balance of oxidizing and reducing species.',
+      'It responds logarithmically and depends on pH and temperature; the same millivolts can mean different chemistries.',
+      'Use it to hold a condition: dechlorination control, disinfection indication, anoxic zone monitoring, chemical treatment endpoints.',
+      'Check with a standard solution of known potential; a slow or offset electrode is cleaned or replaced.',
+      'Pair it with a concentration measurement where the process needs a number, such as a chlorine analyzer.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 7,
+    tags: ['Instrumentation', 'Water', 'Wastewater', 'Control', 'Signals'],
+    blocks: [
+      { t: 'h2', text: 'What the reading means' },
+      {
+        t: 'p',
+        text: 'A platinum electrode takes on the potential set by the electron activity of the water, and the reference electrode, usually silver and silver chloride, provides a stable comparison. The difference is the ORP. Water with free chlorine sits at several hundred millivolts positive; water after sulfite addition falls to near zero or negative; an anoxic zone in a treatment plant sits around minus one hundred millivolts and an anaerobic zone lower. The relationship to concentration is logarithmic, so a small change in millivolts near a setpoint corresponds to a large change in the oxidant, which is why ORP is sensitive at the endpoint and insensitive far from it. It also shifts with pH, roughly tens of millivolts per pH unit for chlorine, and with temperature, and readings from different plants or different pH regimes cannot be compared directly.',
+      },
+      {
+        t: 'table',
+        head: ['Condition', 'Typical ORP', 'Note'],
+        rows: [
+          ['Chlorinated drinking water', 'About +600 to +750 mV', 'Depends on pH and residual; above about 650 mV is often used as an indicator of effective disinfection'],
+          ['Dechlorinated effluent', 'Near 0 to about +200 mV', 'The setpoint for sulfite control sits at the knee where chlorine disappears'],
+          ['Aerobic zone', 'About +50 to +200 mV', 'Oxygen present'],
+          ['Anoxic zone', 'About −100 mV', 'Nitrate present, oxygen absent; denitrification'],
+          ['Anaerobic zone', 'Below about −200 mV', 'Neither oxygen nor nitrate; phosphorus release'],
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'note',
+        title: 'Ranges are indicative',
+        text: 'The values above vary with pH, temperature, the reference electrode type, and the water. Each plant establishes its own ranges by comparing ORP with laboratory results and process behavior, and uses those.',
+      },
+      { t: 'h2', text: 'Uses' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Dechlorination control', def: 'Sulfite or bisulfite is fed to an effluent to remove chlorine before discharge. Chlorine analyzers cannot read zero reliably and sulfite analyzers are rare, so the feed is controlled to an ORP setpoint just below the knee where chlorine vanishes. The loop is fast, the setpoint is found by titration at commissioning, and overdosing sulfite depletes oxygen in the receiving water.' },
+          { term: 'Disinfection indication', def: 'An ORP above a plant-specific threshold indicates an oxidizing condition adequate for disinfection; it complements the chlorine residual and catches a residual that is present but ineffective at high pH.' },
+          { term: 'Anoxic and anaerobic monitoring', def: 'The ORP in a biological zone shows whether the zone has the condition the process wants; it is used to control mixers, recycle rates, and aeration on and off in cyclic processes.' },
+          { term: 'Chemical treatment endpoints', def: 'Cyanide oxidation, chromium reduction, and similar industrial treatments are controlled to ORP endpoints established for the chemistry.' },
+        ],
+      },
+      { t: 'h2', text: 'Electrodes and calibration' },
+      {
+        t: 'ul',
+        items: [
+          'The platinum surface fouls with biofilm, oil, and scale, which slows the response and shifts the reading; clean with the manufacturer method and never abrade the platinum unless the manufacturer says so.',
+          'The reference junction clogs or is poisoned by sulfide and by some chemicals; a drifting offset that cleaning does not fix is a reference problem, and the electrode is replaced.',
+          'Check, rather than calibrate, with a standard solution of known potential at a known temperature; an electrode that reads within the tolerance stated by the manufacturer is left alone, one outside it is cleaned and rechecked, and one still outside is replaced.',
+          'An offset adjustment exists on most transmitters; use it sparingly and record it, because an offset that grows is an electrode failing.',
+          'Response time is the diagnostic: a healthy electrode moves to a new value in seconds; one that takes minutes is fouled or aged.',
+        ],
+      },
+      { t: 'h2', text: 'Using it well' },
+      {
+        t: 'ul',
+        items: [
+          'Establish the plant ranges and setpoints by comparison with laboratory results and titrations, and document them.',
+          'Pair ORP with a concentration measurement where a number is needed for a permit; ORP controls, the analyzer records.',
+          'Alarm on rate of change and on a stuck reading as well as on limits; a stuck reading is a fouled electrode.',
+          'Mount the electrode where the water moves and the sample is representative, downstream of the mixing point by enough distance for the reaction to complete.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Can I convert ORP to chlorine residual?',
+        a: 'Not reliably. The relationship depends on pH, temperature, the chlorine species, and other oxidants and reductants in the water. A plant can establish a rough correlation for its own water at its usual pH, and it breaks when any of those change. Use a chlorine analyzer for the residual.',
+      },
+      {
+        q: 'The ORP setpoint for dechlorination keeps needing adjustment.',
+        a: 'The effluent chemistry, pH, or temperature is changing, and the knee moves with it. Verify by titration, consider a cascade with a chlorine analyzer upstream for feed-forward, and check the electrode response time; a slow electrode makes the loop hunt and looks like a wrong setpoint.',
+      },
+      {
+        q: 'Why do two ORP probes in the same tank read 40 millivolts apart?',
+        a: 'Different reference electrode types, different fouling, or one reference junction poisoned. Check both in the same standard solution; the one that is off is cleaned or replaced. Differences of tens of millivolts between electrodes are common and are why ORP is used relative to a plant baseline.',
+      },
+      {
+        q: 'Does ORP need temperature compensation?',
+        a: 'The potential changes with temperature, but there is no standard compensation the way there is for pH, because the effect depends on the chemistry. Most transmitters report the raw potential and the temperature separately, and the plant setpoints account for the seasonal range.',
+      },
+    ],
+    related: [
+      '/controls/instrumentation/analytical/chlorine',
+      '/controls/instrumentation/analytical/ph',
+      '/controls/instrumentation/analytical/dissolved-oxygen',
+      '/controls/instrumentation/calibration/calibration-troubleshooting',
+      '/controls/instrumentation/calibration/calibration-procedures',
+      '/controls/plc-systems/analog-control/pid',
+    ],
+  },
+  {
+    path: '/controls/instrumentation/calibration/calibration-troubleshooting',
+    kind: 'reference',
+    title: 'Calibration Troubleshooting',
+    summary:
+      'When an instrument will not calibrate or stay calibrated: wrong or expired standards, slope and offset out of range, compensation errors, procedure mistakes, loop scaling that disagrees with the instrument, and deciding when to adjust, replace.',
+    answer:
+      'An instrument that fails calibration is telling you one of five things: the reference you are calibrating against is wrong, the sensor has degraded past the range the electronics can correct, a compensation input such as temperature is wrong, the procedure was done out of order or without settling, or the error is not in the instrument at all but in the loop or the scaling downstream. The as-found readings against the standards, the slope and offset the transmitter reports after the attempt, the response time, and a check of the reference against a second reference sort them out. The adjustments that a calibration allows are bounded: a pH electrode whose slope has fallen below the limit, a transmitter whose zero has drifted beyond its trim range, or an analyzer that needs a large factor is replaced or serviced, because an adjustment that forces a bad sensor to read right today will be wrong tomorrow. And sometimes the instrument passes, the process value is real, and the disagreement is with an operator expectation or a laboratory sample taken from a different place.',
+    keyPoints: [
+      'Check the reference before the instrument: standards expire, get contaminated, and are the wrong value more often than anyone admits.',
+      'Slope and offset after calibration tell you the sensor state; out-of-range values mean replace, not adjust harder.',
+      'Temperature and other compensation inputs must be right before the primary value can be.',
+      'Follow the procedure order, allow settling, and calibrate under conditions close to service.',
+      'Separate the instrument from the loop: a transmitter that reads right at its display and wrong at the screen has a scaling problem.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['Instrumentation', 'Commissioning', 'Troubleshooting', 'Documentation', 'Analog'],
+    blocks: [
+      { t: 'h2', text: 'Symptom to cause' },
+      {
+        t: 'table',
+        head: ['Symptom', 'Likely cause', 'Check'],
+        rows: [
+          ['Will not reach the standard value', 'Sensor degraded; standard wrong; wrong range', 'Slope and offset reported; a second standard; the sensor age'],
+          ['Calibrates, drifts within days', 'Sensor aging, fouling, reference junction, temperature element', 'Response time; drift record; temperature reading'],
+          ['Reads right in the standard, wrong in the process', 'Matrix effect, sample not representative, interference, temperature', 'Laboratory sample at the sensor; compensation settings'],
+          ['Zero fine, span off', 'Span standard wrong; sensor slope; nonlinearity', 'A third point; the slope value'],
+          ['Span fine, zero off', 'Zero standard contaminated; offset drift; a static head or mounting effect', 'Zero with a fresh standard; the installation'],
+          ['Slow to settle', 'Fouled or aged sensor; cold standards; low flow', 'Response time against the specification; clean'],
+          ['Calibrates at the transmitter, wrong on the screen', 'Loop scaling, controller range, screen tag', 'Walk the signal: current, counts, scaled value'],
+          ['Calibrates differently each time', 'Procedure inconsistency, unstable standard, electrical noise', 'Repeat with one technician and fresh standards; check the loop for noise'],
+        ],
+      },
+      { t: 'h2', text: 'The reference first' },
+      {
+        t: 'p',
+        text: 'Buffers absorb carbon dioxide and change; conductivity standards evaporate and concentrate; chlorine standards decay in hours; a pressure calibrator has its own calibration date; a test weight is worn. Before adjusting an instrument, the standard is checked against a second one or against its certificate date and storage condition, and a standard opened long ago is discarded. Half of the instruments that would not calibrate were being calibrated to a wrong number.',
+      },
+      { t: 'h2', text: 'What slope and offset say' },
+      {
+        t: 'p',
+        text: 'A transmitter that calibrates reports how far it had to adjust: a slope, or span factor, and an offset, or zero shift. Each has a range within which the manufacturer considers the sensor healthy. A pH electrode with a slope below the limit, a dissolved oxygen sensor whose span factor has climbed, a pressure transmitter whose zero trim is near its limit, and an analyzer that needs a large correction factor are all sensors at the end of their life, and forcing them into calibration buys days. The values are recorded on every calibration, and the trend tells the technician when replacement is due before the failure.',
+      },
+      { t: 'h2', text: 'Compensation and conditions' },
+      {
+        t: 'ul',
+        items: [
+          'Temperature: a wrong temperature reading makes pH, conductivity, dissolved oxygen, and many others wrong; verify the temperature element against a thermometer before calibrating the primary.',
+          'Pressure and salinity on dissolved oxygen; potassium and pH on ammonium; chloride on nitrate; each compensation input is verified first.',
+          'Standards and the sensor at the same temperature, settled; a cold buffer on a warm electrode drifts for minutes.',
+          'Flow and pressure at the sensor during calibration close to service conditions where the reading depends on them.',
+          'Time: the settling time in the procedure is a minimum, and a reading that is still moving is not a reading.',
+        ],
+      },
+      { t: 'h2', text: 'The loop, not the instrument' },
+      {
+        t: 'p',
+        text: 'An instrument can pass its calibration at its own display and still be wrong at the operator screen, because the 4 to 20 milliamp output, the controller scaling, and the screen tag are a second chain with its own errors. The check is a walk: the transmitter display, the loop current with a meter, the raw counts and the scaled value in the controller, and the screen. A transmitter range changed during calibration without the controller scaling updated is the commonest way a good calibration becomes a wrong reading.',
+      },
+      { t: 'h2', text: 'Adjust, replace, or leave alone' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Adjust', def: 'When the as-found error exceeds the tolerance, the slope and offset after adjustment are within their healthy ranges, and the response time is normal.' },
+          { term: 'Replace', def: 'When the sensor cannot reach the standard, the slope or offset is out of range, the response is slow after cleaning, or the drift record shows the interval between calibrations shrinking.' },
+          { term: 'Leave alone', def: 'When the as-found error is within tolerance; adjusting an instrument that is within tolerance adds the uncertainty of the standard to the reading and hides the drift trend.' },
+          { term: 'Look elsewhere', def: 'When the instrument passes and the process value is disputed: a laboratory sample taken at a different point, an operator expectation, or a process that genuinely changed.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'As-found, as-left',
+        text: 'Every calibration records the readings before adjustment and after, the standards used with their lot and date, the slope and offset, and the technician. The as-found record is the evidence for the process data since the last calibration; the trend of as-found errors sets the interval; and a record that shows only as-left proves nothing.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'The electrode calibrates perfectly and the reading is still wrong in the tank.',
+        a: 'The tank is not the buffer: fouling that the buffer washed off, a matrix effect, a temperature difference, a reference junction that behaves differently in the process, or a sample point that does not represent the tank. Take a laboratory sample beside the electrode, and compare the electrode response time in the process.',
+      },
+      {
+        q: 'How much error is acceptable?',
+        a: 'What the procedure says, set from the use of the measurement: a compliance instrument tighter than a trend, a control instrument tight enough that the loop does not chase the error. Typical tolerances are a percent or two of span for transmitters and a tenth of a pH unit for electrodes; the plant writes its own.',
+      },
+      {
+        q: 'Should I calibrate more often if it keeps drifting?',
+        a: 'Calibrating more often treats the symptom; a sensor that drifts past tolerance between calibrations is failing, fouling faster than it is cleaned, or installed where it cannot work. Fix the cause, then set the interval from the drift record.',
+      },
+      {
+        q: 'The transmitter passed but the controller reads 3 percent high.',
+        a: 'The loop: the transmitter range and the controller scaling do not match, or the input module range is off. Walk the signal from the transmitter display through the current to the counts and the scaled value, and correct the scaling, not the transmitter.',
+      },
+    ],
+    related: [
+      '/controls/instrumentation/calibration/calibration-procedures',
+      '/controls/instrumentation/calibration/calibration-documentation',
+      '/controls/instrumentation/calibration/loop-checks',
+      '/troubleshooting/instrumentation-troubleshooting/transmitter-reads-wrong-value',
+      '/troubleshooting/instrumentation-troubleshooting/analog-does-not-match-field-indicator',
+      '/how-to/instrumentation-how-to/calibrate-a-pressure-transmitter',
+    ],
+  },
+  {
+    path: '/controls/instrumentation/signals/digital-signals',
+    kind: 'reference',
+    title: 'Digital Signals',
+    summary:
+      'Discrete signals between instruments and controllers: dry and wetted contacts, sinking and sourcing transistor outputs, two-wire sensor leakage, NAMUR sensors with wire-break detection, contact ratings at low current, and wiring conventions.',
+    answer:
+      'A digital signal is a two-state signal, on or off, carried by a contact, a transistor, or a defined current level, and the reason it fails is usually a mismatch between how the sending device produces it and how the input expects it. A dry contact closes a circuit the input powers; a wetted contact provides its own voltage, which must match the input; a transistor output sinks current to common or sources it from the supply, and the input must be wired for the one it is; a two-wire proximity sensor draws its own power through the signal and leaks a small current when off that a sensitive input may read as on; a NAMUR sensor signals with two current levels so that a broken wire or a short is detected as a fault. Alarms and safety signals are wired so that the healthy state is a closed contact or a live current and a broken wire reads as alarm. With those rules on the drawing and a contact rated for the small currents an input draws, a discrete signal is the most reliable signal in the plant.',
+    keyPoints: [
+      'Know what the sender produces: dry contact, wetted contact, sinking or sourcing transistor, two-wire sensor, or NAMUR current levels.',
+      'Match the input: powered or not, sinking or sourcing, voltage, and threshold.',
+      'Wire alarms and safety signals fail-safe: closed or live when healthy, so a broken wire alarms.',
+      'Use contacts rated for low current on 24 volt inputs; a power contact at milliamps corrodes and reads open.',
+      'Debounce mechanical contacts and filter noisy inputs in the controller, with the delay documented.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['Instrumentation', 'Signals', 'PLC', 'Design', 'Alarms'],
+    blocks: [
+      { t: 'h2', text: 'Signal types' },
+      {
+        t: 'table',
+        head: ['Type', 'What the sender does', 'What the input needs', 'Notes'],
+        rows: [
+          ['Dry contact', 'Closes or opens a circuit with no voltage of its own', 'A powered input that supplies the wetting voltage', 'Float switches, limit switches, relay contacts'],
+          ['Wetted contact', 'Provides its own voltage when closed', 'An input matching that voltage and referenced to the same common', 'Run feedback from a starter at 120 volts; isolate or use an input relay'],
+          ['Sourcing transistor, PNP', 'Connects the signal to the positive supply when on', 'A sinking input that expects positive', 'The common convention in North American panels'],
+          ['Sinking transistor, NPN', 'Connects the signal to common when on', 'A sourcing input that supplies the positive', 'Common on Asian-market sensors; check before wiring'],
+          ['Two-wire sensor', 'Powered through the signal loop; switches the loop current', 'An input that tolerates the off-state leakage and provides the minimum on current', 'Proximity switches; leakage of a milliampere or two'],
+          ['NAMUR', 'About 1 milliampere off, about 3 or more milliamperes on, per the standard', 'A NAMUR input or an isolator amplifier that reads the levels and detects breaks', 'Intrinsically safe applications; wire-break and short detection'],
+          ['Solid-state relay output', 'A semiconductor switch, often AC rated', 'A load above the minimum holding current', 'Leakage when off; not for low-current inputs without a burden'],
+        ],
+      },
+      { t: 'h2', text: 'Sinking and sourcing' },
+      {
+        t: 'p',
+        text: 'The words describe the direction of current at the input terminal. A sinking input draws current in from the field device to its common, so the field device must source current from the positive supply: a sourcing device drives a sinking input. A sourcing input pushes current out to the field device, which must sink it to common. A dry contact works with either because it carries current in either direction. A transistor sensor works with one, and a mismatch reads permanently off or permanently on. The panel standard chooses one convention, states it on the drawings, and buys sensors to match; the exceptions get an interposing relay.',
+      },
+      { t: 'h2', text: 'Fail-safe' },
+      {
+        t: 'p',
+        text: 'An alarm contact that closes to alarm cannot tell the controller about a broken wire, a blown fuse, or a dead sensor; the input reads off, which looks like no alarm. An alarm contact that opens to alarm, held closed when healthy, alarms on every one of those failures. The same applies to run feedbacks, permissives, and safety signals: the healthy state carries current. NAMUR sensors take it further by distinguishing off from broken. The convention is on the drawing, and an input configured the wrong way round is an alarm that never comes.',
+      },
+      { t: 'h2', text: 'Contacts at low current' },
+      {
+        t: 'p',
+        text: 'A 24 volt input draws a few milliamperes. A contact designed for amperes at 120 volts has a film of oxide that a small current cannot break through, and it reads open intermittently after a year in a damp panel. Contacts for controller inputs are rated for low-level switching, gold-plated or bifurcated, and float switches and limit switches are specified with that rating. A mechanical contact also bounces for milliseconds on closure, which a counter or a fast input reads as several closures unless it is debounced in the input filter or the program.',
+      },
+      { t: 'h2', text: 'Wiring rules' },
+      {
+        t: 'ul',
+        items: [
+          'Discrete field wiring at 24 volts in its own wireway and conduit, away from power.',
+          'One common per input group, from the panel supply, not from the field device supply.',
+          'Wetted signals from other panels through input relays or isolated inputs.',
+          'Two-wire sensor leakage checked against the input off-state threshold; a burden resistor where it is not.',
+          'Long runs to sensitive inputs with shielded cable and a filter delay in the input configuration.',
+          'Every discrete point on the I/O list with its type, its fail-safe convention, and its debounce.',
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'The meter test',
+        text: 'With the field device in each state, measure the voltage at the input terminal: the on state should read near the supply for a sinking input and near zero for a sourcing input, and the off state the reverse. A voltage that sits in between is a leakage or a wiring mismatch, and it is the reason the input flickers.',
+      },
+    ],
+    faqs: [
+      {
+        q: 'The input stays on with the sensor off.',
+        a: 'A two-wire sensor leaking enough current to hold the input on, a sourcing sensor on a sourcing input wired to the supply, or a wire shorted to positive. Measure the off-state voltage at the input; a burden resistor across the input or the right input type fixes the leakage case.',
+      },
+      {
+        q: 'Should alarms be normally open or normally closed?',
+        a: 'Closed when healthy, opening on alarm, so that a broken wire alarms. Normally open alarm contacts are used only where a spurious alarm is worse than a missed one, and that is rare in a water plant.',
+      },
+      {
+        q: 'Can I run a 120 volt discrete signal to a 24 volt input?',
+        a: 'Not directly. Use an input relay with a 120 volt coil and a dry contact to the input, or an isolated 120 volt input module. A 120 volt wire landed on a 24 volt input destroys the channel.',
+      },
+      {
+        q: 'How much debounce?',
+        a: 'A few milliseconds for a clean contact, ten to fifty for a float or a bouncy limit switch, set in the input filter or a timer in the program, and never so long that a genuine short pulse is missed. Document the value beside the point.',
+      },
+    ],
+    related: [
+      '/controls/plc-systems/plc-fundamentals/io-systems',
+      '/controls/control-panels/plc-panels/panel-i-o',
+      '/controls/instrumentation/level/floats',
+      '/troubleshooting/plc-troubleshooting/inputs-not-reading',
+      '/controls/instrumentation/signals/pulse',
+      '/controls/plc-systems/programming/alarms',
+    ],
+  },
+  {
+    path: '/controls/instrumentation/signals/frequency',
+    kind: 'reference',
+    title: 'Frequency Signals',
+    summary:
+      'Frequency as a process signal: the instruments that produce it, how frequency differs from pulse counting, the K-factor and the conversion to flow, frequency inputs and period measurement at low rates, converters to 4-20 mA, noise, and how to verify one.',
+    answer:
+      'A frequency signal carries its value in how often it changes state, in pulses per second, and it is the natural output of anything that spins or oscillates: a turbine or paddlewheel flowmeter whose rotor passes a pickup, a magnetic pickup on a shaft, a vortex meter counting shedding, and some analyzers and converters. The frequency is proportional to the rate, flow or speed, through a factor the manufacturer states, and the same pulses counted over time give the total. Reading it needs an input that measures frequency directly, either a frequency input module or a high-speed counter that the controller reads at intervals, or a converter that turns frequency into 4 to 20 milliamps for an ordinary analog input. At low rates the period between pulses is measured instead of counting pulses per second, because counting a few pulses over a second gives coarse resolution. The signal is immune to the offset and drift of an analog level but vulnerable to noise pulses that add to the count, so the wiring, the threshold, and the filtering matter.',
+    keyPoints: [
+      'Frequency encodes the rate; counting the same pulses over time gives the total.',
+      'The K-factor from the manufacturer converts pulses per unit volume or per revolution into flow or speed.',
+      'Use a frequency input or a high-speed counter; an ordinary input cannot follow more than a few pulses per second.',
+      'At low frequency, measure the period between pulses for resolution; at high frequency, count pulses per interval.',
+      'Noise pulses add to the count; shield, set the threshold, and filter, and verify against a known rate.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 7,
+    tags: ['Instrumentation', 'Signals', 'Flow', 'PLC', 'Analog'],
+    blocks: [
+      { t: 'h2', text: 'Sources' },
+      {
+        t: 'table',
+        head: ['Instrument', 'What produces the frequency', 'Typical range', 'Output form'],
+        rows: [
+          ['Turbine flowmeter', 'Rotor blades passing a magnetic or inductive pickup', 'Tens to thousands of hertz', 'Sine wave from a coil, or a squared pulse from an amplifier'],
+          ['Paddlewheel flowmeter', 'Paddle magnets passing a sensor', 'A few to hundreds of hertz', 'Open-collector or square wave'],
+          ['Vortex flowmeter', 'Vortex shedding frequency', 'Tens to hundreds of hertz', 'Usually converted internally; pulse output optional'],
+          ['Magnetic pickup on a shaft', 'Gear teeth passing the pickup', 'Depends on teeth and speed', 'Sine wave; needs a conditioner'],
+          ['Positive displacement meter', 'Rotor or piston cycles', 'Low, often below a hertz', 'Reed or open-collector pulse'],
+          ['Frequency converters', 'A transmitter that outputs frequency proportional to its value', 'Defined by the device', 'Square wave'],
+        ],
+      },
+      { t: 'h2', text: 'From frequency to flow' },
+      {
+        t: 'formula',
+        expr: 'Q = f × 60 ÷ K',
+        where: [
+          'Q = flow rate in volume per minute',
+          'f = frequency in pulses per second',
+          'K = K-factor in pulses per unit volume from the meter calibration',
+        ],
+      },
+      {
+        t: 'p',
+        text: 'The K-factor is on the meter calibration certificate and is entered in the input configuration or the program; a meter replaced with one of a different K-factor reads wrong until the number is changed. Turbine meters have a K-factor that varies slightly with flow, and a linearization table from the certificate improves accuracy across the range. The total is the pulse count divided by the K-factor, kept in a counter that survives power loss.',
+      },
+      { t: 'h2', text: 'Reading it' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Frequency input module', def: 'Measures frequency directly and reports it as a value, with a configurable range, threshold, and filter. The cleanest solution.' },
+          { term: 'High-speed counter', def: 'Counts pulses; the program reads the count at a fixed interval and computes the frequency as the difference over the interval. Fine for high rates; coarse at low rates.' },
+          { term: 'Period measurement', def: 'The counter timestamps each pulse and the program computes frequency as the reciprocal of the period. Necessary below a few hertz, where a one-second count window resolves only whole pulses.' },
+          { term: 'Frequency to current converter', def: 'A device that outputs 4 to 20 milliamps proportional to frequency, for an ordinary analog input. Adds a device and a calibration; loses the pulse total unless the converter also counts.' },
+          { term: 'Ordinary discrete input', def: 'Reads a state each scan; misses pulses faster than about half the scan rate. Suitable only for very slow pulse sources, and never for frequency measurement.' },
+        ],
+      },
+      {
+        t: 'formula',
+        expr: 'Resolution of a counting method = 1 ÷ T_window pulses per second',
+        where: [
+          'T_window = the counting interval in seconds',
+          'A one-second window resolves 1 hertz; at a 5 hertz signal that is 20 percent, which is why low rates use period measurement',
+        ],
+      },
+      { t: 'h2', text: 'Noise' },
+      {
+        t: 'p',
+        text: 'A frequency input counts every edge that crosses its threshold, and a noise spike from a drive or a contactor is an edge. The symptoms are a flow reading that jumps when a motor starts, a total that creeps with the process stopped, and a frequency that reads when the meter is still. The defenses are shielded twisted pair grounded at the panel, routing away from power and drive cables, an input threshold set above the noise and below the signal, a filter or minimum pulse width in the input configuration, and, for coil pickups, a conditioner near the meter that squares the signal before it travels. A meter with a squared output and a short cable rarely has the problem.',
+      },
+      { t: 'h2', text: 'Verifying' },
+      {
+        t: 'ul',
+        items: [
+          'A frequency generator or a calibrator with a frequency output into the input at known values across the range; the reading should match the calculation from the K-factor.',
+          'A handheld frequency meter on the signal with the process running, compared with the controller reading.',
+          'A volumetric or comparison check against another meter or a tank draw-down for the whole chain.',
+          'The total against the meter register if it has one, over a day.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Frequency or 4 to 20 milliamps from the flowmeter?',
+        a: 'Frequency when the input can read it: no drift, no offset, and the total comes free. Current when the run is long and noisy, the controller has only analog inputs, or a converter is already present. Many meters offer both; use frequency for the total and current for the rate if the design wants belt and braces.',
+      },
+      {
+        q: 'The flow reads zero below a certain rate.',
+        a: 'The input cutoff or the minimum frequency setting, or the meter itself below its minimum flow. Turbine and paddlewheel meters have a minimum below which the rotor stalls or the K-factor is far off; the input should report zero there and the design should size the meter for the range.',
+      },
+      {
+        q: 'Why does the total drift when the pump is off?',
+        a: 'Noise pulses counted while the meter is still, or a rotor turning slowly in a leaking check valve. A minimum frequency cutoff, a better threshold, and shielding fix the first; a valve fixes the second.',
+      },
+      {
+        q: 'How fast can a counter input go?',
+        a: 'High-speed counter inputs handle tens of kilohertz or more; ordinary inputs a few pulses per second at most. Check the module specification against the maximum meter frequency at full flow.',
+      },
+    ],
+    related: [
+      '/controls/instrumentation/signals/pulse',
+      '/controls/instrumentation/flow/flow-installation',
+      '/controls/instrumentation/flow/flow-troubleshooting',
+      '/controls/instrumentation/signals/4-20-ma-signals',
+      '/controls/plc-systems/plc-fundamentals/io-systems',
+      '/troubleshooting/noise-interference/vfd-noise-on-analog-signals',
+    ],
+  },
+  {
+    path: '/controls/instrumentation/signals/pulse',
+    kind: 'reference',
+    title: 'Pulse Signals',
+    summary:
+      'Pulse outputs for totalizing: flowmeters, energy meters, rain gauges, and feeders, output types, scaling in volume per pulse, counter inputs, pulse width and rate, debouncing reeds, totalizer retention and rollover, and verifying against the register.',
+    answer:
+      'A pulse output sends one pulse for each unit of quantity, a gallon, a kilowatt-hour, a hundredth of an inch of rain, a stroke of a chemical pump, and the receiver counts them to keep a total. It is the simplest and most exact way to totalize, because each pulse is a defined quantity and nothing drifts, and it fails in simple ways: pulses too fast or too narrow for the input, a reed contact that bounces and counts double, a scaling that says gallons when the meter sends tens of gallons, a counter that rolls over without the program noticing, and pulses lost while the controller was down or the wire was open. The design chooses a pulse rate and width the input can catch, a counter input that survives the scan, a scale factor written on the I/O list, a totalizer that retains through power loss and handles rollover, and a periodic check of the counted total against the meter register, which is the only proof that no pulses were lost.',
+    keyPoints: [
+      'Each pulse is a fixed quantity; the total is the count times the scale factor, and the factor is on the I/O list.',
+      'Use a counter input; an ordinary input misses pulses faster than the scan and counts bounce as pulses.',
+      'Pulse width and maximum rate must suit the input; configure the meter for a rate the input can catch at full flow.',
+      'Retain the totalizer through power loss and handle rollover explicitly.',
+      'Pulses sent while the controller is down are gone; compare the total with the meter register on a schedule.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 7,
+    tags: ['Instrumentation', 'Signals', 'Flow', 'PLC', 'Documentation'],
+    blocks: [
+      { t: 'h2', text: 'Sources and outputs' },
+      {
+        t: 'table',
+        head: ['Source', 'Quantity per pulse', 'Output type', 'Notes'],
+        rows: [
+          ['Magnetic or ultrasonic flowmeter', 'Configurable: 1, 10, 100 gallons, or cubic feet', 'Open-collector transistor or relay', 'Set the quantity so the rate at full flow suits the input'],
+          ['Mechanical water meter with register', 'Fixed by the register: often 10 or 100 gallons', 'Reed switch, sometimes two for direction', 'Slow; bounce; a magnet on the register drives the reed'],
+          ['Energy meter', 'Watt-hours or kilowatt-hours per pulse', 'Open-collector or solid-state', 'Per the meter setting; fast at high load'],
+          ['Rain gauge', 'A hundredth of an inch or a tenth of a millimeter per tip', 'Reed switch in the tipping bucket', 'Slow; bounce'],
+          ['Chemical metering pump', 'One pulse per stroke; volume per stroke from the pump', 'Relay or transistor', 'Stroke volume depends on the stroke length setting'],
+          ['Gas or chemical feeder', 'Per unit fed', 'Relay', 'Slow'],
+        ],
+      },
+      { t: 'h2', text: 'Catching the pulses' },
+      {
+        t: 'p',
+        text: 'A controller input is read once per scan, so an ordinary input reliably catches pulses only when each state lasts longer than a scan, which limits it to a pulse or two per second on a typical program. A high-speed counter input counts in hardware, independent of the scan, at rates up to kilohertz, and reports the count to the program. Between them sit counter functions in some input modules and the counter inputs on small controllers. The rule is that anything above about one pulse per second, and anything where a missed pulse matters, goes to a counter input, and the pulse quantity at the meter is set so that the rate at maximum flow is comfortably below the input maximum and the pulse width is above the input minimum.',
+      },
+      {
+        t: 'formula',
+        expr: 'f_max = Q_max ÷ V_pulse',
+        where: [
+          'f_max = pulse rate at maximum flow, pulses per unit time',
+          'Q_max = maximum flow in volume per unit time',
+          'V_pulse = volume per pulse configured at the meter',
+        ],
+      },
+      { t: 'h2', text: 'Reed contacts' },
+      {
+        t: 'p',
+        text: 'A reed switch closes when a magnet passes and bounces on closure and opening for a few milliseconds, which a fast counter reads as several pulses. A reed output is debounced with a filter time in the counter configuration or a small resistor and capacitor at the input, set longer than the bounce and shorter than the shortest genuine pulse. A reed switch also has a limited contact life and a current rating in milliamperes; the counter input current is within it.',
+      },
+      { t: 'h2', text: 'Totalizing' },
+      {
+        t: 'ul',
+        items: [
+          'The total is kept in a retentive register that survives power loss and a program download, in a data type wide enough for the life of the meter: a 32-bit integer of gallons rolls over in four billion gallons, a 16-bit one in sixty-five thousand.',
+          'The hardware counter rolls over at its own limit; the program reads the difference each scan and adds it to the total rather than copying the counter.',
+          'Scaling from pulses to volume happens once, with the factor on the I/O list and in the tag description.',
+          'A daily total is computed from the running total at a fixed time, not by resetting the counter, so that a missed reset does not corrupt a day.',
+          'The total is displayed with its unit and compared with the meter register on a schedule; a difference beyond the expected bounce is lost pulses or a wrong factor.',
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'warning',
+        title: 'Pulses have no memory',
+        text: 'A meter that sends a pulse while the controller is rebooting, the wire is open, or the counter is full has sent it into nothing. The meter register, or a buffered counter in the meter, holds the truth. A design that needs an exact total reads the register over a protocol, or reconciles the pulse total against the register and adjusts.',
+      },
+      { t: 'h2', text: 'Verifying' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Bench', text: 'A pulse generator or a calibrator into the input at a known rate and width, and the count read from the program; then at the maximum rate the meter can produce.' },
+          { title: 'Field', text: 'The meter register before and after a known period, compared with the controller total for the same period, with the scale factor.' },
+          { title: 'Bounce', text: 'A reed output at a slow rate with the filter off and then on; the count should equal the number of magnet passes only with the filter.' },
+          { title: 'Retention', text: 'A controller power cycle with a known total; the total should be intact afterward.' },
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Pulse or Modbus for the total?',
+        a: 'Modbus, where the meter offers it, gives the register value itself with no lost pulses and the rate as well. Pulse is simpler and works with any controller. Many designs use both: pulse for the running total and a periodic register read for reconciliation.',
+      },
+      {
+        q: 'The controller total is 3 percent lower than the register.',
+        a: 'Lost pulses: an input too slow for the rate, pulses during outages, or a filter too long. Check the maximum rate at full flow against the input, the pulse width, and the outage log. A total that is higher than the register is bounce or noise.',
+      },
+      {
+        q: 'What pulse quantity should I set on the meter?',
+        a: 'The largest that gives the resolution the process needs, so that the rate is low: ten or a hundred gallons per pulse for a plant flow, one gallon for a chemical feed. The rate at maximum flow should be a fraction of the input maximum.',
+      },
+      {
+        q: 'Can I use the same pulse for rate and total?',
+        a: 'Yes: the counter difference per interval gives the rate and the accumulated count gives the total. At low rates the rate from pulses is coarse, and a 4 to 20 milliamp rate signal alongside the pulse total is the usual arrangement.',
+      },
+    ],
+    related: [
+      '/controls/instrumentation/signals/frequency',
+      '/controls/instrumentation/signals/digital-signals',
+      '/controls/instrumentation/flow/magnetic-flowmeters',
+      '/controls/plc-systems/plc-fundamentals/retentive-memory',
+      '/controls/plc-systems/communications/modbus-tcp',
+      '/controls/scada-hmi/historian-data/reporting',
+    ],
+  },
+  {
+    path: '/controls/instrumentation/signals/signal-isolation',
+    kind: 'reference',
+    title: 'Signal Isolation',
+    summary:
+      'Isolating analog signals: loop isolators and their variants, splitters that feed two receivers, converters, the common-mode problem isolation solves, ratings, accuracy and response costs, and when an isolated input module makes the isolator unnecessary.',
+    answer:
+      'A signal isolator passes a 4 to 20 milliamp or voltage signal from one circuit to another with no electrical connection between them, so that a ground potential difference, a common-mode voltage from a drive, or a fault on one side does not appear on the other. It comes in several forms: a loop-powered isolator that takes its power from the receiving loop and passes a transmitter signal into it; an output-powered isolator that powers a two-wire transmitter on its input side and drives the output from the panel supply; a four-wire isolator with its own supply that isolates input, output, and power from each other; a splitter that takes one signal and produces two isolated outputs for two receivers; and converters that also change the signal form. Each adds a small error and a small delay, needs mounting, power, and fusing, and has an isolation rating that must exceed the voltage it will see. Where the controller input module has isolated channels, the isolator is unnecessary for the ground loop case; it remains the answer for feeding two receivers, for a grounded transmitter into a non-isolated input, and for signals from drives and other panels.',
+    keyPoints: [
+      'An isolator passes the signal and blocks the ground path; it cures ground loops, common-mode voltage, and fault propagation.',
+      'Choose the form by who powers what: loop-powered, output-powered for a two-wire transmitter, or four-wire with its own supply.',
+      'A splitter feeds two receivers from one transmitter without putting them in series.',
+      'Isolation adds error and delay; check the accuracy and response time against the loop needs.',
+      'Isolated input channels remove the need for an isolator in the simple ground loop case.',
+    ],
+    published: '2026-09-05',
+    updated: '2026-09-05',
+    readingTime: 8,
+    tags: ['Instrumentation', 'Signals', '4-20 mA', 'Grounding', 'Design'],
+    blocks: [
+      { t: 'h2', text: 'Forms' },
+      {
+        t: 'table',
+        head: ['Type', 'Power', 'Use'],
+        rows: [
+          ['Loop-powered isolator', 'From the receiving loop; no separate supply', 'A transmitter signal from a field or another panel into a panel loop; simplest to install'],
+          ['Output-powered isolator', 'Panel supply on the output side; provides loop power to a two-wire transmitter on the input side', 'A grounded or remote two-wire transmitter feeding a non-isolated input'],
+          ['Four-wire isolator', 'Its own supply, isolated from input and output', 'Signals from drives and instruments with their own power; full three-way isolation'],
+          ['Signal splitter', 'Panel supply', 'One transmitter feeding a controller and a chart recorder, or two controllers, each isolated'],
+          ['Converter', 'Panel supply', 'Current to voltage, voltage to current, or a range change, with isolation'],
+          ['Intrinsically safe isolator', 'Panel supply', 'Galvanic isolation and energy limiting for a hazardous area loop'],
+        ],
+      },
+      { t: 'h2', text: 'What it solves' },
+      {
+        t: 'dl',
+        items: [
+          { term: 'Ground loops', def: 'A transmitter grounded at its mounting and a receiver grounded at the panel share a ground path through the earth; the potential difference drives a current that adds to the signal. The isolator breaks the path.' },
+          { term: 'Common-mode voltage', def: 'A signal from a drive or a device with its own electronics sits at a voltage above the panel common; a non-isolated input reads the voltage as signal or is damaged. The isolator floats the input side.' },
+          { term: 'Fault propagation', def: 'A surge or a short on the field side stays on the field side; the isolator sacrifices itself before the input module.' },
+          { term: 'Two receivers', def: 'Putting two receivers in series on one loop works until the loop voltage runs out or one receiver is grounded; a splitter gives each its own isolated loop.' },
+          { term: 'Signal form', def: 'A device with a voltage output feeding a current input, or the reverse, through a converter that isolates as well.' },
+        ],
+      },
+      { t: 'h2', text: 'Costs' },
+      {
+        t: 'ul',
+        items: [
+          'Accuracy: a tenth of a percent of span is typical; check it against the loop tolerance, and include it in the loop error budget.',
+          'Response time: milliseconds to tens of milliseconds; irrelevant for level and flow, relevant for a fast pressure loop.',
+          'Power: a supply and a fuse per isolator, and heat in the panel.',
+          'Failure: one more device that can fail open, short, or drift; a calibration point on the schedule.',
+          'Isolation rating: the voltage between sides the isolator withstands; specify above the worst common-mode voltage or surge it will see.',
+        ],
+      },
+      { t: 'h2', text: 'Installation' },
+      {
+        t: 'steps',
+        items: [
+          { title: 'Where', text: 'At the panel where the signal enters, on the rail, near the terminal strip of the loop, after the surge protector if the loop leaves the building.' },
+          { title: 'Which side is grounded', text: 'Decide and draw it: one ground per side, and the isolator between. An isolator with both sides grounded at the same point isolates nothing.' },
+          { title: 'Power', text: 'From the panel 24 volt supply through a fused terminal; the loop it powers is then a panel loop.' },
+          { title: 'Range', text: 'Configure or order the input and output ranges; a 4 to 20 into 4 to 20 isolator is the common case, a range change is a converter.' },
+          { title: 'Calibrate', text: 'Two points through the isolator, with a calibrator on the input and a meter on the output, at commissioning and on the loop schedule.' },
+          { title: 'Document', text: 'The isolator on the loop drawing and the I/O list, with its type, its power source, and which side is grounded.' },
+        ],
+      },
+      {
+        t: 'callout',
+        kind: 'tip',
+        title: 'Or isolate at the input',
+        text: 'An input module with channel-to-channel isolation floats each loop from the others and from the controller. For a panel full of loops from grounded transmitters it is cheaper and cleaner than a rail of isolators, and the isolators remain for splitters, converters, and signals from drives.',
+      },
+      { t: 'h2', text: 'Diagnosing an isolator' },
+      {
+        t: 'ul',
+        items: [
+          'Output at 4 milliamps with the input live: the isolator has no power or has failed; check the fuse and the supply.',
+          'Output tracks the input with an offset: calibration, or the isolator drifting; recalibrate and watch.',
+          'Output correct on the bench and wrong in the panel: the isolation is bypassed by a second ground, or the common-mode voltage exceeds the rating.',
+          'Output noisy: the input side is picking up noise the isolator passes; the isolator does not filter, and the cable and shield are the fix.',
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: 'Do I need an isolator on every loop?',
+        a: 'No. Loops powered from the panel, grounded only at the panel, into a non-isolated module with all channels on the same common, work without one. Isolate the loops that cross grounds, come from drives or other panels, or need two receivers.',
+      },
+      {
+        q: 'Can I put the isolator at the transmitter end?',
+        a: 'A field-mounted isolator or an isolated transmitter output does the same job at the other end and is used where the panel cannot be changed or the common-mode problem originates at the panel. It needs power and an enclosure in the field.',
+      },
+      {
+        q: 'What is the difference between an isolator and a surge protector?',
+        a: 'A surge protector clamps transients to ground and is connected to ground on purpose; an isolator blocks the ground path. A loop that leaves the building has both: the protector at the entrance, the isolator after it.',
+      },
+      {
+        q: 'Why does the reading change when I ground the shield at the field end?',
+        a: 'The shield became the ground loop path; a shield is grounded at one end only, and the reading change proves the loop needs isolation or a correct shield ground rather than a second one.',
+      },
+    ],
+    related: [
+      '/controls/instrumentation/signals/ground-loops',
+      '/controls/control-panels/plc-panels/isolation',
+      '/controls/instrumentation/signals/4-20-ma-signals',
+      '/how-to/instrumentation-how-to/diagnose-ground-loops',
+      '/controls/instrumentation/signals/surge-protection',
+      '/troubleshooting/instrumentation-troubleshooting/4-20-ma-signal-unstable',
+    ],
+  },
 ];
